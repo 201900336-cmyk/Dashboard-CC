@@ -11304,6 +11304,12 @@ function renderIncidencias(){
    defecto, "Máxima precisión" (whisper-large-v3-turbo) con tarjeta de video,
    tramos con más contexto, volumen nivelado y botón "Transcribir de nuevo".
 
+   v21.79 — A pedido de Oscar se QUITAN de la vista la "Transcripción en tu
+   computadora" (Whisper) y la "Pre-evaluación del sistema". Queda el audio
+   con las dos voces y las "Evaluaciones en Genesys". Si Genesys llega a tener
+   transcripción (Speech & Text Analytics), se sigue mostrando sola. El código
+   de Whisper y de la pre-evaluación queda guardado pero sin ningún botón que
+   lo active (se puede volver a prender).
    v21.78 — Pre-evaluación del sistema: matriz propia de 8 criterios que se
    califica sola con la transcripción, con momento, observación editable,
    alertas (cancelar, supervisor, reclamo…) y Excel.
@@ -12448,24 +12454,27 @@ function qaHtmlDescargas(f){
   return `<div class="qa-dls">
     ${item("🎧","Audio de la llamada", "cliente y asesor juntos", `data-dl-audio="1"`, !!(completo || pistas.length))}
     ${item("🖥️","Pantalla", pant?"video del escritorio del asesor":"sin grabación de pantalla", pant?`data-dl="${qaEsc(qaUriDe(pant))}" data-nombre="${qaEsc(qaNombreArchivo(f,"webm","pantalla"))}"`:"", !!pant)}
-    ${item("📝","Transcripción", frases&&frases.length?"texto con tiempos (.txt)":"no disponible", `data-dl-transcripcion="1"`, !!(frases&&frases.length))}
+    ${frases&&frases.length ? item("📝","Transcripción", "texto con tiempos (.txt)", `data-dl-transcripcion="1"`, true) : ""}
   </div>`;
 }
 function qaHtmlTranscripcionBloque(alto){
   const st = QA.detalle.stta;
-  let html = qaSeccionEstado("stta","la transcripción");
-  // v21.75: si Genesys no tiene transcripción, se ofrece la de la computadora
-  if(html) return st.estado==="cargando" ? html : html + `<div id="qa-tr-local">${qaIaHtml()}</div>`;
+  // v21.79: solo se muestra la transcripción de Genesys (si existe); se quitó la de la computadora
+  if(!qaHayTransGenesys()) return "";
   const s = st.s || {};
   const sent = typeof s.sentimentScore==="number" ? s.sentimentScore : null;
   const sentTxt = sent===null ? null : sent>0.25 ? ["Positivo","pos"] : sent<-0.25 ? ["Negativo","neg"] : ["Neutral","neu"];
   const frases = st.frases;
   return `${sentTxt?`<div class="qa-sent ${sentTxt[1]}">Sentimiento del cliente: <b>${sentTxt[0]}</b> <span class="mut">(${sent.toFixed(2)}${typeof s.sentimentTrend==="number"?`, tendencia ${s.sentimentTrend>0?"↑":s.sentimentTrend<0?"↓":"→"}`:""})</span></div>`:""}
-    ${frases && frases.length ? qaHtmlFrases(frases, alto) : `<div id="qa-tr-local">${qaIaHtml()}</div>`}`;
+    ${qaHtmlFrases(frases, alto)}`;
+}
+function qaHayTransGenesys(){
+  const st = QA.detalle && QA.detalle.stta;
+  return !!(st && st.estado==="ok" && st.frases && st.frases.length);
 }
 function qaHtmlEvaluacionBloque(){
-  // v21.78: arriba la pre-evaluación del sistema; abajo las de Genesys
-  return `<div id="qa-pe" class="qa-pe">${qaPeHtml()}</div><div class="qa-pe-head qa-pe-gen"><b>Evaluaciones en Genesys</b></div>${qaHtmlEvaluacionGenesys()}`;
+  // v21.79: se quitó la pre-evaluación del sistema; quedan solo las evaluaciones de Genesys
+  return qaHtmlEvaluacionGenesys();
 }
 function qaHtmlEvaluacionGenesys(){
   let html = qaSeccionEstado("evals","las evaluaciones");
@@ -12540,7 +12549,7 @@ function qaPintarDetalle(){
       </section>
       <section class="qa-dw-sec">
         <h4>Grabación</h4>${qaHtmlGrabacionBloque(f, true)}
-        <h4>Transcripción y sentimiento</h4>${qaHtmlTranscripcionBloque(300)}
+        ${qaHayTransGenesys() ? `<h4>Transcripción y sentimiento</h4>${qaHtmlTranscripcionBloque(300)}` : ""}
         <h4>Descargas</h4>${qaHtmlDescargas(f)}
         <h4>Evaluación de calidad</h4>${qaHtmlEvaluacionBloque()}
         ${qaHtmlAuditoria()}
@@ -12594,7 +12603,7 @@ function qaPintarFicha(posPrevia){
       ${qaHtmlAuditoria()}
     </section>
     <section class="qa-card qa-fcol">
-      <h4 class="qa-ft">Grabación y transcripción</h4>
+      <h4 class="qa-ft">${qaHayTransGenesys() ? "Grabación y transcripción" : "Grabación"}</h4>
       ${qaHtmlGrabacionBloque(f, true)}
       ${qaHtmlTranscripcionBloque(260)}
       <h4 class="qa-ft" style="margin-top:14px;">Descargas</h4>
