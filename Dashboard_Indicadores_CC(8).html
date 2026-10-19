@@ -6881,20 +6881,42 @@ async function asistenciaGuardarParaTodos(){
   btn.disabled = true; btn.textContent = "Guardando...";
   statusEl.className = "justif-status loading"; statusEl.textContent = `Guardando ${filas.length} filas para todo el equipo...`;
   try{
-    // Mismo criterio que Justificación/Pronóstico: sin header Content-Type
-    // (para no forzar un preflight OPTIONS que Apps Script no responde).
-    const res = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify({ accion: "malla_asistencia_guardar", filas, codigo }),
-    });
-    const result = await res.json().catch(()=>null);
-    if(!result || !result.ok){
-      const errMsg = result && result.error === "codigo_invalido" ? "Código incorrecto."
-        : result && result.error === "datos_incompletos" ? "Faltan datos — intenta de nuevo."
-        : "No se pudo guardar. Intenta de nuevo en unos segundos.";
-      statusEl.className = "justif-status error"; statusEl.textContent = errMsg;
-      btn.disabled = false; btn.textContent = "💾 Guardar para todo el equipo";
-      return;
+    // v21.80 (2026-10-19): Oscar no pudo guardar una malla de 42 días ("No se
+    // pudo guardar…" sin motivo). Ahora se guarda POR SEMANAS (el Apps Script
+    // solo reemplaza las fechas que recibe y conserva el resto, así que mandar
+    // en tandas da el mismo resultado), cada tanda con 1 reintento, y si algo
+    // falla se muestra el motivo real que devolvió el servidor.
+    const porFecha = {};
+    filas.forEach(f=>{ (porFecha[f.Fecha] = porFecha[f.Fecha] || []).push(f); });
+    const fechasOrd = Object.keys(porFecha).sort();
+    const tandas = [];
+    for(let i=0; i<fechasOrd.length; i+=7) tandas.push(fechasOrd.slice(i, i+7));
+    const enviar = async (lote)=>{
+      const res = await fetch(url, { method: "POST", body: JSON.stringify({ accion: "malla_asistencia_guardar", filas: lote, codigo }) });
+      const txt = await res.text();
+      let result = null; try{ result = JSON.parse(txt); }catch(e){}
+      if(!result) return { ok:false, error:"respuesta_rara", detalle:`HTTP ${res.status}: ${txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim().slice(0,160)}` };
+      return result;
+    };
+    for(let t=0; t<tandas.length; t++){
+      const fs = tandas[t];
+      const lote = fs.reduce((acc,iso)=> acc.concat(porFecha[iso]), []);
+      statusEl.textContent = `Guardando semana ${t+1} de ${tandas.length} (${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])})...`;
+      let result = null;
+      for(let intento=0; intento<2; intento++){
+        try{ result = await enviar(lote); }catch(e){ result = { ok:false, error:"conexion", detalle: String(e && e.message || e) }; }
+        if(result.ok || result.error==="codigo_invalido") break;
+        console.error("Detalle técnico (guardar malla, tanda "+(t+1)+", intento "+(intento+1)+"):", result);
+        await new Promise(r=> setTimeout(r, 4000));
+      }
+      if(!result.ok){
+        const motivo = result.error === "codigo_invalido" ? "Código incorrecto."
+          : result.error === "datos_incompletos" ? "Faltan datos en la malla."
+          : `No se pudo guardar la semana del ${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])}` + (t ? ` (las ${t} anteriores sí quedaron guardadas)` : "") + `. Motivo: ${result.detalle || result.error || "sin detalle"}`;
+        statusEl.className = "justif-status error"; statusEl.textContent = motivo;
+        btn.disabled = false; btn.textContent = "💾 Guardar para todo el equipo";
+        return;
+      }
     }
     statusEl.className = "justif-status ok";
     statusEl.textContent = "Guardado ✓ Ya está disponible para todo el equipo.";
