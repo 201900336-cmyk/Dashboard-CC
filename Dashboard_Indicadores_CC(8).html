@@ -1858,6 +1858,13 @@ function skillIndex(name){
   const n = normKey(aliased);
   let idx = SKILLS.findIndex(s=>normKey(s)===n);
   if(idx>=0) return idx;
+  // v21.83 (2026-10-21) — bug real: la búsqueda "parecida" de abajo hacía que
+  // categorías de Genesys como "Mail Despacho (Fuera de Horario)",
+  // "BackOffice Despacho", "Mail Corporativo" o "WhatsApp Corporativo" (que
+  // CONTIENEN "Despacho"/"Corporativo") tomaran el Forecast, FCR, TNPS y
+  // Justificación de OTRO skill del Sheet. Para una categoría de Genesys solo
+  // vale la coincidencia exacta (o su alias); sin columna propia => -1.
+  if(typeof GENESYS_CATEGORIAS!=="undefined" && GENESYS_CATEGORIAS.includes(name)) return -1;
   idx = SKILLS.findIndex(s=>normKey(s).includes(n) || n.includes(normKey(s)));
   return idx;
 }
