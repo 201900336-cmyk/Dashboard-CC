@@ -8179,6 +8179,11 @@ const GENESYS_QUEUE_TO_CATEGORIA = {
   "HN_Mail_VIP": "Mail Corporativo",
   "HN_WA_Corp": "WhatsApp Corporativo",
   "HN_BRM_Despacho_N2": "BackOffice Despacho",
+  // v21.82 (2026-10-21) — 4 skills nuevos a pedido de Oscar (nombre de la cola tal cual está en Genesys):
+  "HN_RecuperaciondeEquipos": "Recuperación de equipos",
+  "HN_WA_Despacho_No_Contactados_Contacto_Previo": "WhatsApp No Contactados",
+  "HN_Despacho_Mail": "Mail Despacho (Horario Hábil)",
+  "HN_Despacho_Mail_FH": "Mail Despacho (Fuera de Horario)",
 };
 // A pedido de Oscar (2026-09-08): antes de octubre de 2025, Despacho usaba
 // OTRA cola en Genesys (la reemplazaron/renombraron ese mes — por eso las
@@ -8196,7 +8201,7 @@ const GENESYS_QUEUE_ID_TO_CATEGORIA = {
 function genesysCategoriaDeCola(queueId, qName){
   return GENESYS_QUEUE_ID_TO_CATEGORIA[queueId] || GENESYS_QUEUE_TO_CATEGORIA[qName];
 }
-const GENESYS_CATEGORIAS = ["Fijo","Móvil","Despacho","Corporativo","WhatsApp","Helpdesk","Redes Sociales","Chat Web","Mail Clientes","Mail Corporativo","WhatsApp Corporativo","BackOffice Despacho"];
+const GENESYS_CATEGORIAS = ["Fijo","Móvil","Despacho","Corporativo","WhatsApp","Helpdesk","Redes Sociales","Chat Web","Mail Clientes","Mail Corporativo","WhatsApp Corporativo","BackOffice Despacho","Recuperación de equipos","WhatsApp No Contactados","Mail Despacho (Horario Hábil)","Mail Despacho (Fuera de Horario)"];
 // A pedido de Oscar: algunas colas a veces también traen interacciones de
 // otros canales aparte del que le corresponde a esa categoría (ej. voz
 // colándose en una cola de mensajería) — esas NO deben contar. Por eso cada
@@ -8225,6 +8230,11 @@ const GENESYS_CATEGORIA_MEDIA_FILTER = {
   "Mail Corporativo": ["email"],
   "WhatsApp Corporativo": ["message"],
   "BackOffice Despacho": ["voice"],
+  // v21.82: WhatsApp solo mensajes y los Mail solo correos. "Recuperación de
+  // equipos" queda sin restricción (cuenta todos los canales de su cola).
+  "WhatsApp No Contactados": ["message"],
+  "Mail Despacho (Horario Hábil)": ["email"],
+  "Mail Despacho (Fuera de Horario)": ["email"],
 };
 // Decide si un bucket de canal (mediaType) de una cola cuenta o no para el
 // cálculo, según la categoría a la que pertenece esa cola. Si la consulta no
@@ -9431,7 +9441,7 @@ function genesysHasLoadedData(){
    Sheet), lo sigue llenando el equipo aparte.
    ============================================================ */
 const KPISDIA_NS_META = 0.85; // meta única de NS%, a pedido de Oscar (2026-09-08) — igual para todas las categorías, tanto para el semáforo como para las Alertas del día
-const KPISDIA_CATS = ["Fijo","Móvil","Helpdesk","Corporativo","Despacho","WhatsApp","Redes Sociales","Chat Web","Mail Clientes","Mail Corporativo","WhatsApp Corporativo","BackOffice Despacho"]; // "Canales Digitales" se renombró a "WhatsApp" y se agregaron 6 categorías nuevas el 2026-09-10
+const KPISDIA_CATS = ["Fijo","Móvil","Helpdesk","Corporativo","Despacho","WhatsApp","Redes Sociales","Chat Web","Mail Clientes","Mail Corporativo","WhatsApp Corporativo","BackOffice Despacho","Recuperación de equipos","WhatsApp No Contactados","Mail Despacho (Horario Hábil)","Mail Despacho (Fuera de Horario)"]; // "Canales Digitales" se renombró a "WhatsApp" y se agregaron 6 categorías nuevas el 2026-09-10
 const KPISDIA_CAT_LABEL = { "Despacho": "Despacho N1" }; // alias solo de exhibición, igual al nombre que usa Oscar en su reporte
 const KPISDIA_GLOBAL_CATS = ["Fijo","Móvil","Corporativo"]; // "KPIs Globales (Móvil - Fijo - Corporativo)" del reporte original
 function kpisDiaNsColor(v){
@@ -9669,7 +9679,7 @@ function kpisDiaRerenderConEstadoActual(cont){
 }
 // Ícono representativo por categoría — puramente decorativo (pedido de Oscar,
 // 2026-09-08: "ponle iconos"), no afecta ningún cálculo.
-const KPISDIA_CAT_ICON = { "Fijo":"🏠", "Móvil":"📱", "Helpdesk":"🎧", "Corporativo":"🏢", "Despacho":"🚨", "WhatsApp":"💬", "Redes Sociales":"📢", "Chat Web":"🌐", "Mail Clientes":"📧", "Mail Corporativo":"✉️", "WhatsApp Corporativo":"📲", "BackOffice Despacho":"🗂️" };
+const KPISDIA_CAT_ICON = { "Fijo":"🏠", "Móvil":"📱", "Helpdesk":"🎧", "Corporativo":"🏢", "Despacho":"🚨", "WhatsApp":"💬", "Redes Sociales":"📢", "Chat Web":"🌐", "Mail Clientes":"📧", "Mail Corporativo":"✉️", "WhatsApp Corporativo":"📲", "BackOffice Despacho":"🗂️", "Recuperación de equipos":"📦", "WhatsApp No Contactados":"📵", "Mail Despacho (Horario Hábil)":"📨", "Mail Despacho (Fuera de Horario)":"🌙" };
 function kpisDiaRender(cont, periodo, rawByCat){
   // "today" = último día del período (el mes de referencia para FCR Global y
   // tNPS mensual). En modo Hoy/Ayer es el mismo día de siempre.
