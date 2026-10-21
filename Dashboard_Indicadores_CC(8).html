@@ -8205,8 +8205,16 @@ const GENESYS_QUEUE_ID_TO_CATEGORIA = {
 };
 // Categoría de una cola de Genesys: primero por ID (colas viejas/renombradas
 // que ya no matchean por nombre), y si no, por nombre (caso normal).
+// v21.83: si el nombre no coincide exacto, se compara "normalizado" (sin
+// mayúsculas, tildes, espacios ni guiones), para que "HN_Despacho_Mail" y
+// "HN Despacho Mail" o "HN_DESPACHO_MAIL" se reconozcan como la misma cola.
+function genesysNormCola(n){ return String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,""); }
+let genesysColaNormMap = null;
 function genesysCategoriaDeCola(queueId, qName){
-  return GENESYS_QUEUE_ID_TO_CATEGORIA[queueId] || GENESYS_QUEUE_TO_CATEGORIA[qName];
+  const directa = GENESYS_QUEUE_ID_TO_CATEGORIA[queueId] || GENESYS_QUEUE_TO_CATEGORIA[qName];
+  if(directa) return directa;
+  if(!genesysColaNormMap){ genesysColaNormMap = {}; Object.keys(GENESYS_QUEUE_TO_CATEGORIA).forEach(k=>{ genesysColaNormMap[genesysNormCola(k)] = GENESYS_QUEUE_TO_CATEGORIA[k]; }); }
+  return genesysColaNormMap[genesysNormCola(qName)];
 }
 const GENESYS_CATEGORIAS = ["Fijo","Móvil","Despacho","Corporativo","WhatsApp","Helpdesk","Redes Sociales","Chat Web","Mail Clientes","Mail Corporativo","WhatsApp Corporativo","BackOffice Despacho","Recuperación de equipos","WhatsApp No Contactados","Mail Despacho (Horario Hábil)","Mail Despacho (Fuera de Horario)"];
 // A pedido de Oscar: algunas colas a veces también traen interacciones de
@@ -10397,10 +10405,16 @@ function renderGenesys(){
     // panel vacío sin pistas, se muestra la lista completa de TODAS las
     // colas que sí devolvió Genesys, para comparar nombres a simple vista.
     const showAllQueuesFallback = debugQueues.length === 0;
+    // v21.83: las colas con nombre PARECIDO al esperado salen primero y resaltadas.
+    const pistas = Object.keys(GENESYS_QUEUE_TO_CATEGORIA)
+      .filter(k=> !catsFiltro.size || catsFiltro.has(GENESYS_QUEUE_TO_CATEGORIA[k]))
+      .reduce((acc,k)=> acc.concat(k.split(/[_\s-]+/).map(genesysNormCola).filter(t=> t.length>=4)), [])
+      .filter((t,i,a)=> t && a.indexOf(t)===i);
+    const parecido = q=> { const n = genesysNormCola(q.name); return pistas.filter(t=> n.includes(t)).length; };
     const allQueuesRowsHtml = showAllQueuesFallback ? genesysState.queues
       .slice()
-      .sort((a,b)=> a.name.localeCompare(b.name))
-      .map(q=> `<tr><td style="padding:4px 8px;">${genesysCategoriaDeCola(q.id, q.name) || '<span style="color:var(--gray);">(sin mapear)</span>'}</td><td style="padding:4px 8px;">${q.name}</td><td style="padding:4px 8px;font-family:Consolas,Monaco,monospace;font-size:10.5px;color:var(--gray);">${q.id}</td></tr>`)
+      .sort((a,b)=> (parecido(b) - parecido(a)) || a.name.localeCompare(b.name))
+      .map(q=> `<tr${parecido(q) ? ' style="background:#FFF4E5;font-weight:700;"' : ''}><td style="padding:4px 8px;">${genesysCategoriaDeCola(q.id, q.name) || '<span style="color:var(--gray);">(sin mapear)</span>'}</td><td style="padding:4px 8px;">${q.name}</td><td style="padding:4px 8px;font-family:Consolas,Monaco,monospace;font-size:10.5px;color:var(--gray);">${q.id}</td></tr>`)
       .join("") : "";
     const debugPanelHtml = `
       <details class="modal-details" style="margin:0 0 10px;">
@@ -10413,7 +10427,7 @@ function renderGenesys(){
         </div>
         ${debugHasDup ? `<p style="color:#B45309;font-size:11.5px;margin-top:6px;">⚠️ Hay colas con el <b>mismo nombre</b> pero distinto ID — es probable que en Genesys exista una cola duplicada o archivada con ese nombre, lo que sumaría interacciones de más. Conviene revisarlo en Genesys Admin → Colas.</p>` : ``}
         ${showAllQueuesFallback ? `
-          <p style="color:#B45309;font-size:11.5px;margin-top:6px;">⚠️ Ninguna cola cargada desde Genesys coincide con el filtro de categoría actual. Es probable que el nombre real de esas colas en Genesys sea distinto al que está guardado en el dashboard, o que ya no exista. Genesys devolvió <b>${genesysState.queues.length} colas en total</b> — aquí están todas para comparar el nombre exacto:</p>
+          <p style="color:#B45309;font-size:11.5px;margin-top:6px;">⚠️ Ninguna cola cargada desde Genesys coincide con el filtro de categoría actual. Es probable que el nombre real de esas colas en Genesys sea distinto al que está guardado en el dashboard, o que ya no exista. Genesys devolvió <b>${genesysState.queues.length} colas en total</b> — aquí están todas para comparar el nombre exacto: Las que salen <b>primero y resaltadas</b> tienen un nombre parecido al que espera el dashboard.</p>
           <div style="overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;margin-top:4px;">
             <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
               <thead><tr style="text-align:left;color:var(--gray);position:sticky;top:0;background:#fff;"><th style="padding:4px 8px;">Categoría (si tiene mapeo)</th><th style="padding:4px 8px;">Cola (nombre real en Genesys)</th><th style="padding:4px 8px;">ID</th></tr></thead>
