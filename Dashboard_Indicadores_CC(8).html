@@ -1221,7 +1221,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <input type="text" id="justif-input-codigo" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="••••" />
     <label>Tu nombre</label>
     <input type="text" id="justif-input-nombre" autocomplete="off" placeholder="Ej. Oscar" />
-    <label>Justificación</label>
+    <label id="justif-label-texto">Justificación</label>
     <textarea id="justif-input-texto" placeholder="Describe el motivo de la caída del NS este día..."></textarea>
     <div class="justif-status" id="justif-modal-status"></div>
     <div class="modal-actions">
@@ -3072,12 +3072,17 @@ function handleSaveGsConfig(){
    abierto lo verá en cuanto recargue o vuelva a actualizar.
    ============================================================ */
 let justifModalTarget = null; // {iso, cat} de la fila que se está editando
-function openJustifModal(iso, cat){
-  justifModalTarget = { iso, cat };
-  document.getElementById("justif-modal-context").textContent = `${cat} — ${fmtFechaGenesys(iso)}`;
+function openJustifModal(iso, cat, esObjetivo){
+  justifModalTarget = { iso, cat, esObjetivo: !!esObjetivo };
+  document.getElementById("justif-modal-context").textContent = `${cat} — ${fmtFechaGenesys(iso)}${esObjetivo ? " · cerró en Objetivo" : ""}`;
   document.getElementById("justif-input-codigo").value = "";
   document.getElementById("justif-input-nombre").value = "";
-  document.getElementById("justif-input-texto").value = stripAttribution(genesysSheetJustificacion(iso, cat) || "");
+  const actual = stripAttribution(genesysSheetJustificacion(iso, cat) || "");
+  document.getElementById("justif-input-texto").value = esObjetivo ? justifComentarioObjetivo(actual) : actual;
+  document.getElementById("justif-label-texto").textContent = esObjetivo ? "Comentario adicional (opcional)" : "Justificación";
+  document.getElementById("justif-input-texto").placeholder = esObjetivo
+    ? "Ej. Inconvenientes con HBO - 160 reclamos (déjalo vacío para quitar el comentario)"
+    : "Describe el motivo de la caída del NS este día...";
   const statusEl = document.getElementById("justif-modal-status");
   statusEl.className = "justif-status"; statusEl.textContent = "";
   document.getElementById("justif-modal-overlay").style.display = "flex";
@@ -3100,10 +3105,13 @@ async function submitJustifModal(){
     statusEl.className = "justif-status error"; statusEl.textContent = "Escribe tu nombre para identificar quién edita.";
     return;
   }
-  if(!texto){
+  if(!texto && !justifModalTarget.esObjetivo){
     statusEl.className = "justif-status error"; statusEl.textContent = "Escribe la justificación.";
     return;
   }
+  // v21.84: en un día en Objetivo se guarda "Objetivo - <comentario>" (o solo
+  // "Objetivo" si se dejó vacío, para quitar el comentario).
+  const textoFinal = justifModalTarget.esObjetivo ? (texto ? `Objetivo - ${justifComentarioObjetivo(texto)}` : "Objetivo") : texto;
   const cfg = loadLiveConfig();
   const url = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
   if(!url){
@@ -3130,7 +3138,7 @@ async function submitJustifModal(){
     const skillParaSheet = (typeof GENESYS_CATEGORIA_SKILL_ALIAS !== "undefined" && GENESYS_CATEGORIA_SKILL_ALIAS[justifModalTarget.cat]) || justifModalTarget.cat;
     const res = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({ fecha: justifModalTarget.iso, skill: skillParaSheet, texto, nombre, codigo }),
+      body: JSON.stringify({ fecha: justifModalTarget.iso, skill: skillParaSheet, texto: textoFinal, nombre, codigo }),
     });
     const result = await res.json().catch(()=>null);
     if(!result || !result.ok){
@@ -8388,6 +8396,16 @@ function stripAttribution(text){
   }
   return text;
 }
+// v21.84: comentario adicional de un día que cerró en Objetivo. En el Sheet
+// se guarda como "Objetivo - <comentario>"; aquí se quita el "Objetivo" del
+// inicio (con guion, dos puntos o paréntesis) para no repetirlo en pantalla.
+function justifComentarioObjetivo(txt){
+  let t = String(txt||"").trim();
+  t = t.replace(/^objetivo\b\s*[-–—:]*\s*/i, "").trim();
+  if(/^\(.*\)$/.test(t)) t = t.slice(1, -1).trim();
+  return t;
+}
+function justifEsc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 // A pedido de Oscar (2026-09-03): "Pronóstico" diario en la BITÁCORA de
 // Genesys, mismo mecanismo que la Justificación — se trae de la columna "FC"
 // de Fact_Bitacora_Diaria (índice 10 de `daily`, la misma que ya usa la
@@ -10678,8 +10696,15 @@ function renderGenesys(){
             const pencilBtn = belowUmbral
               ? `<button type="button" class="justif-pencil-btn" title="Editar justificación" onclick="openJustifModal('${r.isoFecha}','${r.cat}')">✏️</button>`
               : "";
+            // v21.84 (Oscar, 2026-10-23): los días en Objetivo también llevan
+            // lápiz, para dejar un comentario de algo que impactó aunque se
+            // cerró en objetivo. Se ve: "Objetivo" (verde) – comentario (cursiva).
+            const comObj = meetsObjetivo ? justifComentarioObjetivo(justTxt) : "";
+            const pencilObj = meetsObjetivo && skillIndex(r.cat) >= 0
+              ? `<button type="button" class="justif-pencil-btn" title="Agregar comentario al día en Objetivo" onclick="openJustifModal('${r.isoFecha}','${r.cat}',true)">✏️</button>`
+              : "";
             const justCell = meetsObjetivo
-              ? `<span style="color:var(--green);font-weight:700;">Objetivo</span>`
+              ? `<span style="color:var(--green);font-weight:700;">Objetivo</span>${comObj ? ` <span style="color:var(--gray);font-style:italic;">– ${justifEsc(comObj)}</span>` : ""}${pencilObj}`
               : (justTxt
                   ? `<span style="color:${isObjetivo?"var(--green)":"var(--gray)"};font-weight:${isObjetivo?"700":"400"};">${justTxt}</span>${pencilBtn}`
                   : `<span style="color:var(--gray);">-</span>${pencilBtn}`);
