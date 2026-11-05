@@ -847,6 +847,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-tabla b.r,.qa-tabla td.r{color:#B4021F;} .qa-tabla b.g{color:#17733F;}
   .qa-tabla.mini{font-size:11.5px;} .qa-tabla.mini th{position:static;}
   .qa-tabla tr.qa-sub > td{background:var(--qa-soft);padding:10px 12px;cursor:default;}
+  /* v21.88: conversación escrita en QA */
+  .qa-chat{display:flex;flex-direction:column;gap:8px;max-height:460px;overflow:auto;padding:10px;background:#F6F7F9;border-radius:10px;}
+  .qa-msg{max-width:78%;align-self:flex-start;}
+  .qa-msg.asesor{align-self:flex-end;}
+  .qa-msg.bot{align-self:center;max-width:90%;}
+  .qa-msg-q{font-size:10.5px;font-weight:700;color:var(--qa-mut);margin:0 4px 2px;}
+  .qa-msg.asesor .qa-msg-q{text-align:right;}
+  .qa-msg-t{font-size:12.5px;line-height:1.45;padding:7px 10px;border-radius:10px;background:#fff;border:1px solid var(--qa-line);white-space:normal;word-break:break-word;}
+  .qa-msg.asesor .qa-msg-t{background:#FDEBEC;border-color:#F6C6CE;}
+  .qa-msg.bot .qa-msg-t{background:#EEF0F3;font-size:11.5px;color:#3B4350;}
+  .qa-msg.correo{max-width:100%;}
+  .qa-msg-adj{margin-top:4px;font-size:11px;color:var(--qa-mut);}
   /* v21.87: pestaña TNPS (Prueba) — reutiliza los estilos de QA */
   .tn-root{--qa-ink:#1F2430;--qa-mut:#5B6472;--qa-line:#E6E8EC;--qa-soft:#F6F7F9;--qa-blue:#1D4ED8;padding:4px 0 24px;color:var(--qa-ink);}
   .tn-root .mut{color:var(--qa-mut);}
@@ -870,6 +882,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-tabla tr.tn-g1 td:first-child{box-shadow:inset 3px 0 0 #E4032E;}
   .tn-tabla tr.tn-g2 td:first-child{box-shadow:inset 3px 0 0 #C9A227;}
   .tn-tabla tr.tn-g3 td:first-child{box-shadow:inset 3px 0 0 #17733F;}
+  .tn-ver{padding:3px 8px;font-size:11.5px;white-space:nowrap;}
+  .tn-cands td{font-size:12px;}
+  .tn-cands-t{font-weight:700;margin-bottom:6px;font-size:12px;}
+  .tn-cands .qa-tabla{background:#fff;border-radius:8px;}
   .tn-buscar{flex:1;min-width:220px;border:1px solid var(--qa-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;}
   .tn-aviso{font-size:13px;}
   .tn-error{border-color:#F3B4BE;background:#FFF6F7;}
@@ -12031,6 +12047,8 @@ async function qaGrabaciones(convId, onEspera){
     const lista = Array.isArray(r.data) ? r.data : (r.data && r.data.entities) || null;
     if(r.status===202 || lista===null){ if(onEspera) onEspera(i+1); await esperar(3000); continue; }
     if(lista.some(x=> x.mediaUris && Object.keys(x.mediaUris).length) || !lista.length) return lista;
+    // v21.88: chat / WhatsApp / correo: Genesys manda el texto (sin audio)
+    if(lista.some(x=> qaEsTranscripcionTexto(x))) return lista;
     if(onEspera) onEspera(i+1); await esperar(3000);
   }
   throw new Error("PREPARANDO");
@@ -12509,6 +12527,42 @@ function qaOtrasDelNumero(f){
 function qaHtmlRecorridoBloque(f){
   return `<ol class="qa-rail">${qaRecorrido(f).map(e=>`<li class="${e.tipo}"><b>${qaEsc(e.titulo)}</b><span>${qaEsc(e.sub)}</span></li>`).join("")}</ol>`;
 }
+
+/* ---------- v21.88: conversación escrita (WhatsApp, chat, correo) ----------
+   Para estas interacciones Genesys no tiene audio: GET /conversations/{id}/
+   recordings devuelve el texto (messagingTranscript, transcript o
+   emailTranscript). Se muestra como chat, cliente a la izquierda y asesor a
+   la derecha. */
+function qaEsTranscripcionTexto(r){
+  return !!r && ((Array.isArray(r.messagingTranscript) && r.messagingTranscript.length) || (Array.isArray(r.transcript) && r.transcript.length) || (Array.isArray(r.emailTranscript) && r.emailTranscript.length));
+}
+function qaHtmlChat(recs, f){
+  const msgs = [];
+  const telCli = String((f && f.ani) || "").replace(/\D/g,"").slice(-8);
+  (recs||[]).forEach(r=>{
+    (r.messagingTranscript||[]).forEach(m=>{
+      const desde = String(m.from||"");
+      let quien = "bot", nombre = "Bot / sistema";
+      if(m.fromUser && (m.fromUser.id || m.fromUser.name)){ quien = "asesor"; nombre = m.fromUser.name || qaUserName(m.fromUser.id); }
+      else if(m.purpose==="agent" || m.purpose==="user"){ quien = "asesor"; nombre = "Asesor"; }
+      else if(m.fromExternalContact || m.purpose==="customer" || m.purpose==="external" || (telCli.length>=7 && desde.replace(/\D/g,"").slice(-8)===telCli)){ quien = "cliente"; nombre = "Cliente"; }
+      const adj = (m.messageMediaAttachments||[]).map(a=> `📎 ${a.name || a.mediaType || "adjunto"}`).join(" · ");
+      msgs.push({ t: m.timestamp, quien, nombre, texto: m.messageText || "", adj });
+    });
+    (r.transcript||[]).forEach(m=>{
+      const p = String(m.participantPurpose||"").toLowerCase();
+      const quien = p==="customer"||p==="external" ? "cliente" : (p==="agent"||p==="user") ? "asesor" : "bot";
+      msgs.push({ t: m.utc || m.timestamp, quien, nombre: quien==="cliente" ? "Cliente" : quien==="asesor" ? ((m.user && m.user.name) || "Asesor") : "Bot / sistema", texto: m.body || m.message || "", adj:"" });
+    });
+    (r.emailTranscript||[]).forEach(m=>{
+      const de = (m.from && (m.from.name || m.from.email)) || "";
+      msgs.push({ t: m.time, quien: "correo", nombre: de || "Correo", texto: (m.subject ? `Asunto: ${m.subject}\n` : "") + String(m.textBody || "").slice(0, 4000), adj: (m.attachments||[]).map(a=> `📎 ${a.name||"adjunto"}`).join(" · ") });
+    });
+  });
+  if(!msgs.length) return "";
+  msgs.sort((a,b)=> Date.parse(a.t||0) - Date.parse(b.t||0));
+  return `<div class="qa-chat" role="log" aria-label="Conversación escrita">${msgs.map(m=>`<div class="qa-msg ${m.quien}"><div class="qa-msg-q">${qaEsc(m.nombre)}${m.t?` · ${qaHora(m.t)}`:""}</div><div class="qa-msg-t">${qaEsc(m.texto).replace(/\n/g,"<br>")}${m.adj?`<div class="qa-msg-adj">${qaEsc(m.adj)}</div>`:""}</div></div>`).join("")}</div>`;
+}
 function qaHtmlGrabacionBloque(f, conOnda){
   let html = qaSeccionEstado("grab","la grabación");
   if(html) return html;
@@ -12516,6 +12570,9 @@ function qaHtmlGrabacionBloque(f, conOnda){
   const audios = recs.filter(r=> (r.media||"audio").toLowerCase()==="audio");
   const pantallas = recs.filter(r=> (r.media||"").toLowerCase()==="screen");
   if(!recs.length) return `<div class="qa-sec-msg mut">Esta llamada no tiene grabación (o todavía no está disponible).</div>`;
+  // v21.88: chat / WhatsApp / correo → se muestra la conversación escrita
+  const chatHtml = qaHtmlChat(recs, f);
+  if(chatHtml && !audios.length) return chatHtml;
   const onda = QA.detalle.onda;
   const st = qaOndaStats();
   const chips = st ? `<div class="qa-ac-chips"><span>Silencio ${st.silencio}%</span><span>Hablan a la vez ${st.alaVez}%</span><span>Asesor habló ${st.asesor}%</span><span>Cliente habló ${st.cliente}%</span></div>` : "";
@@ -12756,7 +12813,7 @@ function qaPintarDetalle(){
         ${otras.length?`<h4>Otras llamadas de este número</h4><ul class="qa-otras">${otras.map(o=>`<li><button type="button" data-ver-conv="${o.id}">${qaFecha(o.inicio)} ${qaHora(o.inicio)} · ${qaEsc(o.asesor)} · ${qaEsc(o.tipificacion)}</button></li>`).join("")}</ul>`:""}
       </section>
       <section class="qa-dw-sec">
-        <h4>Grabación</h4>${qaHtmlGrabacionBloque(f, true)}
+        <h4>${/^(message|chat|email|webchat)$/i.test((f && f.media)||"") ? "Conversación" : "Grabación"}</h4>${qaHtmlGrabacionBloque(f, true)}
         ${qaHayTransGenesys() ? `<h4>Transcripción y sentimiento</h4>${qaHtmlTranscripcionBloque(300)}` : ""}
         <h4>Descargas</h4>${qaHtmlDescargas(f)}
         <h4>Evaluación de calidad</h4>${qaHtmlEvaluacionBloque()}
@@ -14183,7 +14240,8 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
      decide y lo anota; aquí solo se muestra lo que llega.
    ============================================================ */
 const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"resumen",
-  datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"peor" };
+  datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"peor",
+  detFilas:[], ver:null };   // ver: { rid, estado, cands, msg } (v21.88)
 const TN_GRUPOS = { 1:"Detractor", 2:"Pasivo", 3:"Promotor" };
 
 function tnRangoFechas(){
@@ -14358,6 +14416,7 @@ function tnHtmlDetalle(){
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
     && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[16]].join(" ").toLowerCase().includes(q)));
   const max = 500;
+  TN.detFilas = filas.slice(0, max);
   const aviso = d.detalleDesde && d.detalleDesde > tnRangoFechas()[0] ? `<p class="qa-nota">El detalle muestra como máximo 31 días: desde el ${tnFecha(d.detalleDesde)}.</p>` : "";
   return `<div class="qa-card tn-filtros">
       <div class="qa-chips">${[["1","Detractores"],["2","Pasivos"],["3","Promotores"],["todos","Todos"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.detGrupo===k?"on":""}" data-grupo="${k}">${l}</button>`).join("")}</div>
@@ -14365,8 +14424,8 @@ function tnHtmlDetalle(){
       <span class="mut">${filas.length.toLocaleString("es-HN")} encuesta${filas.length===1?"":"s"}</span>
     </div>${aviso}
     <div class="qa-card"><div class="tn-tabla-wrap alto"><table class="qa-tabla mini tn-tabla">
-      <thead><tr><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th><th>Comentario</th><th>Sentimiento</th><th>Temas</th></tr></thead>
-      <tbody>${filas.slice(0,max).map(f=>`<tr class="tn-g${f[2]}"><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td><td class="nw">${qaEsc(f[15])}</td><td class="el" title="${qaEsc(f[16])}">${qaEsc(f[16])}</td></tr>`).join("")}</tbody>
+      <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th><th>Comentario</th><th>Sentimiento</th><th>Temas</th></tr></thead>
+      <tbody>${filas.slice(0,max).map((f,i)=>`<tr class="tn-g${f[2]}"><td class="nw"><button type="button" class="qa-chip tn-ver" data-ver="${i}" title="Buscar la conversación en Genesys">🎧 Ver</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td><td class="nw">${qaEsc(f[15])}</td><td class="el" title="${qaEsc(f[16])}">${qaEsc(f[16])}</td></tr>${tnHtmlVer(f)}`).join("")}</tbody>
     </table></div>${filas.length>max?`<p class="qa-nota">Se muestran las primeras ${max}. Usa el buscador o los filtros para acotar.</p>`:""}</div>
     <p class="qa-nota">🔒 Datos de clientes: solo para el equipo autorizado. Cada consulta queda registrada.</p>`;
 }
@@ -14390,6 +14449,86 @@ function tnGrafica(){
       scales:{ y:{ position:"left", suggestedMin:-20, suggestedMax:100, title:{ display:true, text:"TNPS" } },
                y1:{ position:"right", beginAtZero:true, grid:{ drawOnChartArea:false }, title:{ display:true, text:"Encuestas" } } } }
   });
+}
+
+
+/* ---------- v21.88: de la encuesta a la conversación en Genesys ----------
+   Qualtrics no trae el ID de la conversación, así que se busca en Genesys:
+   1) por el teléfono del cliente (en WhatsApp viene en "Cliente"), desde 3
+      días antes de la encuesta hasta la hora de la encuesta;
+   2) si no hay teléfono o no aparece nada, por el asesor (1 día antes).
+   Se ordenan por: mismo asesor que la encuesta y la más cercana antes de la
+   encuesta. Si la mejor coincide con el asesor, se abre sola en el panel de
+   QA (audio o chat); igual se listan las demás por si era otra. */
+function tnNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+function tnMismoAsesor(nombreGenesys, f){
+  const a = tnNorm(nombreGenesys); if(!a) return false;
+  const b = tnNorm(f[9]) || tnNorm(String(f[8]||"").split("@")[0].replace(/[._-]/g," "));
+  if(!b) return false;
+  if(a===b || a.includes(b) || b.includes(a)) return true;
+  const ta = new Set(a.split(" ").filter(x=>x.length>2)); const comunes = b.split(" ").filter(x=> x.length>2 && ta.has(x));
+  return comunes.length >= 2;
+}
+function tnRid(f){ return f[17] || (f[0]+"|"+f[12]); }
+function tnHtmlVer(f){
+  const v = TN.ver;
+  if(!v || v.rid!==tnRid(f)) return "";
+  let h = "";
+  if(v.estado==="buscando") h = `⏳ ${qaEsc(v.msg || "Buscando la conversación en Genesys…")}`;
+  else if(v.estado==="error") h = `⚠️ ${qaEsc(v.msg)}`;
+  else if(!v.cands.length) h = `No se encontró la conversación en Genesys (${qaEsc(v.msg||"")}).`;
+  else h = `<div class="tn-cands-t">${v.abierta ? "✅ Se abrió la más probable. " : ""}Conversaciones encontradas${v.via?` (${qaEsc(v.via)})`:""}:</div>
+    <table class="qa-tabla mini"><tbody>${v.cands.map((c,i)=>`<tr><td class="nw">${qaEsc(qaFecha(c.inicio))} ${qaEsc(qaHora(c.inicio))}</td><td class="nw">${qaEsc(c.canal)}</td><td class="el">${qaEsc(c.cola)}</td><td class="el">${qaEsc(c.asesor)}${c._mismo?` <b class="g">· mismo asesor</b>`:""}</td><td><button type="button" class="qa-chip" data-abrirconv="${qaEsc(c.id)}">${i===0?"⭐ ":""}Abrir</button></td></tr>`).join("")}</tbody></table>`;
+  return `<tr class="qa-sub tn-cands"><td colspan="11">${h}</td></tr>`;
+}
+async function tnVerConversacion(f){
+  if(!f) return;
+  const rid = tnRid(f);
+  if(TN.ver && TN.ver.rid===rid && TN.ver.estado==="ok" && TN.ver.cands.length){ qaAbrirDetalle(TN.ver.cands[0].id); return; }
+  TN.ver = { rid, estado:"buscando", cands:[] }; tnRender();
+  const pintar = ()=>{ if(TN.ver && TN.ver.rid===rid) tnRender(); };
+  try{
+    const fechaEnc = f[0].slice(0,10);
+    const horaEnc = Date.parse(f[0].replace(" ","T")+":00-06:00") + 10*60*1000;   // 10 min de margen
+    await genesysEnsureQueuesLoaded();
+    await qaWrapupsMap();
+    const traer = async (filtros, desde)=>{
+      const r = await qaDetailsQuery(desde, fechaEnc, filtros);
+      const convs = r.convs || [];
+      const uids = new Set(); convs.forEach(c=> (c.participants||[]).forEach(p=>{ if(p.userId) uids.add(p.userId); }));
+      await genesysEnsureUsersLoaded(Array.from(uids));
+      const wrap = await qaCompletarWrapups(convs);
+      return convs.map(c=> qaResumen(c, wrap)).filter(c=> Date.parse(c.inicio) <= horaEnc);
+    };
+    let cands = [], via = "";
+    const tel = [f[13], f[12]].find(t=> qaTelefonoVariantes(t).length);
+    if(tel){
+      TN.ver.msg = "Buscando por el teléfono del cliente…"; pintar();
+      const vars = qaTelefonoVariantes(tel);
+      cands = await traer([{ type:"or", predicates: vars.flatMap(v=> [{ type:"dimension", dimension:"ani", operator:"matches", value:v }, { type:"dimension", dimension:"dnis", operator:"matches", value:v }]) }], qaSumarDias(fechaEnc,-3));
+      via = "por teléfono del cliente";
+    }
+    if(!cands.length && (f[8] || f[9])){
+      TN.ver.msg = "Buscando por el asesor…"; pintar();
+      const q = String(f[8]||"").includes("@") ? f[8] : (f[9] || f[8]);
+      const r = await qaFetch("/api/v2/users/search", { method:"POST", body: JSON.stringify({ pageSize:5, query:[{ fields:["email","name"], value:q, type:"CONTAINS" }] }) });
+      const u = (r.results||[])[0];
+      if(u){
+        genesysState.usersById[u.id] = u.name;
+        cands = await traer([qaFiltroOr("userId", [u.id])], qaSumarDias(fechaEnc,-1));
+        via = "por asesor";
+      }
+    }
+    cands.forEach(c=>{ c._mismo = tnMismoAsesor(c.asesor, f); QA.convCache.set(c.id, c); });
+    cands.sort((a,b)=> (b._mismo - a._mismo) || (Date.parse(b.inicio) - Date.parse(a.inicio)));
+    cands = cands.slice(0, 6);
+    TN.ver = { rid, estado:"ok", cands, via, msg: tel ? "ni por teléfono ni por asesor" : "la encuesta no trae teléfono y no se encontró al asesor", abierta: !!(cands[0] && cands[0]._mismo) };
+    pintar();
+    if(cands[0] && cands[0]._mismo) qaAbrirDetalle(cands[0].id);
+  }catch(e){
+    TN.ver = { rid, estado:"error", cands:[], msg: qaMensajeError(e) };
+    pintar();
+  }
 }
 
 function tnExcel(){
@@ -14421,6 +14560,8 @@ function tnWire(){
   const mi = document.getElementById("tn-min"); if(mi) mi.addEventListener("change", ()=>{ TN.minAsesor = Math.max(1, Number(mi.value)||1); tnRender(); });
   body.querySelectorAll("[data-orden]").forEach(b=> b.addEventListener("click", ()=>{ TN.ordenAsesor = b.dataset.orden; tnRender(); }));
   body.querySelectorAll("[data-grupo]").forEach(b=> b.addEventListener("click", ()=>{ TN.detGrupo = b.dataset.grupo; tnRender(); }));
+  body.querySelectorAll("[data-ver]").forEach(b=> b.addEventListener("click", ()=> tnVerConversacion(TN.detFilas[Number(b.dataset.ver)])));
+  body.querySelectorAll("[data-abrirconv]").forEach(b=> b.addEventListener("click", ()=> qaAbrirDetalle(b.dataset.abrirconv)));
   const bu = document.getElementById("tn-buscar");
   if(bu){ let t = null; bu.addEventListener("input", ()=>{ clearTimeout(t); t = setTimeout(()=>{ TN.detBuscar = bu.value; const pos = bu.selectionStart; tnRender(); const n = document.getElementById("tn-buscar"); if(n){ n.focus(); n.setSelectionRange(pos,pos); } }, 250); }); }
 }
