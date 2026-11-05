@@ -886,6 +886,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-cands td{font-size:12px;}
   .tn-cands-t{font-weight:700;margin-bottom:6px;font-size:12px;}
   .tn-cands .qa-tabla{background:#fff;border-radius:8px;}
+  .tn-tabla tr.tn-sel > td{background:#FFF4D6 !important;}
+  .tn-tabla tr.tn-sel > td:first-child{box-shadow:inset 5px 0 0 #E4032E !important;}
+  .tn-tabla tr.tn-sel{outline:2px solid #F2B705;outline-offset:-2px;}
+  .tn-ver.visto{border-color:#9FD3B4;background:#EAF7EF;color:#17733F;}
+  .tn-tabla tr.tn-visto:not(.tn-sel) > td{color:#5B6472;}
+  @keyframes tnFlash{0%,100%{background:#FFF4D6;}50%{background:#FFE08A;}}
+  .tn-tabla tr.tn-flash > td{animation:tnFlash .6s ease-in-out 3;}
   .tn-buscar{flex:1;min-width:220px;border:1px solid var(--qa-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;}
   .tn-aviso{font-size:13px;}
   .tn-error{border-color:#F3B4BE;background:#FFF6F7;}
@@ -12364,6 +12371,7 @@ function qaCerrarDetalle(){
   d.classList.remove("abierto");
   d.querySelectorAll("audio,video").forEach(a=>{ try{ a.pause(); }catch(e){} });
   if(QA.detalle && QA.detalle.modo==="drawer"){ qaSoltarAudio(); QA.detalle = null; }
+  if(typeof tnVolverAFila==="function") tnVolverAFila();
 }
 function qaAudioActual(){
   const cont = QA.detalle && QA.detalle.modo==="ficha" ? document.getElementById("qa-ficha-det") : document.getElementById("qa-dw-cont");
@@ -14241,7 +14249,14 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
    ============================================================ */
 const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"resumen",
   datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"peor",
-  detFilas:[], ver:null };   // ver: { rid, estado, cands, msg } (v21.88)
+  detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
+  sel:"" };                  // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
+// v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
+const TN_VISTOS = new Set((()=>{ try{ return JSON.parse(localStorage.getItem("tn_vistos")||"[]"); }catch(e){ return []; } })());
+function tnMarcarVisto(rid){
+  TN_VISTOS.add(rid);
+  try{ localStorage.setItem("tn_vistos", JSON.stringify(Array.from(TN_VISTOS).slice(-3000))); }catch(e){}
+}
 const TN_GRUPOS = { 1:"Detractor", 2:"Pasivo", 3:"Promotor" };
 
 function tnRangoFechas(){
@@ -14425,7 +14440,7 @@ function tnHtmlDetalle(){
     </div>${aviso}
     <div class="qa-card"><div class="tn-tabla-wrap alto"><table class="qa-tabla mini tn-tabla">
       <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th><th>Comentario</th><th>Sentimiento</th><th>Temas</th></tr></thead>
-      <tbody>${filas.slice(0,max).map((f,i)=>`<tr class="tn-g${f[2]}"><td class="nw"><button type="button" class="qa-chip tn-ver" data-ver="${i}" title="Buscar la conversación en Genesys">🎧 Ver</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td><td class="nw">${qaEsc(f[15])}</td><td class="el" title="${qaEsc(f[16])}">${qaEsc(f[16])}</td></tr>${tnHtmlVer(f)}`).join("")}</tbody>
+      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td><td class="nw">${qaEsc(f[15])}</td><td class="el" title="${qaEsc(f[16])}">${qaEsc(f[16])}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
     </table></div>${filas.length>max?`<p class="qa-nota">Se muestran las primeras ${max}. Usa el buscador o los filtros para acotar.</p>`:""}</div>
     <p class="qa-nota">🔒 Datos de clientes: solo para el equipo autorizado. Cada consulta queda registrada.</p>`;
 }
@@ -14484,6 +14499,7 @@ function tnHtmlVer(f){
 async function tnVerConversacion(f){
   if(!f) return;
   const rid = tnRid(f);
+  TN.sel = rid; tnMarcarVisto(rid);
   if(TN.ver && TN.ver.rid===rid && TN.ver.estado==="ok" && TN.ver.cands.length){ qaAbrirDetalle(TN.ver.cands[0].id); return; }
   TN.ver = { rid, estado:"buscando", cands:[] }; tnRender();
   const pintar = ()=>{ if(TN.ver && TN.ver.rid===rid) tnRender(); };
@@ -14531,6 +14547,14 @@ async function tnVerConversacion(f){
   }
 }
 
+// v21.89: al cerrar el panel, la fila de la encuesta queda a la vista y parpadea
+function tnVolverAFila(){
+  if(state.tab!=="tnps" || !TN.sel) return;
+  const tr = Array.from(document.querySelectorAll("#tn-root tr[data-rid]")).find(x=> x.dataset.rid===TN.sel);
+  if(!tr) return;
+  tr.scrollIntoView({ behavior:"smooth", block:"center" });
+  tr.classList.remove("tn-flash"); void tr.offsetWidth; tr.classList.add("tn-flash");
+}
 function tnExcel(){
   if(typeof XLSX==="undefined") return;
   const filas = tnFilasFiltradas();
@@ -14561,7 +14585,7 @@ function tnWire(){
   body.querySelectorAll("[data-orden]").forEach(b=> b.addEventListener("click", ()=>{ TN.ordenAsesor = b.dataset.orden; tnRender(); }));
   body.querySelectorAll("[data-grupo]").forEach(b=> b.addEventListener("click", ()=>{ TN.detGrupo = b.dataset.grupo; tnRender(); }));
   body.querySelectorAll("[data-ver]").forEach(b=> b.addEventListener("click", ()=> tnVerConversacion(TN.detFilas[Number(b.dataset.ver)])));
-  body.querySelectorAll("[data-abrirconv]").forEach(b=> b.addEventListener("click", ()=> qaAbrirDetalle(b.dataset.abrirconv)));
+  body.querySelectorAll("[data-abrirconv]").forEach(b=> b.addEventListener("click", ()=>{ const tr = b.closest("tr.tn-cands"); const prev = tr && tr.previousElementSibling; if(prev && prev.dataset.rid){ TN.sel = prev.dataset.rid; } qaAbrirDetalle(b.dataset.abrirconv); }));
   const bu = document.getElementById("tn-buscar");
   if(bu){ let t = null; bu.addEventListener("input", ()=>{ clearTimeout(t); t = setTimeout(()=>{ TN.detBuscar = bu.value; const pos = bu.selectionStart; tnRender(); const n = document.getElementById("tn-buscar"); if(n){ n.focus(); n.setSelectionRange(pos,pos); } }, 250); }); }
 }
