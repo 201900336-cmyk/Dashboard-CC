@@ -2858,7 +2858,10 @@ async function refreshFromCsvSet(c, opts){
         }
       };
       const [rowsMonthly, rowsDaily, rowsFcr, rowsFcrMonthly, rowsIncidentes, rowsMalla] = await Promise.all([
-        fetchOne(c.monthly), fetchOne(c.daily), fetchOne(c.fcr), fetchOne(c.fcrMonthly), fetchOne(c.incidentes), fetchOne(c.malla),
+        fetchOne(c.monthly), fetchOne(c.daily), fetchOne(c.fcr), fetchOne(c.fcrMonthly), fetchOne(c.incidentes),
+        // v21.85: la malla (nombres y correos) ya no se baja de la copia
+        // publicada: el modal de Asistencia la pide al Apps Script con sesión.
+        null,
       ]);
       const newMonthly = rowsMonthly ? parseMonthlyRows(rowsMonthly) : null;
       const newDaily = rowsDaily ? parseDailyRows(rowsDaily) : null;
@@ -3138,11 +3141,12 @@ async function submitJustifModal(){
     const skillParaSheet = (typeof GENESYS_CATEGORIA_SKILL_ALIAS !== "undefined" && GENESYS_CATEGORIA_SKILL_ALIAS[justifModalTarget.cat]) || justifModalTarget.cat;
     const res = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({ fecha: justifModalTarget.iso, skill: skillParaSheet, texto: textoFinal, nombre, codigo }),
+      body: JSON.stringify({ fecha: justifModalTarget.iso, skill: skillParaSheet, texto: textoFinal, nombre, codigo, token: scriptSesionToken() }),
     });
     const result = await res.json().catch(()=>null);
     if(!result || !result.ok){
       const errMsg = result && result.error === "codigo_invalido" ? "Código incorrecto."
+        : result && result.error === "sesion_requerida" ? SCRIPT_MSG_SESION
         : result && result.error === "datos_incompletos" ? "Faltan datos — intenta de nuevo."
         : "No se pudo guardar. Intenta de nuevo en unos segundos.";
       statusEl.className = "justif-status error"; statusEl.textContent = errMsg;
@@ -3279,11 +3283,12 @@ async function submitPronosticoModal(){
     // para evitar el preflight OPTIONS que Apps Script no responde.
     const res = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({ accion: "pronostico_bulk", skill: cat, dias, codigo }),
+      body: JSON.stringify({ accion: "pronostico_bulk", skill: cat, dias, codigo, token: scriptSesionToken() }),
     });
     const result = await res.json().catch(()=>null);
     if(!result || !result.ok){
       const errMsg = result && result.error === "codigo_invalido" ? "Código incorrecto."
+        : result && result.error === "sesion_requerida" ? SCRIPT_MSG_SESION
         : result && result.error === "datos_incompletos" ? "Faltan datos — intenta de nuevo."
         : "No se pudo guardar. Intenta de nuevo en unos segundos.";
       statusEl.className = "justif-status error"; statusEl.textContent = errMsg;
@@ -6730,10 +6735,21 @@ async function asistenciaCargarMallaDirecta(){
   const cfg = loadLiveConfig();
   const base = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
   if(!base) throw new Error("sin URL del Apps Script");
-  const url = base + (base.includes("?") ? "&" : "?") + "malla=1&t=" + Date.now();
-  const res = await fetchWithTimeout(url, { cache:"no-store" }, JSON_FETCH_TIMEOUT_MS);
-  if(!res.ok) throw new Error("HTTP " + res.status);
-  const data = await parseJsonUrlPayload(await res.text());
+  // v21.85: primero se pide por POST con la sesión de Genesys (malla_leer).
+  // Si el Apps Script todavía es el anterior (responde "codigo_invalido"
+  // porque no conoce esa acción), se usa la lectura de antes (?malla=1).
+  let data = null;
+  try{
+    const resPost = await fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"malla_leer", token: scriptSesionToken() }) }, JSON_FETCH_TIMEOUT_MS);
+    if(resPost.ok) data = await parseJsonUrlPayload(await resPost.text());
+  }catch(e){ console.error("Detalle técnico (malla con sesión):", e); data = null; }
+  if(data && data.error === "sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
+  if(!data || !Array.isArray(data.mallaAsistencia)){
+    const url = base + (base.includes("?") ? "&" : "?") + "malla=1&t=" + Date.now();
+    const res = await fetchWithTimeout(url, { cache:"no-store" }, JSON_FETCH_TIMEOUT_MS);
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    data = await parseJsonUrlPayload(await res.text());
+  }
   if(!data || !Array.isArray(data.mallaAsistencia)) throw new Error("respuesta sin malla (¿Apps Script v21.62 publicado?)");
   asistenciaMallaMeta = data.mallaAsistenciaMeta || null;
   asistenciaMallaGuardada = data.mallaAsistencia.length ? parseMallaAsistenciaRows(data.mallaAsistencia) : null;
@@ -6789,7 +6805,7 @@ async function openAsistenciaModal(){
   }catch(err){
     console.error("Detalle técnico (malla directa):", err);
     asistenciaMallaOrigen = "publicada";
-    aviso = "⚠️ No se pudo traer la última malla guardada directo del servidor — se muestra la copia publicada, que puede venir atrasada unos minutos. Vuelve a abrir el modal en un momento.";
+    aviso = (err && err.message === SCRIPT_MSG_SESION) ? "⚠️ " + SCRIPT_MSG_SESION : "⚠️ No se pudo traer la última malla guardada directo del servidor — se muestra la copia publicada, que puede venir atrasada unos minutos. Vuelve a abrir el modal en un momento.";
   }
   if(asistenciaMallaLocal) return; // el usuario ya subió un Excel mientras tanto: no pisarlo
   asistenciaAplicarMallaGuardada(aviso);
@@ -6907,7 +6923,7 @@ async function asistenciaGuardarParaTodos(){
     const tandas = [];
     for(let i=0; i<fechasOrd.length; i+=7) tandas.push(fechasOrd.slice(i, i+7));
     const enviar = async (lote)=>{
-      const res = await fetch(url, { method: "POST", body: JSON.stringify({ accion: "malla_asistencia_guardar", filas: lote, codigo }) });
+      const res = await fetch(url, { method: "POST", body: JSON.stringify({ accion: "malla_asistencia_guardar", filas: lote, codigo, token: scriptSesionToken() }) });
       const txt = await res.text();
       let result = null; try{ result = JSON.parse(txt); }catch(e){}
       if(!result) return { ok:false, error:"respuesta_rara", detalle:`HTTP ${res.status}: ${txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim().slice(0,160)}` };
@@ -6920,12 +6936,13 @@ async function asistenciaGuardarParaTodos(){
       let result = null;
       for(let intento=0; intento<2; intento++){
         try{ result = await enviar(lote); }catch(e){ result = { ok:false, error:"conexion", detalle: String(e && e.message || e) }; }
-        if(result.ok || result.error==="codigo_invalido") break;
+        if(result.ok || result.error==="codigo_invalido" || result.error==="sesion_requerida") break;
         console.error("Detalle técnico (guardar malla, tanda "+(t+1)+", intento "+(intento+1)+"):", result);
         await new Promise(r=> setTimeout(r, 4000));
       }
       if(!result.ok){
         const motivo = result.error === "codigo_invalido" ? "Código incorrecto."
+          : result.error === "sesion_requerida" ? SCRIPT_MSG_SESION
           : result.error === "datos_incompletos" ? "Faltan datos en la malla."
           : `No se pudo guardar la semana del ${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])}` + (t ? ` (las ${t} anteriores sí quedaron guardadas)` : "") + `. Motivo: ${result.detalle || result.error || "sin detalle"}`;
         statusEl.className = "justif-status error"; statusEl.textContent = motivo;
@@ -7148,11 +7165,12 @@ async function tmoAsesorGuardarMeta(){
     const metas = { ...genesysMetasTmo, [cat]: nuevaSeg };
     const res = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({ accion: "metas_tmo_guardar", metas, codigo }),
+      body: JSON.stringify({ accion: "metas_tmo_guardar", metas, codigo, token: scriptSesionToken() }),
     });
     const result = await res.json().catch(()=>null);
     if(!result || !result.ok){
       const errMsg = result && result.error === "codigo_invalido" ? "Código incorrecto."
+        : result && result.error === "sesion_requerida" ? SCRIPT_MSG_SESION
         : result && result.error === "datos_incompletos" ? "Faltan datos — intenta de nuevo."
         : "No se pudo guardar. Intenta de nuevo en unos segundos.";
       statusEl.className = "justif-status error"; statusEl.textContent = errMsg;
@@ -7862,6 +7880,13 @@ function genesysGetStoredToken(){
     return obj;
   }catch(e){ return null; }
 }
+// v21.85: sesión de Genesys que se manda al Apps Script (en el cuerpo del
+// POST, nunca en la dirección) para que revise que quien guarda o pide la
+// malla/el audio entró con Genesys de Claro. "" si no hay sesión vigente.
+function scriptSesionToken(){
+  try{ const t = genesysGetStoredToken(); return (t && t.accessToken) || ""; }catch(e){ return ""; }
+}
+const SCRIPT_MSG_SESION = "Tu sesión de Genesys venció. Recarga la página y vuelve a iniciar sesión con Genesys.";
 function genesysSaveToken(accessToken, expiresIn){
   sessionStorage.setItem(GENESYS_TOKEN_KEY, JSON.stringify({
     accessToken, expiresAt: Date.now() + (Number(expiresIn||3600)*1000 - 30000),
@@ -12099,20 +12124,39 @@ async function qaLeerAudioViaScript(url){
   const cfg = typeof loadLiveConfig==="function" ? loadLiveConfig() : {};
   const base = (cfg && cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
   if(!base) throw new Error("SIN_SCRIPT");
-  const llamar = async (params)=>{
+  // v21.85: por POST con la sesión de Genesys (accion "audio"). Si el Apps
+  // Script todavía es el anterior (responde "codigo_invalido"), se usa la
+  // lectura de antes (GET ?audio=1) para el resto de los pedazos.
+  const llamarGet = async (params)=>{
     const r = await fetch(base + (base.includes("?") ? "&" : "?") + "audio=1&" + params + "&t=" + Date.now(), { cache:"no-store" });
     const txt = await r.text();
     let d = null; try{ d = JSON.parse(txt); }catch(err){ throw new Error("SCRIPT_VIEJO"); }
+    if(d && d.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
     if(!d || d.ok!==true) throw new Error((d && d.error) || "El Apps Script no pudo leer el audio");
     return d;
   };
-  const info = await llamar("info=1&u=" + encodeURIComponent(url));
+  let viaPost = true;
+  const llamar = async (params, cuerpo)=>{
+    if(viaPost){
+      let d = null;
+      try{
+        const r = await fetch(base, { method:"POST", body: JSON.stringify({ accion:"audio", ...cuerpo, token: scriptSesionToken() }) });
+        d = JSON.parse(await r.text());
+      }catch(err){ d = null; }
+      if(d && d.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
+      if(d && d.ok===true) return d;
+      if(!d || d.error==="codigo_invalido") viaPost = false;   // Apps Script anterior: lectura de antes
+      else throw new Error(d.error || "El Apps Script no pudo leer el audio");
+    }
+    return await llamarGet(params);
+  };
+  const info = await llamar("info=1&u=" + encodeURIComponent(url), { info:1, u:url });
   if(info.b64 && !info.total) return { bytes: qaB64aBytes(info.b64).buffer, tipo: info.tipo || "audio/mpeg", via:"apps script" };
   const total = Number(info.total) || 0, TAM = 1024*1024;
   const partes = []; for(let a=0; a<total; a+=TAM) partes.push([a, Math.min(total-1, a+TAM-1)]);
   const out = new Uint8Array(total);
   await asistenciaPoolMap(partes, 3, async ([a,b])=>{
-    const d = await llamar(`desde=${a}&hasta=${b}&u=${encodeURIComponent(info.final || url)}`);
+    const d = await llamar(`desde=${a}&hasta=${b}&u=${encodeURIComponent(info.final || url)}`, { desde:a, hasta:b, u: info.final || url });
     out.set(qaB64aBytes(d.b64), a);
   });
   return { bytes: out.buffer, tipo: info.tipo || "audio/mpeg", via:"apps script" };
