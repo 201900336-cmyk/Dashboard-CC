@@ -8558,8 +8558,9 @@ function genesysTnpsForMonths(periods, cats){
    ============================================================
    Oscar: el equipo llenaba a mano el TNPS en el Sheet (columna TNPS de
    Interacciones). Desde OCTUBRE 2026 la gráfica sale de Qualtrics; los meses
-   anteriores siguen saliendo del Sheet (no se tocan). Solo la gráfica: la
-   tarjeta KPI, "Mejor TNPS" y KPIs del día siguen con el Sheet.
+   anteriores siguen saliendo del Sheet (no se tocan). v21.91 (Oscar): también
+   la tarjeta TNPS, "Mejor TNPS" y el tNPS (mes) de KPIs del día, con la misma
+   regla (tnpsValorPeriodos), así los cuatro muestran el mismo número.
    TNPS = (promotores − detractores) ÷ total de encuestas, sumando todas las
    encuestas de los skills elegidos (o de todos los de la tabla).
    Equivalencias que dio Oscar (skill del dashboard ← encuesta + unidad o
@@ -8593,6 +8594,33 @@ function tnpsQxForMonth(year, month, cats){
   const n = d+p+pr;
   return n ? (pr-d)/n : null;
 }
+// v21.91: valor ÚNICO de TNPS para gráfica, tarjeta, "Mejor TNPS" y KPIs del
+// día. Meses desde TNPS_QX_DESDE con skills de la tabla → Qualtrics (sumando
+// encuestas); meses anteriores (o skills sin equivalencia) → Sheet, como antes.
+// Si el servidor todavía no mandó los datos de Qualtrics, todo sigue del Sheet.
+function tnpsMesUsaQx(year, month, catsQx){
+  return catsQx.length > 0 && TNPS_QX.estado==="ok" && `${year}-${String(month).padStart(2,"0")}` >= TNPS_QX_DESDE;
+}
+function tnpsValorPeriodos(periods, sel){
+  const cats = sel.filter(c => skillIndex(c) >= 0);
+  const catsQx = sel.filter(c => TNPS_QX_MAP[c]);
+  const pre = periods.filter(p=> !tnpsMesUsaQx(p.year, p.month, catsQx));
+  const post = periods.filter(p=> tnpsMesUsaQx(p.year, p.month, catsQx));
+  const vPre = pre.length && cats.length ? genesysTnpsForMonths(pre, cats) : null;
+  let vPost = null;
+  if(post.length){
+    const meses = new Set(post.map(p=> `${p.year}-${String(p.month).padStart(2,"0")}`));
+    let d = 0, pa = 0, pr = 0;
+    (TNPS_QX.meses||[]).forEach(f=>{
+      if(!meses.has(f[0]) || !catsQx.some(c=> tnpsQxCoincide(c, f))) return;
+      d += Number(f[4])||0; pa += Number(f[5])||0; pr += Number(f[6])||0;
+    });
+    if(d+pa+pr) vPost = (pr-d)/(d+pa+pr);
+  }
+  if(vPre===null) return vPost;
+  if(vPost===null) return vPre;
+  return (vPre*pre.length + vPost*post.length)/(pre.length+post.length);   // período que cruza septiembre/octubre
+}
 function tnpsQxCargar(){
   if(TNPS_QX.estado==="cargando" || TNPS_QX.estado==="ok") return;
   if(TNPS_QX.estado==="error" && Date.now()-TNPS_QX.intentoEn < 5*60*1000) return;
@@ -8619,20 +8647,14 @@ function tnpsQxCargar(){
 function genesysTnpsYearSeries(year, catsFiltro){
   const sel = catsFiltro && catsFiltro.size ? Array.from(catsFiltro) : GENESYS_CATEGORIAS;
   const cats = sel.filter(c => skillIndex(c) >= 0);
-  // v21.90: desde TNPS_QX_DESDE, la línea sale de Qualtrics (skills de la tabla TNPS_QX_MAP)
-  const catsQx = sel.filter(c => TNPS_QX_MAP[c]);
-  const valor = (y, mo)=>{
-    const mes = `${y}-${String(mo).padStart(2,"0")}`;
-    // (si el servidor todavía no manda los datos de Qualtrics, se sigue usando el Sheet como antes)
-    if(mes >= TNPS_QX_DESDE && catsQx.length && TNPS_QX.estado==="ok") return tnpsQxForMonth(y, mo, catsQx);
-    return genesysTnpsForMonth(y, mo, cats);
-  };
+  // v21.90/21.91: desde TNPS_QX_DESDE sale de Qualtrics (ver tnpsValorPeriodos)
+  const valor = (y, mo)=> tnpsValorPeriodos([{ year:y, month:mo }], sel);
   const curr = [], prev = [];
   for(let mo=1; mo<=12; mo++){
     curr.push(valor(year, mo));
     prev.push(valor(year-1, mo));
   }
-  return { curr, prev, cats, catsSinTnps: (catsFiltro && catsFiltro.size ? Array.from(catsFiltro) : GENESYS_CATEGORIAS).filter(c => skillIndex(c) < 0) };
+  return { curr, prev, cats, sel, catsSinTnps: sel.filter(c => skillIndex(c) < 0 && !TNPS_QX_MAP[c]) };
 }
 // "Mejor TNPS" para el banner de insights de Genesys — a pedido de Oscar
 // (2026-09-05), mismo tipo de insight "Mejor mes de TNPS" que antes tenía la
@@ -8645,14 +8667,14 @@ function genesysTnpsYearSeries(year, catsFiltro){
 // 12 meses de cada año filtrado (o todos los años con datos, si no hay
 // ninguno filtrado).
 function genesysBestTnpsInsight(catsFiltro){
-  const cats = (catsFiltro && catsFiltro.size ? Array.from(catsFiltro) : GENESYS_CATEGORIAS).filter(c => skillIndex(c) >= 0);
-  if(!cats.length) return null;
+  const sel = catsFiltro && catsFiltro.size ? Array.from(catsFiltro) : GENESYS_CATEGORIAS;
+  if(!sel.some(c => skillIndex(c) >= 0 || TNPS_QX_MAP[c])) return null;
   const yearsSel = Array.from(state.selYears).sort((a,b)=>a-b);
   const yearsToUse = yearsSel.length ? yearsSel : uniqueYears();
   let best = null;
   yearsToUse.forEach(y=>{
     for(let mm=1; mm<=12; mm++){
-      const v = genesysTnpsForMonth(y, mm, cats);
+      const v = tnpsValorPeriodos([{ year:y, month:mm }], sel);   // v21.91: desde octubre 2026, Qualtrics
       if(v!==null && (best===null || v>best.val)) best = {year:y, month:mm, val:v};
     }
   });
@@ -9890,7 +9912,7 @@ function kpisDiaRender(cont, periodo, rawByCat){
     const sIdx = skillIndex(cat);
     m.fcrDiario = periodo.unDia ? kpisDiaFcrDiario(sIdx, fechaIso) : kpisDiaFcrRango(sIdx, desdeIso, fechaIso);
     m.fcrGlobal = kpisDiaFcrGlobal(sIdx, today.month);
-    m.tnpsMes = sIdx>=0 ? genesysTnpsForMonth(today.year, today.month, [cat]) : null;
+    m.tnpsMes = (sIdx>=0 || TNPS_QX_MAP[cat]) ? tnpsValorPeriodos([{ year:today.year, month:today.month }], [cat]) : null;   // v21.91: Qualtrics desde octubre 2026
     porCat[cat] = m;
   });
   const statHtml = (label, val)=>`<div class="kpisdia-stat"><span class="k">${label}</span><span class="v">${val}</span></div>`;
@@ -10429,12 +10451,12 @@ function renderGenesys(){
       // de Genesys (M2M = mes anterior, Y2Y = mismo mes, año pasado). Nunca
       // se inventa un TNPS "de un día", que no existe en el Sheet — solo se
       // deja de mostrarlo en blanco cuando SÍ hay un dato mensual real.
-      const tnpsCatsQuick = (catsFiltro && catsFiltro.size ? Array.from(catsFiltro) : GENESYS_CATEGORIAS).filter(c => skillIndex(c) >= 0);
+      const tnpsCatsQuick = (catsFiltro && catsFiltro.size ? Array.from(catsFiltro) : GENESYS_CATEGORIAS);   // v21.91: tnpsValorPeriodos separa Sheet / Qualtrics
       const tnpsPrevMonthQ = qd.month===1 ? 12 : qd.month-1;
       const tnpsPrevMonthYearQ = qd.month===1 ? qd.year-1 : qd.year;
-      currTotal.tnps = genesysTnpsForMonth(qd.year, qd.month, tnpsCatsQuick);
-      momTotal.tnps = genesysTnpsForMonth(tnpsPrevMonthYearQ, tnpsPrevMonthQ, tnpsCatsQuick);
-      yoyTotal.tnps = genesysTnpsForMonth(qd.year-1, qd.month, tnpsCatsQuick);
+      currTotal.tnps = tnpsValorPeriodos([{ year:qd.year, month:qd.month }], tnpsCatsQuick);
+      momTotal.tnps = tnpsValorPeriodos([{ year:tnpsPrevMonthYearQ, month:tnpsPrevMonthQ }], tnpsCatsQuick);
+      yoyTotal.tnps = tnpsValorPeriodos([{ year:qd.year-1, month:qd.month }], tnpsCatsQuick);
       tnpsMomLabel = `${MESES[tnpsPrevMonthQ-1]} ${tnpsPrevMonthYearQ}`;
       tnpsYoyLabel = `${MESES[qd.month-1]} ${qd.year-1}`;
       catsFocusMonth = rawFocus;
@@ -10491,9 +10513,9 @@ function renderGenesys(){
       genesysTnpsInfo = genesysTnpsYearSeries(focusYear, catsFiltro);
       currYearSeries.tnps = genesysTnpsInfo.curr;
       prevYearSeries.tnps = genesysTnpsInfo.prev;
-      currTotal.tnps = genesysTnpsForMonths(focusPeriods, genesysTnpsInfo.cats);
-      momTotal.tnps = genesysTnpsForMonths(momPeriods, genesysTnpsInfo.cats);
-      yoyTotal.tnps = genesysTnpsForMonths(yoyPeriods, genesysTnpsInfo.cats);
+      currTotal.tnps = tnpsValorPeriodos(focusPeriods, genesysTnpsInfo.sel);   // v21.91: también desde Qualtrics
+      momTotal.tnps = tnpsValorPeriodos(momPeriods, genesysTnpsInfo.sel);
+      yoyTotal.tnps = tnpsValorPeriodos(yoyPeriods, genesysTnpsInfo.sel);
 
       periodLabel = genesysPeriodLabelForPeriods(focusPeriods);
       momLabel = genesysPeriodLabelForPeriods(momPeriods);
