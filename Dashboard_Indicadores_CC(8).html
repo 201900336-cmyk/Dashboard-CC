@@ -869,7 +869,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-excel{margin-left:auto;}
   .tn-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px;}
   .tn-kpi-v{font-size:26px;font-weight:800;letter-spacing:-.02em;}
-  .tn-card .kpi-value{font-size:26px;}
+  .tn-card{padding:16px 16px 14px;gap:8px;}
+  .tn-card .kpi-value{font-size:36px;line-height:1.05;}
+  .tn-card .kpi-label{font-size:11.5px;}
+  .tn-card .tn-badge{width:52px;height:52px;}
+  .tn-card .tn-badge svg{width:27px;height:27px;}
+  .tn-card .chip{font-size:10.5px;padding:3px 8px;}
+  @media (max-width:900px){ .tn-card .kpi-value{font-size:28px;} .tn-card .tn-badge{width:42px;height:42px;} }
   .tn-card .kpi-value.tn-g{color:#17733F;} .tn-card .kpi-value.tn-r{color:#B4021F;} .tn-card .kpi-value.tn-a{color:#8A5A00;}
   .tn-card.g{border-top-color:#17733F;} .tn-card.a{border-top-color:#E0A800;} .tn-card.r{border-top-color:#B4021F;}
   .tn-badge.g{background:#E6F6EB;color:#17733F;} .tn-badge.a{background:#FFF4D6;color:#8A5A00;} .tn-badge.r{background:#FDE7EA;color:#B4021F;}
@@ -877,11 +883,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-h3-sub{font-size:11.5px;font-weight:600;color:var(--qa-mut);margin-left:6px;}
   .tn-kpi-v.g{color:#17733F;} .tn-kpi-v.r{color:#B4021F;}
   .tn-h3{margin:0 0 10px;font-size:14px;}
-  .tn-graf{position:relative;height:260px;}
+  .tn-graf{position:relative;height:300px;}
   .tn-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
   .tn-tabla-wrap{max-height:420px;overflow:auto;}
   .tn-tabla-wrap.alto{max-height:620px;}
   .tn-tabla tbody tr{cursor:default;}
+  .tn-tabla tfoot .tn-total td{font-weight:800;background:#F6F7F9;border-top:2px solid var(--qa-line);position:sticky;bottom:0;}
   .tn-tabla .el{max-width:240px;}
   .tn-sub2{font-size:10.5px;}
   .tn-coment{min-width:260px;max-width:420px;white-space:normal;line-height:1.4;}
@@ -14388,6 +14395,7 @@ function tnRangoPrevio(){
   if(n > 60) return null;
   return [qaSumarDias(desde, -n), qaSumarDias(desde, -1)];
 }
+function tnNombrePrevio(){ return (TN.rango==="mes" || TN.rango==="mesant") ? "Mes Anterior" : "Período anterior"; }
 function tnCalc(d,p,pr){ const n = d+p+pr; return { n, d, p, pr, tnps: n ? Math.round(((pr-d)/n)*1000)/10 : null }; }
 function tnFmt(v){ return v===null || v===undefined ? "—" : (Math.round(v*10)/10).toLocaleString("es-HN"); }
 function tnPct(a,n){ return n ? (Math.round(a/n*1000)/10).toLocaleString("es-HN")+"%" : "—"; }
@@ -14524,7 +14532,7 @@ function tnChip(actual, previo, tipo, bueno, etiqueta){
 }
 function tnKpis(t, tp){
   const pr = tnRangoPrevio();
-  const etiqueta = pr ? `Período anterior (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})` : "";
+  const etiqueta = pr ? `${tnNombrePrevio()} (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})` : "";
   const hayPrev = tp && tp.n;
   const card = (val, lbl, icono, tono, chip, cls)=> `<div class="kpi-card tn-card ${tono||""}">
       <div class="kpi-top"><span class="kpi-value ${cls||""}">${val}</span>${tnIcono(icono, tono)}</div>
@@ -14539,13 +14547,19 @@ function tnKpis(t, tp){
     ${card(pct(t.d,t.n), `Detractores (${t.d.toLocaleString("es-HN")})`, "detractor", "r", hayPrev ? tnChip(tnPctNum(t.d,t.n), tnPctNum(tp.d,tp.n), "pts", -1, etiqueta) : "", "tn-r")}
   </div>`;
 }
+// v21.93: fila de total (sumando las encuestas de la tabla, TNPS recalculado)
+function tnHtmlTotal(filas){
+  if(filas.length < 2) return "";
+  const t = tnCalc(filas.reduce((a,g)=>a+g.d,0), filas.reduce((a,g)=>a+g.p,0), filas.reduce((a,g)=>a+g.pr,0));
+  return `<tfoot><tr class="tn-total"><td>Total</td><td class="num">${t.n.toLocaleString("es-HN")}</td><td class="num">${t.pr.toLocaleString("es-HN")}</td><td class="num">${t.p.toLocaleString("es-HN")}</td><td class="num">${t.d.toLocaleString("es-HN")}</td><td class="num"><b class="${t.tnps<0?"r":t.tnps>=50?"g":""}">${t.tnps===null?"—":tnFmt(t.tnps)+"%"}</b></td></tr></tfoot>`;
+}
 function tnTabla(titulo, grupos, opts){
   opts = opts || {};
   const filas = grupos.slice().sort(opts.orden || ((a,b)=> b.n-a.n));
   if(!filas.length) return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><p class="mut">Sin encuestas en este período.</p></div>`;
   return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><div class="tn-tabla-wrap"><table class="qa-tabla mini tn-tabla">
     <thead><tr><th>${opts.col||"Nombre"}</th><th class="num">Encuestas</th><th class="num">Promotores</th><th class="num">Pasivos</th><th class="num">Detractores</th><th class="num">TNPS</th></tr></thead>
-    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${g.pr}</td><td class="num">${g.p}</td><td class="num">${g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td></tr>`).join("")}</tbody>
+    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${g.pr}</td><td class="num">${g.p}</td><td class="num">${g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td></tr>`).join("")}</tbody>${tnHtmlTotal(filas)}
   </table></div></div>`;
 }
 function tnHtmlResumen(){
@@ -14556,7 +14570,7 @@ function tnHtmlResumen(){
   if(!t.n) return tnKpis(t, tp) + `<div class="qa-card tn-aviso">No hay encuestas en este período${TN.encuesta||TN.unidad?" con estos filtros":""}. ${TN.datos && !TN.datos.ultimaSinc ? "Todavía no se ha sincronizado Qualtrics." : ""}</div>`;
   const pr = tnRangoPrevio();
   return tnKpis(t, tp)
-    + `<div class="qa-card"><h3 class="tn-h3">TNPS por día${pr ? ` <span class="tn-h3-sub">vs. período anterior (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})</span>` : ""}</h3><div class="tn-graf"><canvas id="tn-chart-dia"></canvas></div></div>`
+    + `<div class="qa-card"><h3 class="tn-h3">TNPS por día${pr ? ` <span class="tn-h3-sub">vs. ${tnNombrePrevio()} (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})</span>` : ""}</h3><div class="tn-graf"><canvas id="tn-chart-dia"></canvas></div></div>`
     + `<div class="tn-grid">`
     + tnTabla("Por encuesta", tnAgrupar(filas, f=>f[1]), { col:"Encuesta" })
     + tnTabla("Por unidad", tnAgrupar(filas, f=>f[2]), { col:"Unidad" })
@@ -14614,15 +14628,27 @@ function tnGrafica(){
   }
   const valPrev = diasPrev.map(x=> x && pr && x<=pr[1] && porDiaPrev.get(x) ? porDiaPrev.get(x).tnps : null);
   const datasets = [
-    { type:"line", label:"TNPS", data: dias.map(x=> porDia.get(x) ? porDia.get(x).tnps : null), borderColor:"#E4032E", backgroundColor:"rgba(160,160,160,0.30)", borderWidth:2, tension:.25, yAxisID:"y", pointRadius:3, spanGaps:true, fill: pr ? 1 : false, order:1 }
+    { type:"line", label:"TNPS", data: dias.map(x=> porDia.get(x) ? porDia.get(x).tnps : null), borderColor:"#E4032E", backgroundColor:"rgba(160,160,160,0.30)", borderWidth:2, tension:.25, yAxisID:"y", pointRadius:3, spanGaps:true, fill: pr ? 1 : false, order:1,
+      datalabels:{ align:(c)=> tnLadoEtiqueta(c, true), anchor:"center", offset:7, clip:false, color:"#B4021F", backgroundColor:"rgba(255,255,255,.88)", borderRadius:3, padding:{ top:1, bottom:1, left:3, right:3 }, font:{ size:10.5, weight:"bold" }, formatter:(v)=> v===null||v===undefined ? "" : `${Math.round(v)}%` } }
   ];
-  if(pr) datasets.push({ type:"line", label:`Período anterior (${tnFecha(pr[0]).slice(0,5)} al ${tnFecha(pr[1]).slice(0,5)})`, data: valPrev, borderColor:"#161616", backgroundColor:"#161616", borderWidth:2, borderDash:[5,3], tension:.25, yAxisID:"y", pointRadius:2, spanGaps:true, fill:false, order:2 });
-  datasets.push({ type:"bar", label:"Encuestas", data: dias.map(x=> porDia.get(x) ? porDia.get(x).n : 0), backgroundColor:"rgba(91,100,114,.16)", yAxisID:"y1", order:3 });
+  // cada etiqueta va del lado contrario a la otra línea, para que no se encimen
+  function tnLadoEtiqueta(c, actual){
+    const a = c.chart.data.datasets[0].data[c.dataIndex], b = pr ? c.chart.data.datasets[1].data[c.dataIndex] : null;
+    if(a===null || a===undefined || b===null || b===undefined) return actual ? "top" : "bottom";
+    return (actual ? a >= b : b > a) ? "top" : "bottom";
+  }
+  if(pr) datasets.push({ type:"line", label:`${tnNombrePrevio()} (${tnFecha(pr[0]).slice(0,5)} al ${tnFecha(pr[1]).slice(0,5)})`, data: valPrev, borderColor:"#161616", backgroundColor:"#161616", borderWidth:2, borderDash:[5,3], tension:.25, yAxisID:"y", pointRadius:2, spanGaps:true, fill:false, order:2,
+      datalabels:{ align:(c)=> tnLadoEtiqueta(c, false), anchor:"center", offset:7, clip:false, color:"#3B4350", backgroundColor:"rgba(255,255,255,.85)", borderRadius:3, padding:{ top:1, bottom:1, left:3, right:3 }, font:{ size:9.5, weight:"600" }, formatter:(v)=> v===null||v===undefined ? "" : `${Math.round(v)}%` } });
+  datasets.push({ type:"bar", label:"Encuestas", data: dias.map(x=> porDia.get(x) ? porDia.get(x).n : 0), backgroundColor:"rgba(91,100,114,.16)", yAxisID:"y1", order:3,
+    datalabels:{ anchor:"start", align:"end", offset:2, clip:true, color:"#5B6472", font:{ size:9 }, formatter:(v)=> v ? v : "" } });
   destroyChart("tn-chart-dia");
   charts["tn-chart-dia"] = new Chart(cv.getContext("2d"), {
     data: { labels: dias.map(x=> tnFecha(x).slice(0,5)), datasets },
+    plugins: typeof ChartDataLabels!=="undefined" ? [ChartDataLabels] : [],
     options: { responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+      layout:{ padding:{ top:20, bottom:4 } },
       plugins:{
+        datalabels:{},
         legend:{ position:"bottom", labels:{ boxWidth:10, font:{ size:11 } } },
         tooltip:{ callbacks:{
           title:(it)=> it.length ? tnFecha(dias[it[0].dataIndex]) : "",
