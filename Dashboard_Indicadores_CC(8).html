@@ -10730,7 +10730,7 @@ function renderGenesys(){
     // acomoda junto a Accesibilidad en esa misma fila en vez de quedar como
     // tarjeta aparte de ancho completo, para no dejar un espacio vacío.
     genesysForecastInfo = genesysForecastYearSeries(focusYear, catsFiltro);
-    const forecastCardHtml = `<div class="chart-card"><div class="ch-title"><span>ENTRANTES VS. FORECAST (${focusYear})</span>${chartDlBtn("chart-genesys-forecast","genesys-entrantes-forecast")}</div><div class="ch-body"><div class="chart-wrap" style="height:160px;"><canvas id="chart-genesys-forecast"></canvas></div></div>${genesysForecastInfo.catsSinForecast.length ? `<div class="note" style="display:block;margin-top:6px;">📄 ${genesysForecastInfo.catsSinForecast.join(", ")} no ${genesysForecastInfo.catsSinForecast.length===1?"tiene":"tienen"} Forecast registrado (no ${genesysForecastInfo.catsSinForecast.length===1?"es un skill":"son skills"} de Interacciones) — no se incluye en esta comparación.</div>` : ``}</div>`;
+    const forecastCardHtml = `<div class="chart-card"><div class="ch-title"><span>ENTRANTES VS. FORECAST (${focusYear})</span>${chartDlBtn("chart-genesys-forecast","genesys-entrantes-forecast")}</div><div class="ch-body"><div class="chart-wrap" style="height:160px;"><canvas id="chart-genesys-forecast"></canvas></div></div></div>`;   /* v21.96: sin el aviso de skills sin Forecast (Oscar) */
     chartPairs.forEach(pair=>{
       bodyHtml += `<div class="grid-2">`;
       pair.forEach(d=>{
