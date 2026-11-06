@@ -869,6 +869,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-excel{margin-left:auto;}
   .tn-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px;}
   .tn-kpi-v{font-size:26px;font-weight:800;letter-spacing:-.02em;}
+  .tn-card .kpi-value{font-size:26px;}
+  .tn-card .kpi-value.tn-g{color:#17733F;} .tn-card .kpi-value.tn-r{color:#B4021F;} .tn-card .kpi-value.tn-a{color:#8A5A00;}
+  .tn-card.g{border-top-color:#17733F;} .tn-card.a{border-top-color:#E0A800;} .tn-card.r{border-top-color:#B4021F;}
+  .tn-badge.g{background:#E6F6EB;color:#17733F;} .tn-badge.a{background:#FFF4D6;color:#8A5A00;} .tn-badge.r{background:#FDE7EA;color:#B4021F;}
+  .tn-card .kpi-deltas{min-height:18px;}
+  .tn-h3-sub{font-size:11.5px;font-weight:600;color:var(--qa-mut);margin-left:6px;}
   .tn-kpi-v.g{color:#17733F;} .tn-kpi-v.r{color:#B4021F;}
   .tn-h3{margin:0 0 10px;font-size:14px;}
   .tn-graf{position:relative;height:260px;}
@@ -1119,7 +1125,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <button class="tab-pill" data-tab="incidencias">Incidencias</button>
       <button class="tab-pill active" data-tab="genesys">📞 Genesys</button>
       <button class="tab-pill" data-tab="qa">🎧 QA</button>
-      <button class="tab-pill" data-tab="tnps">⭐ TNPS<span class="tn-prueba">Prueba</span></button>
+      <button class="tab-pill" data-tab="tnps">⭐ Qualtrics</button>
     </div>
     <div id="header-actions">
       <button class="btn-update" id="btn-refresh-online">🔄 Actualizar ahora</button>
@@ -14358,6 +14364,30 @@ function tnRangoFechas(){
   const d = TN.desde || qaSumarDias(hoy,-29), h = TN.hasta || hoy;
   return d<=h ? [d,h] : [h,d];
 }
+// v21.92: en Genesys WhatsApp la unidad viene como "Fijo" / "Móvil" → "WhatsApp Fijo" / "WhatsApp Móvil"
+function tnUnidad(enc, unidad){
+  const e = String(enc||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const u = String(unidad||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  if(e.includes("whatsapp") && u==="fijo") return "WhatsApp Fijo";
+  if(e.includes("whatsapp") && u==="movil") return "WhatsApp Móvil";
+  return unidad;
+}
+// v21.92: período anterior del mismo largo, para comparar día contra día
+// (Este mes → mismos días del mes anterior; Mes anterior → el mes de antes;
+// lo demás → los N días justo antes). Más de 60 días: sin comparación.
+function tnDiasEntre(a,b){ return Math.round((Date.parse(b+"T12:00:00Z")-Date.parse(a+"T12:00:00Z"))/864e5); }
+function tnRangoPrevio(){
+  const [desde, hasta] = tnRangoFechas();
+  if(TN.rango==="mes" || TN.rango==="mesant"){
+    const iniPrev = qaSumarDias(desde, -1).slice(0,8)+"01";
+    const finMesPrev = qaSumarDias(desde, -1);
+    const fin = TN.rango==="mes" ? qaSumarDias(iniPrev, tnDiasEntre(desde, hasta)) : finMesPrev;
+    return [iniPrev, fin > finMesPrev ? finMesPrev : fin];
+  }
+  const n = tnDiasEntre(desde, hasta) + 1;
+  if(n > 60) return null;
+  return [qaSumarDias(desde, -n), qaSumarDias(desde, -1)];
+}
 function tnCalc(d,p,pr){ const n = d+p+pr; return { n, d, p, pr, tnps: n ? Math.round(((pr-d)/n)*1000)/10 : null }; }
 function tnFmt(v){ return v===null || v===undefined ? "—" : (Math.round(v*10)/10).toLocaleString("es-HN"); }
 function tnPct(a,n){ return n ? (Math.round(a/n*1000)/10).toLocaleString("es-HN")+"%" : "—"; }
@@ -14366,17 +14396,21 @@ function tnFecha(iso){ return iso ? `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.
 async function tnCargar(forzar){
   const [desde, hasta] = tnRangoFechas();
   const conDetalle = TN.vista==="detalle";
-  const clave = `${desde}|${hasta}|${conDetalle?1:0}`;
+  const previo = conDetalle ? null : tnRangoPrevio();
+  const pedirDesde = previo ? previo[0] : desde;   // v21.92: se trae también el período anterior
+  const clave = `${pedirDesde}|${desde}|${hasta}|${conDetalle?1:0}`;
   if(!forzar && TN.datos && TN.clave===clave) return;
   const cfg = loadLiveConfig();
   const base = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
   TN.cargando = true; TN.error = ""; tnRender();
   try{
-    const res = await fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"tnps", desde, hasta, detalle: conDetalle?1:0, token: scriptSesionToken() }) }, 60000);
+    const res = await fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"tnps", desde: pedirDesde, hasta, detalle: conDetalle?1:0, token: scriptSesionToken() }) }, 60000);
     const data = await parseJsonUrlPayload(await res.text());
     if(data && data.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
     if(data && data.error==="codigo_invalido") throw new Error("El servidor todavía no tiene la versión con TNPS. Hay que pegar el Apps Script v21.87 y publicar la Nueva versión.");
     if(!data || !data.ok || !Array.isArray(data.resumen)) throw new Error((data && data.error) || "Respuesta inesperada del servidor.");
+    data.resumen.forEach(f=>{ f[2] = tnUnidad(f[1], f[2]); });
+    if(Array.isArray(data.detalle)) data.detalle.forEach(f=>{ f[4] = tnUnidad(f[1], f[4]); });
     TN.datos = data; TN.clave = clave;
   }catch(err){
     console.error("Detalle técnico (TNPS):", err);
@@ -14386,10 +14420,12 @@ async function tnCargar(forzar){
   TN.cargando = false; tnRender();
 }
 
-function tnFilasFiltradas(){
+function tnFilasFiltradas(rango){
   const r = (TN.datos && TN.datos.resumen) || [];
-  return r.filter(f=> (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[2]===TN.unidad));
+  const [desde, hasta] = rango || tnRangoFechas();
+  return r.filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[2]===TN.unidad));
 }
+function tnFilasPrevias(){ const pr = tnRangoPrevio(); return pr ? tnFilasFiltradas(pr) : []; }
 function tnAgrupar(filas, claveFn, nombreFn){
   const m = new Map();
   filas.forEach(f=>{
@@ -14407,7 +14443,7 @@ function renderTnps(){
   if(!cont) return;
   if(!genesysGetStoredToken()){
     cont.innerHTML = `<div class="chart-card" style="max-width:560px;margin:24px auto;text-align:center;padding:32px 24px;">
-      <div style="font-size:15px;font-weight:800;margin-bottom:8px;">⭐ TNPS</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:8px;">⭐ Qualtrics</div>
       <div style="color:var(--gray);font-size:13px;margin-bottom:18px;line-height:1.5;">Inicia sesión con tu cuenta de Genesys Cloud para ver las encuestas de satisfacción.</div>
       <button type="button" class="btn-update" onclick="genesysSignIn()">🔑 Iniciar sesión con Genesys</button></div>`;
     return;
@@ -14415,8 +14451,8 @@ function renderTnps(){
   if(!document.getElementById("tn-root")){
     cont.innerHTML = `<div id="tn-root" class="tn-root">
       <div class="qa-head">
-        <div class="qa-head-t"><h2>TNPS <span class="tn-prueba">Prueba</span></h2><p id="tn-sub">Encuestas de satisfacción de Qualtrics.</p></div>
-        <div class="qa-nav" role="tablist" aria-label="Secciones de TNPS" id="tn-nav"></div>
+        <div class="qa-head-t"><h2>Qualtrics</h2><p id="tn-sub">Encuestas de satisfacción (TNPS).</p></div>
+        <div class="qa-nav" role="tablist" aria-label="Secciones de Qualtrics" id="tn-nav"></div>
       </div>
       <div id="tn-body"></div>
     </div>`;
@@ -14438,12 +14474,12 @@ function tnRender(){
   if(TN.vista==="detalle" && d && !d.puedeVerDetalle) TN.vista = "resumen";
   document.getElementById("tn-nav").innerHTML = nav.map(([k,l])=>`<button type="button" role="tab" data-vista="${k}" class="${TN.vista===k?"active":""}" aria-selected="${TN.vista===k}">${l}</button>`).join("");
   const sub = document.getElementById("tn-sub");
-  if(sub) sub.textContent = "Encuestas de satisfacción de Qualtrics (Honduras)" + (d && d.ultimaSinc && d.ultimaSinc.en ? ` · actualizado ${tnFecha(d.ultimaSinc.en.slice(0,10))} ${d.ultimaSinc.en.slice(11,16)}` : "") + ".";
+  if(sub) sub.textContent = "Encuestas de satisfacción (TNPS) · Honduras" + (d && d.ultimaSinc && d.ultimaSinc.en ? ` · actualizado ${tnFecha(d.ultimaSinc.en.slice(0,10))} ${d.ultimaSinc.en.slice(11,16)}` : "") + ".";
 
   const [desde, hasta] = tnRangoFechas();
   const rangos = [["hoy","Hoy"],["ayer","Ayer"],["7","Últimos 7 días"],["mes","Este mes"],["mesant","Mes anterior"],["90","Últimos 90 días"],["rango","Rango"]];
   const encuestas = (d && d.encuestas) || [];
-  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> !TN.encuesta || f[1]===TN.encuesta).map(f=>f[2]).filter(Boolean))).sort();
+  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta)).map(f=>f[2]).filter(Boolean))).sort();
   let html = `<div class="qa-card tn-filtros">
     <div class="qa-chips">${rangos.map(([k,l])=>`<button type="button" class="qa-chip ${TN.rango===k?"on":""}" data-rango="${k}">${l}</button>`).join("")}</div>
     ${TN.rango==="rango" ? `<label class="qa-fecha">Desde <input type="date" id="tn-desde" value="${desde}" max="${qaHoyIso()}"/></label><label class="qa-fecha">Hasta <input type="date" id="tn-hasta" value="${hasta}" max="${qaHoyIso()}"/></label>` : ""}
@@ -14461,20 +14497,46 @@ function tnRender(){
     else if(TN.vista==="asesores") html += tnHtmlAsesores();
     else html += tnHtmlDetalle();
   }
-  html += `<p class="qa-nota">Prueba: los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada.</p>`;
+  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada.${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
   body.innerHTML = html;
   tnWire();
   if(TN.vista==="resumen" && d) tnGrafica();
 }
 
-function tnKpis(t){
-  const card = (val, lbl, cls)=> `<div class="kpi-card"><div class="tn-kpi-v ${cls||""}">${val}</div><div class="kpi-label">${lbl}</div></div>`;
+const TN_ICONOS = {
+  tnps: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  encuestas: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>',
+  promotor: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+  pasivo: '<circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+  detractor: '<circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'
+};
+function tnIcono(k, tono){ return `<span class="kpi-icon-badge tn-badge ${tono||""}"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TN_ICONOS[k]}</svg></span>`; }
+function tnPctNum(a,n){ return n ? a/n*100 : null; }
+// chip de comparación: diff en puntos (o en % para las encuestas); "bueno" decide el color
+function tnChip(actual, previo, tipo, bueno, etiqueta){
+  if(actual===null || actual===undefined || previo===null || previo===undefined) return "";
+  let diff, txt;
+  if(tipo==="cant"){ if(!previo) return ""; diff = (actual-previo)/previo*100; txt = `${diff>0?"+":""}${(Math.round(diff*10)/10).toLocaleString("es-HN")}%`; }
+  else { diff = actual-previo; txt = `${diff>0?"+":""}${(Math.round(diff*10)/10).toLocaleString("es-HN")} pts`; }
+  const flecha = Math.abs(diff) < 0.05 ? "■" : diff>0 ? "▲" : "▼";
+  const clase = Math.abs(diff) < 0.05 || bueno===0 ? "flat" : ((diff>0) === (bueno>0) ? "up" : "down");
+  return `<span class="chip ${clase} chip-hoverable" title="${qaEsc(etiqueta)}: ${tipo==="cant" ? previo.toLocaleString("es-HN") : (Math.round(previo*10)/10).toLocaleString("es-HN")+"%"}">${flecha} ${txt} vs ant.</span>`;
+}
+function tnKpis(t, tp){
+  const pr = tnRangoPrevio();
+  const etiqueta = pr ? `Período anterior (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})` : "";
+  const hayPrev = tp && tp.n;
+  const card = (val, lbl, icono, tono, chip, cls)=> `<div class="kpi-card tn-card ${tono||""}">
+      <div class="kpi-top"><span class="kpi-value ${cls||""}">${val}</span>${tnIcono(icono, tono)}</div>
+      <span class="kpi-label">${lbl}</span>
+      <div class="kpi-deltas">${hayPrev ? chip : ""}</div></div>`;
+  const pct = (a,n)=> n ? `${(Math.round(a/n*1000)/10).toLocaleString("es-HN")}%` : "—";
   return `<div class="tn-kpis">
-    ${card(tnFmt(t.tnps), "TNPS", t.tnps!==null && t.tnps<0 ? "r" : "")}
-    ${card(t.n.toLocaleString("es-HN"), "Encuestas")}
-    ${card(tnPct(t.pr,t.n), `Promotores (${t.pr.toLocaleString("es-HN")})`, "g")}
-    ${card(tnPct(t.p,t.n), `Pasivos (${t.p.toLocaleString("es-HN")})`)}
-    ${card(tnPct(t.d,t.n), `Detractores (${t.d.toLocaleString("es-HN")})`, "r")}
+    ${card(t.tnps===null ? "—" : tnFmt(t.tnps)+"%", "TNPS", "tnps", "", hayPrev ? tnChip(t.tnps, tp.tnps, "pts", 1, etiqueta) : "", t.tnps!==null && t.tnps<0 ? "tn-r" : "")}
+    ${card(t.n.toLocaleString("es-HN"), "Encuestas", "encuestas", "", hayPrev ? tnChip(t.n, tp.n, "cant", 0, etiqueta) : "")}
+    ${card(pct(t.pr,t.n), `Promotores (${t.pr.toLocaleString("es-HN")})`, "promotor", "g", hayPrev ? tnChip(tnPctNum(t.pr,t.n), tnPctNum(tp.pr,tp.n), "pts", 1, etiqueta) : "", "tn-g")}
+    ${card(pct(t.p,t.n), `Pasivos (${t.p.toLocaleString("es-HN")})`, "pasivo", "a", hayPrev ? tnChip(tnPctNum(t.p,t.n), tnPctNum(tp.p,tp.n), "pts", 0, etiqueta) : "", "tn-a")}
+    ${card(pct(t.d,t.n), `Detractores (${t.d.toLocaleString("es-HN")})`, "detractor", "r", hayPrev ? tnChip(tnPctNum(t.d,t.n), tnPctNum(tp.d,tp.n), "pts", -1, etiqueta) : "", "tn-r")}
   </div>`;
 }
 function tnTabla(titulo, grupos, opts){
@@ -14483,15 +14545,18 @@ function tnTabla(titulo, grupos, opts){
   if(!filas.length) return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><p class="mut">Sin encuestas en este período.</p></div>`;
   return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><div class="tn-tabla-wrap"><table class="qa-tabla mini tn-tabla">
     <thead><tr><th>${opts.col||"Nombre"}</th><th class="num">Encuestas</th><th class="num">Promotores</th><th class="num">Pasivos</th><th class="num">Detractores</th><th class="num">TNPS</th></tr></thead>
-    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${g.pr}</td><td class="num">${g.p}</td><td class="num">${g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${tnFmt(g.tnps)}</b></td></tr>`).join("")}</tbody>
+    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${g.pr}</td><td class="num">${g.p}</td><td class="num">${g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td></tr>`).join("")}</tbody>
   </table></div></div>`;
 }
 function tnHtmlResumen(){
   const filas = tnFilasFiltradas();
   const t = tnCalc(...[9,10,11].map(i=> filas.reduce((a,f)=>a+f[i],0)));
-  if(!t.n) return tnKpis(t) + `<div class="qa-card tn-aviso">No hay encuestas en este período${TN.encuesta||TN.unidad?" con estos filtros":""}. ${TN.datos && !TN.datos.ultimaSinc ? "Todavía no se ha sincronizado Qualtrics." : ""}</div>`;
-  return tnKpis(t)
-    + `<div class="qa-card"><h3 class="tn-h3">TNPS por día</h3><div class="tn-graf"><canvas id="tn-chart-dia"></canvas></div></div>`
+  const previas = tnFilasPrevias();
+  const tp = tnCalc(...[9,10,11].map(i=> previas.reduce((a,f)=>a+f[i],0)));
+  if(!t.n) return tnKpis(t, tp) + `<div class="qa-card tn-aviso">No hay encuestas en este período${TN.encuesta||TN.unidad?" con estos filtros":""}. ${TN.datos && !TN.datos.ultimaSinc ? "Todavía no se ha sincronizado Qualtrics." : ""}</div>`;
+  const pr = tnRangoPrevio();
+  return tnKpis(t, tp)
+    + `<div class="qa-card"><h3 class="tn-h3">TNPS por día${pr ? ` <span class="tn-h3-sub">vs. período anterior (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})</span>` : ""}</h3><div class="tn-graf"><canvas id="tn-chart-dia"></canvas></div></div>`
     + `<div class="tn-grid">`
     + tnTabla("Por encuesta", tnAgrupar(filas, f=>f[1]), { col:"Encuesta" })
     + tnTabla("Por unidad", tnAgrupar(filas, f=>f[2]), { col:"Unidad" })
@@ -14515,7 +14580,8 @@ function tnHtmlDetalle(){
   if(d.detalleNegado) return `<div class="qa-card tn-aviso">${d.detalleNegado==="sin_permiso" ? "Tu usuario no tiene acceso al detalle de clientes." : SCRIPT_MSG_SESION}</div>`;
   if(!Array.isArray(d.detalle)) return `<div class="qa-card tn-aviso">⏳ Consultando el detalle…</div>`;
   const q = TN.detBuscar.trim().toLowerCase();
-  const filas = d.detalle.filter(f=> (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[4]===TN.unidad)
+  const [dDesde, dHasta] = tnRangoFechas();
+  const filas = d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[4]===TN.unidad)
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
     && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[16]].join(" ").toLowerCase().includes(q)));
   const max = 500;
@@ -14536,20 +14602,40 @@ function tnHtmlDetalle(){
 function tnGrafica(){
   const cv = document.getElementById("tn-chart-dia");
   if(!cv || typeof Chart==="undefined") return;
-  const filas = tnFilasFiltradas();
-  const porDia = tnAgrupar(filas, f=>f[0]).sort((a,b)=> a.k<b.k?-1:1);
+  const [desde, hasta] = tnRangoFechas();
+  const pr = tnRangoPrevio();
+  const porDia = new Map(tnAgrupar(tnFilasFiltradas(), f=>f[0]).map(g=>[g.k, g]));
+  const porDiaPrev = new Map(tnAgrupar(tnFilasPrevias(), f=>f[0]).map(g=>[g.k, g]));
+  // todos los días del período (los días sin encuestas quedan vacíos)
+  const dias = [], diasPrev = [];
+  for(let x = desde, i = 0; x <= hasta && i < 120; x = qaSumarDias(x, 1), i++){
+    dias.push(x);
+    diasPrev.push(pr ? qaSumarDias(pr[0], i) : null);
+  }
+  const valPrev = diasPrev.map(x=> x && pr && x<=pr[1] && porDiaPrev.get(x) ? porDiaPrev.get(x).tnps : null);
+  const datasets = [
+    { type:"line", label:"TNPS", data: dias.map(x=> porDia.get(x) ? porDia.get(x).tnps : null), borderColor:"#E4032E", backgroundColor:"rgba(160,160,160,0.30)", borderWidth:2, tension:.25, yAxisID:"y", pointRadius:3, spanGaps:true, fill: pr ? 1 : false, order:1 }
+  ];
+  if(pr) datasets.push({ type:"line", label:`Período anterior (${tnFecha(pr[0]).slice(0,5)} al ${tnFecha(pr[1]).slice(0,5)})`, data: valPrev, borderColor:"#161616", backgroundColor:"#161616", borderWidth:2, borderDash:[5,3], tension:.25, yAxisID:"y", pointRadius:2, spanGaps:true, fill:false, order:2 });
+  datasets.push({ type:"bar", label:"Encuestas", data: dias.map(x=> porDia.get(x) ? porDia.get(x).n : 0), backgroundColor:"rgba(91,100,114,.16)", yAxisID:"y1", order:3 });
   destroyChart("tn-chart-dia");
   charts["tn-chart-dia"] = new Chart(cv.getContext("2d"), {
-    data: {
-      labels: porDia.map(g=> tnFecha(g.k).slice(0,5)),
-      datasets: [
-        { type:"line", label:"TNPS", data: porDia.map(g=>g.tnps), borderColor:"#E4032E", backgroundColor:"#E4032E", tension:.25, yAxisID:"y", pointRadius:3 },
-        { type:"bar", label:"Encuestas", data: porDia.map(g=>g.n), backgroundColor:"rgba(91,100,114,.18)", yAxisID:"y1" }
-      ]
-    },
+    data: { labels: dias.map(x=> tnFecha(x).slice(0,5)), datasets },
     options: { responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
-      plugins:{ legend:{ position:"bottom" } },
-      scales:{ y:{ position:"left", suggestedMin:-20, suggestedMax:100, title:{ display:true, text:"TNPS" } },
+      plugins:{
+        legend:{ position:"bottom", labels:{ boxWidth:10, font:{ size:11 } } },
+        tooltip:{ callbacks:{
+          title:(it)=> it.length ? tnFecha(dias[it[0].dataIndex]) : "",
+          label:(c)=>{
+            if(c.dataset.yAxisID==="y1") return ` Encuestas: ${c.parsed.y}`;
+            if(c.parsed.y===null || c.parsed.y===undefined) return null;
+            const v = `${(Math.round(c.parsed.y*10)/10).toLocaleString("es-HN")}%`;
+            if(c.datasetIndex===1 && pr){ const dp = diasPrev[c.dataIndex]; const g = porDiaPrev.get(dp); return ` ${tnFecha(dp).slice(0,5)}: ${v}${g?` (${g.n} enc.)`:""}`; }
+            return ` TNPS: ${v}`;
+          }
+        } }
+      },
+      scales:{ y:{ position:"left", suggestedMin:-20, suggestedMax:100, ticks:{ callback:(v)=> v+"%" }, title:{ display:true, text:"TNPS" } },
                y1:{ position:"right", beginAtZero:true, grid:{ drawOnChartArea:false }, title:{ display:true, text:"Encuestas" } } } }
   });
 }
