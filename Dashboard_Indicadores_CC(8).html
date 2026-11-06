@@ -14575,8 +14575,7 @@ function tnHtmlResumen(){
     + tnTabla("Por encuesta", tnAgrupar(filas, f=>f[1]), { col:"Encuesta" })
     + tnTabla("Por unidad", tnAgrupar(filas, f=>f[2]), { col:"Unidad" })
     + `</div>`
-    + tnTabla("Por servicio (cola)", tnAgrupar(filas, f=>f[3]), { col:"Servicio" })
-    + tnTabla("Por supervisor", tnAgrupar(filas, f=>f[8]), { col:"Supervisor" });
+    + tnTabla("Por servicio (cola)", tnAgrupar(filas, f=>f[3]), { col:"Servicio" });   // v21.94: sin "Por supervisor" (Oscar)
 }
 function tnHtmlAsesores(){
   const filas = tnFilasFiltradas();
@@ -14766,7 +14765,6 @@ function tnExcel(){
   XLSX.utils.book_append_sheet(wb, hoja("enc", tnAgrupar(filas, f=>f[1]), "Encuesta"), "Por encuesta");
   XLSX.utils.book_append_sheet(wb, hoja("serv", tnAgrupar(filas, f=>f[3]), "Servicio"), "Por servicio");
   XLSX.utils.book_append_sheet(wb, hoja("ase", tnAgrupar(filas, f=>f[6], f=>f[7]||f[6]), "Asesor"), "Por asesor");
-  XLSX.utils.book_append_sheet(wb, hoja("sup", tnAgrupar(filas, f=>f[8]), "Supervisor"), "Por supervisor");
   XLSX.writeFile(wb, `TNPS_${desde}_${hasta}.xlsx`);
 }
 
