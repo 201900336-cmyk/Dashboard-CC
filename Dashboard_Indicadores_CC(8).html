@@ -916,6 +916,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-top-t{font-weight:800;font-size:13px;margin-bottom:6px;}
   .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
   .tn-sep{margin:18px 0 10px;}
+  .tn-q-skills{margin:4px 0 8px;}
+  .tn-q-filtro{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12px;margin-bottom:6px;}
+  .tn-q-chk{display:inline-flex;align-items:center;gap:5px;font-weight:700;cursor:pointer;}
+  .tn-q-grid{display:grid;gap:14px;margin-top:12px;}
+  .tn-q-block{min-width:0;}
+  .tn-q-titulo{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--qa-mut);margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid var(--qa-line);}
+  .tn-q-titulo.q1{border-bottom-color:#17733F;color:#17733F;} .tn-q-titulo.q4{border-bottom-color:#B4021F;color:#B4021F;}
+  .tn-q-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;}
+  .tn-q-card{background:#F9FAFB;border:1px solid var(--qa-line);border-top:3px solid #C9CDD3;border-radius:10px;padding:8px 10px 9px;min-width:0;}
+  .tn-q-card.ok{border-top-color:#17733F;} .tn-q-card.bajo{border-top-color:#B4021F;}
+  .tn-q-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px;}
+  .tn-q-nom{font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  .tn-q-chip{font-size:8.5px;font-weight:800;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;flex-shrink:0;}
+  .tn-q-chip.ok{background:rgba(30,158,75,.14);color:#166534;border:1px solid rgba(30,158,75,.35);}
+  .tn-q-chip.bajo{background:rgba(228,3,46,.12);color:#B4021F;border:1px solid rgba(228,3,46,.32);}
+  .tn-q-body{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;}
+  .tn-q-stat{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .tn-q-stat .k{font-size:9px;color:var(--qa-mut);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+  .tn-q-stat .v{font-size:13px;font-weight:800;}
+  .tn-q-stat .v.g{color:#17733F;} .tn-q-stat .v.r{color:#B4021F;}
+  @media (max-width:900px){ .tn-q-grid{grid-template-columns:1fr 1fr !important;} }
+  @media (max-width:560px){ .tn-q-grid{grid-template-columns:1fr !important;} }
   .tn-link{background:none;border:0;padding:0 2px;font:inherit;font-weight:800;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;color:inherit;}
   .tn-link.r{color:#B4021F;} .tn-link.g{color:#17733F;}
   .tn-link:hover{text-decoration-style:solid;}
@@ -14368,6 +14390,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
 const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"resumen",
   datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"n",
   detAsesor:"", detAsesorNombre:"", detSkill:"", volverA:"",   // v21.98: del top / lista de asesores al detalle
+  cuSkill:"", cuartiles:[1,2,3,4],   // v22.00: cuartiles de TNPS por asesor (como el TMO por Asesor)
   detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
   sel:"" };                  // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
@@ -14668,15 +14691,71 @@ function tnHtmlTops(filas){
     </div>`).join("");
 }
 
+/* ---------- v22.00: TNPS por asesor en cuartiles (como "TMO por Asesor") ----------
+   Por skill: los asesores con al menos "Mínimo de encuestas" se ordenan de
+   mejor a peor TNPS (empate: más encuestas) y se reparten en 4 cuartiles.
+   Cada tarjeta compara al asesor contra el TNPS del skill. */
+const TN_CUARTIL_LABELS = { 1:"Cuartil 1 — 25% mejor TNPS", 2:"Cuartil 2", 3:"Cuartil 3", 4:"Cuartil 4 — 25% TNPS más bajo" };
+function tnCuartilesDe(filas, skill){
+  const delSkill = skill==="__todos" ? filas : filas.filter(f=> tnSkillDe(f)===skill);
+  const tot = tnCalc(delSkill.reduce((a,f)=>a+f[9],0), delSkill.reduce((a,f)=>a+f[10],0), delSkill.reduce((a,f)=>a+f[11],0));
+  let ag = tnAgrupar(delSkill, f=>f[6], f=>f[7] || f[6]).filter(x=> x.n >= TN.minAsesor && x.tnps!==null);
+  ag.sort((a,b)=> (b.tnps-a.tnps) || (b.n-a.n));
+  const n = ag.length;
+  ag = ag.map((a,i)=> Object.assign(a, { cuartil: Math.min(4, Math.floor(i/n*4)+1) }));
+  return { asesores: ag, tot };
+}
+function tnHtmlCuartiles(filas){
+  const skills = TN_SKILLS.map(x=>x[0]).filter(k=> filas.some(f=> tnSkillDe(f)===k));
+  if(!skills.length) return "";
+  if(TN.cuSkill!=="__todos" && !skills.includes(TN.cuSkill)) TN.cuSkill = skills[0];
+  const { asesores, tot } = tnCuartilesDe(filas, TN.cuSkill);
+  const visibles = new Set(TN.cuartiles);
+  const nombreSkill = TN.cuSkill==="__todos" ? "Todos los skills" : TN.cuSkill;
+  let cuerpo;
+  if(!asesores.length) cuerpo = `<p class="mut" style="margin:10px 0 0;">Ningún asesor de ${qaEsc(nombreSkill)} llega al mínimo de ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"} en este período.</p>`;
+  else {
+    const bloques = [1,2,3,4].filter(q=> visibles.has(q)).map(q=>{
+      const lista = asesores.filter(a=> a.cuartil===q);
+      if(!lista.length) return "";
+      return `<div class="tn-q-block"><div class="tn-q-titulo q${q}">${TN_CUARTIL_LABELS[q]} (${lista.length})</div><div class="tn-q-lista">${lista.map(a=>{
+        const sobre = tot.tnps!==null && a.tnps >= tot.tnps;
+        return `<div class="tn-q-card ${sobre?"ok":"bajo"}" title="${qaEsc(a.k)}">
+          <div class="tn-q-head"><span class="tn-q-nom">${qaEsc(a.nombre||a.k)}</span><span class="tn-q-chip ${sobre?"ok":"bajo"}">${sobre?"▲ Sobre el skill":"▼ Bajo el skill"}</span></div>
+          <div class="tn-q-body">
+            <div class="tn-q-stat"><span class="k">TNPS</span><span class="v ${a.tnps<0?"r":a.tnps>=50?"g":""}">${tnFmt(a.tnps)}%</span></div>
+            <div class="tn-q-stat"><span class="k">Encuestas</span><span class="v">${a.n}</span></div>
+            <div class="tn-q-stat"><span class="k">Promotores</span><span class="v">${tnLinkNotas(a.pr, a.k, a.nombre, "3", TN.cuSkill==="__todos"?"":TN.cuSkill, "g")}</span></div>
+            <div class="tn-q-stat"><span class="k">Detractores</span><span class="v">${tnLinkNotas(a.d, a.k, a.nombre, "1", TN.cuSkill==="__todos"?"":TN.cuSkill, "r")}</span></div>
+          </div></div>`;
+      }).join("")}</div></div>`;
+    }).filter(Boolean);
+    cuerpo = bloques.length
+      ? `<div class="tn-q-grid" style="grid-template-columns:repeat(${bloques.length},minmax(0,1fr));">${bloques.join("")}</div>`
+      : `<p class="mut" style="margin:10px 0 0;">No hay ningún cuartil marcado — activá al menos uno para ver asesores.</p>`;
+  }
+  return `<div class="qa-card tn-q">
+    <div class="tn-skill-h"><h3 class="tn-h3" style="margin:0">📊 TNPS por asesor en cuartiles</h3><span class="mut">${qaEsc(nombreSkill)} · ${tot.n.toLocaleString("es-HN")} encuestas · TNPS del skill <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
+    <div class="qa-chips tn-q-skills">${skills.map(k=>`<button type="button" class="qa-chip ${TN.cuSkill===k?"on":""}" data-cuskill="${qaEsc(k)}">${qaEsc(k)}</button>`).join("")}<button type="button" class="qa-chip ${TN.cuSkill==="__todos"?"on":""}" data-cuskill="__todos">Todos los skills</button></div>
+    <div class="tn-q-filtro"><span class="mut">Mostrar (para capturas):</span>${[1,2,3,4].map(q=>`<label class="tn-q-chk"><input type="checkbox" data-cuartil="${q}" ${visibles.has(q)?"checked":""}/> Cuartil ${q}</label>`).join("")}<span class="mut">· Solo asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}.</span></div>
+    ${cuerpo}
+  </div>`;
+}
+
 function tnHtmlAsesores(){
   const filas = tnFilasFiltradas();
+  // v22.00: las mismas tarjetas de Resumen
+  const tAs = tnCalc(...[9,10,11].map(i=> filas.reduce((a,f)=>a+f[i],0)));
+  const prevAs = tnFilasPrevias();
+  const tpAs = tnCalc(...[9,10,11].map(i=> prevAs.reduce((a,f)=>a+f[i],0)));
   let g = tnAgrupar(filas, f=>f[6], f=>f[7] || f[6]).filter(x=> x.n >= TN.minAsesor);
   g.forEach(x=>{ if(x.nombre !== x.k) x.extra = x.k; });
   const orden = TN.ordenAsesor==="peor" ? (a,b)=> (a.tnps-b.tnps) || (b.n-a.n) : TN.ordenAsesor==="mejor" ? (a,b)=> (b.tnps-a.tnps) || (b.n-a.n) : (a,b)=> b.n-a.n;
-  return `<div class="qa-card tn-filtros">
+  return tnKpis(tAs, tpAs) + `<div class="qa-card tn-filtros">
       <label class="qa-skill">Mínimo de encuestas <input type="number" id="tn-min" min="1" max="50" value="${TN.minAsesor}" style="width:64px"/></label>
       <div class="qa-chips">${[["n","Más encuestas"],["peor","Peor TNPS primero"],["mejor","Mejor TNPS primero"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.ordenAsesor===k?"on":""}" data-orden="${k}">${l}</button>`).join("")}</div>
     </div>`
+    + tnHtmlCuartiles(filas)   // v22.00: cuartiles por skill
     + tnHtmlTops(filas)   // v21.97: top 10 por skill
     + `<h3 class="tn-h3 tn-sep">Todos los asesores</h3>`
     + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden, verDet:true });
@@ -14869,6 +14948,12 @@ function tnExcel(){
     x.pro.forEach((a,i)=> topsFilas.push([x.skill,"Top promotores",i+1,a.nombre,a.k,a.d,a.pr,a.n,a.tnps]));
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(topsFilas), "Top por skill");
+  const cuFilas = [["Skill","Cuartil","Asesor","Usuario","Encuestas","Promotores","Pasivos","Detractores","TNPS","TNPS del skill"]];
+  TN_SKILLS.map(x=>x[0]).forEach(sk=>{
+    const { asesores, tot } = tnCuartilesDe(filas, sk);
+    asesores.forEach(a=> cuFilas.push([sk, a.cuartil, a.nombre, a.k, a.n, a.pr, a.p, a.d, a.tnps, tot.tnps]));
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cuFilas), "Cuartiles");
   XLSX.writeFile(wb, `TNPS_${desde}_${hasta}.xlsx`);
 }
 
@@ -14897,6 +14982,11 @@ function tnWire(){
   }));
   body.querySelectorAll("[data-quitar]").forEach(b=> b.addEventListener("click", ()=>{
     if(b.dataset.quitar==="asesor"){ TN.detAsesor = ""; TN.detAsesorNombre = ""; } else TN.detSkill = "";
+    tnRender();
+  }));
+  body.querySelectorAll("[data-cuskill]").forEach(b=> b.addEventListener("click", ()=>{ TN.cuSkill = b.dataset.cuskill; tnRender(); }));
+  body.querySelectorAll("[data-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
+    TN.cuartiles = Array.from(body.querySelectorAll("[data-cuartil]")).filter(x=>x.checked).map(x=>Number(x.dataset.cuartil));
     tnRender();
   }));
   const vo = document.getElementById("tn-volver");
