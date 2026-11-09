@@ -916,7 +916,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-top-t{font-weight:800;font-size:13px;margin-bottom:6px;}
   .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
   .tn-sep{margin:18px 0 10px;}
-  .tn-q-skills{margin:4px 0 8px;}
+  .tn-q-ayuda{font-size:12px;margin:2px 0 8px;}
+  .tn-q-m2m{display:block;margin-top:7px;padding:3px 8px;border-radius:7px;font-size:10.5px;font-weight:800;background:#EEF0F2;color:#3B4350;}
+  .tn-q-m2m.up{background:rgba(30,158,75,.12);color:#166534;} .tn-q-m2m.down{background:rgba(228,3,46,.10);color:#B4021F;}
+  .tn-q-m2m.sin{font-weight:600;color:var(--qa-mut);}
+  .tn-q-m2m-ant{font-weight:600;opacity:.8;}
   .tn-q-filtro{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12px;margin-bottom:6px;}
   .tn-q-chk{display:inline-flex;align-items:center;gap:5px;font-weight:700;cursor:pointer;}
   .tn-q-grid{display:grid;gap:14px;margin-top:12px;}
@@ -14692,9 +14696,11 @@ function tnHtmlTops(filas){
 }
 
 /* ---------- v22.00: TNPS por asesor en cuartiles (como "TMO por Asesor") ----------
-   Por skill: los asesores con al menos "Mínimo de encuestas" se ordenan de
+   v22.01 (Oscar): se filtra SOLO con los filtros de arriba (Encuesta y
+   Unidad), sin selector propio, para que el usuario siempre filtre en el
+   mismo lugar. Los asesores con al menos "Mínimo de encuestas" se ordenan de
    mejor a peor TNPS (empate: más encuestas) y se reparten en 4 cuartiles.
-   Cada tarjeta compara al asesor contra el TNPS del skill. */
+   Cada tarjeta compara al asesor contra el TNPS de lo filtrado. */
 const TN_CUARTIL_LABELS = { 1:"Cuartil 1 — 25% mejor TNPS", 2:"Cuartil 2", 3:"Cuartil 3", 4:"Cuartil 4 — 25% TNPS más bajo" };
 function tnCuartilesDe(filas, skill){
   const delSkill = skill==="__todos" ? filas : filas.filter(f=> tnSkillDe(f)===skill);
@@ -14706,12 +14712,23 @@ function tnCuartilesDe(filas, skill){
   return { asesores: ag, tot };
 }
 function tnHtmlCuartiles(filas){
-  const skills = TN_SKILLS.map(x=>x[0]).filter(k=> filas.some(f=> tnSkillDe(f)===k));
-  if(!skills.length) return "";
-  if(TN.cuSkill!=="__todos" && !skills.includes(TN.cuSkill)) TN.cuSkill = skills[0];
-  const { asesores, tot } = tnCuartilesDe(filas, TN.cuSkill);
+  if(!filas.length) return "";
+  const { asesores, tot } = tnCuartilesDe(filas, "__todos");
+  // v22.01: M2M de cada asesor (mismos filtros, período anterior: en "Este mes" son los mismos días del mes anterior)
+  const pr = tnRangoPrevio();
+  const prevPorAsesor = new Map(pr ? tnAgrupar(tnFilasPrevias(), f=>f[6]).map(g=>[g.k, g]) : []);
+  const etqPrev = TN.rango==="mes" || TN.rango==="mesant" ? "M2M" : "vs ant.";
+  const chipM2M = (a)=>{
+    if(!pr) return "";
+    const g = prevPorAsesor.get(a.k);
+    if(!g || g.tnps===null) return `<span class="tn-q-m2m sin" title="Sin encuestas en ${qaEsc(tnNombrePrevio().toLowerCase())}">${etqPrev}: sin datos</span>`;
+    const diff = a.tnps - g.tnps;
+    const flecha = Math.abs(diff) < 0.05 ? "■" : diff>0 ? "▲" : "▼";
+    const cls = Math.abs(diff) < 0.05 ? "flat" : diff>0 ? "up" : "down";
+    return `<span class="tn-q-m2m ${cls}" title="${qaEsc(tnNombrePrevio())} (${tnFecha(pr[0])} al ${tnFecha(pr[1])}): ${tnFmt(g.tnps)}% con ${g.n} encuesta${g.n===1?"":"s"}">${etqPrev}: ${flecha} ${diff>0?"+":""}${(Math.round(diff*10)/10).toLocaleString("es-HN")} pts <span class="tn-q-m2m-ant">(antes ${tnFmt(g.tnps)}%)</span></span>`;
+  };
   const visibles = new Set(TN.cuartiles);
-  const nombreSkill = TN.cuSkill==="__todos" ? "Todos los skills" : TN.cuSkill;
+  const nombreSkill = [TN.encuesta || "Todas las encuestas", TN.unidad || "todas las unidades"].join(" · ");
   let cuerpo;
   if(!asesores.length) cuerpo = `<p class="mut" style="margin:10px 0 0;">Ningún asesor de ${qaEsc(nombreSkill)} llega al mínimo de ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"} en este período.</p>`;
   else {
@@ -14721,13 +14738,13 @@ function tnHtmlCuartiles(filas){
       return `<div class="tn-q-block"><div class="tn-q-titulo q${q}">${TN_CUARTIL_LABELS[q]} (${lista.length})</div><div class="tn-q-lista">${lista.map(a=>{
         const sobre = tot.tnps!==null && a.tnps >= tot.tnps;
         return `<div class="tn-q-card ${sobre?"ok":"bajo"}" title="${qaEsc(a.k)}">
-          <div class="tn-q-head"><span class="tn-q-nom">${qaEsc(a.nombre||a.k)}</span><span class="tn-q-chip ${sobre?"ok":"bajo"}">${sobre?"▲ Sobre el skill":"▼ Bajo el skill"}</span></div>
+          <div class="tn-q-head"><span class="tn-q-nom">${qaEsc(a.nombre||a.k)}</span><span class="tn-q-chip ${sobre?"ok":"bajo"}" title="TNPS de lo filtrado: ${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}">${sobre?"▲ Sobre el promedio":"▼ Bajo el promedio"}</span></div>
           <div class="tn-q-body">
             <div class="tn-q-stat"><span class="k">TNPS</span><span class="v ${a.tnps<0?"r":a.tnps>=50?"g":""}">${tnFmt(a.tnps)}%</span></div>
             <div class="tn-q-stat"><span class="k">Encuestas</span><span class="v">${a.n}</span></div>
-            <div class="tn-q-stat"><span class="k">Promotores</span><span class="v">${tnLinkNotas(a.pr, a.k, a.nombre, "3", TN.cuSkill==="__todos"?"":TN.cuSkill, "g")}</span></div>
-            <div class="tn-q-stat"><span class="k">Detractores</span><span class="v">${tnLinkNotas(a.d, a.k, a.nombre, "1", TN.cuSkill==="__todos"?"":TN.cuSkill, "r")}</span></div>
-          </div></div>`;
+            <div class="tn-q-stat"><span class="k">Promotores</span><span class="v">${tnLinkNotas(a.pr, a.k, a.nombre, "3", "", "g")}</span></div>
+            <div class="tn-q-stat"><span class="k">Detractores</span><span class="v">${tnLinkNotas(a.d, a.k, a.nombre, "1", "", "r")}</span></div>
+          </div>${chipM2M(a)}</div>`;
       }).join("")}</div></div>`;
     }).filter(Boolean);
     cuerpo = bloques.length
@@ -14735,8 +14752,8 @@ function tnHtmlCuartiles(filas){
       : `<p class="mut" style="margin:10px 0 0;">No hay ningún cuartil marcado — activá al menos uno para ver asesores.</p>`;
   }
   return `<div class="qa-card tn-q">
-    <div class="tn-skill-h"><h3 class="tn-h3" style="margin:0">📊 TNPS por asesor en cuartiles</h3><span class="mut">${qaEsc(nombreSkill)} · ${tot.n.toLocaleString("es-HN")} encuestas · TNPS del skill <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
-    <div class="qa-chips tn-q-skills">${skills.map(k=>`<button type="button" class="qa-chip ${TN.cuSkill===k?"on":""}" data-cuskill="${qaEsc(k)}">${qaEsc(k)}</button>`).join("")}<button type="button" class="qa-chip ${TN.cuSkill==="__todos"?"on":""}" data-cuskill="__todos">Todos los skills</button></div>
+    <div class="tn-skill-h"><h3 class="tn-h3" style="margin:0">📊 TNPS por asesor en cuartiles</h3><span class="mut">${qaEsc(nombreSkill)} · ${tot.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
+    <p class="mut tn-q-ayuda">Para ver un skill, usá los filtros de arriba: <b>Encuesta</b> y <b>Unidad</b>.</p>
     <div class="tn-q-filtro"><span class="mut">Mostrar (para capturas):</span>${[1,2,3,4].map(q=>`<label class="tn-q-chk"><input type="checkbox" data-cuartil="${q}" ${visibles.has(q)?"checked":""}/> Cuartil ${q}</label>`).join("")}<span class="mut">· Solo asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}.</span></div>
     ${cuerpo}
   </div>`;
@@ -14984,7 +15001,6 @@ function tnWire(){
     if(b.dataset.quitar==="asesor"){ TN.detAsesor = ""; TN.detAsesorNombre = ""; } else TN.detSkill = "";
     tnRender();
   }));
-  body.querySelectorAll("[data-cuskill]").forEach(b=> b.addEventListener("click", ()=>{ TN.cuSkill = b.dataset.cuskill; tnRender(); }));
   body.querySelectorAll("[data-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
     TN.cuartiles = Array.from(body.querySelectorAll("[data-cuartil]")).filter(x=>x.checked).map(x=>Number(x.dataset.cuartil));
     tnRender();
