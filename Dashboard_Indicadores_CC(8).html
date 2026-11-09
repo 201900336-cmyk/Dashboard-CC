@@ -7428,7 +7428,8 @@ function antigConstruir(){
 }
 // Carga la malla guardada si todavía no está en memoria (una vez)
 async function antigAsegurar(){
-  if(ANTIG.estado==="ok" && ANTIG.indice) return;
+  // v22.06: el índice se vuelve a armar SIEMPRE con la malla que esté en
+  // memoria (si se acaba de subir o guardar una malla nueva, se usa esa).
   if(!asistenciaMallaData && !asistenciaMallaGuardada){
     try{ await asistenciaCargarMallaDirecta(); }catch(e){ console.error("Detalle técnico (antigüedad / malla):", e); }
   }
@@ -15033,7 +15034,7 @@ function tnAbrirCuartiles(){
   }
   tnPintarCuartiles();
   ov.style.display = "flex";
-  if(ANTIG.estado!=="ok") antigAsegurar().then(()=> tnPintarCuartiles());   // v22.05: antigüedad desde la malla
+  antigAsegurar().then(()=> tnPintarCuartiles());   // v22.05/22.06: antigüedad desde la malla (se revisa cada vez que se abre)
   const cerrar = ov.querySelector(".modal2-close"); if(cerrar) cerrar.focus();
 }
 
