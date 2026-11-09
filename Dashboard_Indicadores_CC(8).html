@@ -14414,6 +14414,25 @@ function tnRangoPrevio(){
   return [qaSumarDias(desde, -n), qaSumarDias(desde, -1)];
 }
 function tnNombrePrevio(){ return (TN.rango==="mes" || TN.rango==="mesant") ? "Mes Anterior" : "Período anterior"; }
+// v21.99: nombres de asesores en un solo formato ("Andrea Maria Molina de la Cruz")
+const TN_CONECTORES = new Set(["de","del","la","las","los","y","e","da","van","von"]);
+function tnNombrePropio(t){
+  return String(t||"").trim().replace(/\s+/g," ").toLocaleLowerCase("es").split(" ")
+    .map((w,i)=> (i>0 && TN_CONECTORES.has(w)) ? w : w.replace(/(^|[-'])(\p{L})/gu, (m,a,b)=> a + b.toLocaleUpperCase("es")))
+    .join(" ");
+}
+// usuario → nombre: el nombre real si alguna encuesta lo trae; si no, se arma desde el usuario
+function tnNombreDesdeUsuario(u){
+  const base = String(u||"").split("@")[0].replace(/[._-]+/g," ").replace(/\d+/g," ").trim();
+  return base ? tnNombrePropio(base) : String(u||"");
+}
+function tnOrdenarNombres(data){
+  const reales = {};
+  (data.resumen||[]).forEach(f=>{ if(f[6] && f[7] && !reales[f[6]]) reales[f[6]] = tnNombrePropio(f[7]); });
+  (data.detalle||[]).forEach(f=>{ const u = String(f[8]||"").toLowerCase(); if(u && f[9] && !reales[u]) reales[u] = tnNombrePropio(f[9]); });
+  (data.resumen||[]).forEach(f=>{ if(f[6]) f[7] = reales[f[6]] || tnNombreDesdeUsuario(f[6]); else if(f[7]) f[7] = tnNombrePropio(f[7]); });
+  (data.detalle||[]).forEach(f=>{ const u = String(f[8]||"").toLowerCase(); if(u) f[9] = reales[u] || tnNombreDesdeUsuario(u); else if(f[9]) f[9] = tnNombrePropio(f[9]); });
+}
 function tnCalc(d,p,pr){ const n = d+p+pr; return { n, d, p, pr, tnps: n ? Math.round(((pr-d)/n)*1000)/10 : null }; }
 function tnFmt(v){ return v===null || v===undefined ? "—" : (Math.round(v*10)/10).toLocaleString("es-HN"); }
 function tnPct(a,n){ return n ? (Math.round(a/n*1000)/10).toLocaleString("es-HN")+"%" : "—"; }
@@ -14437,6 +14456,7 @@ async function tnCargar(forzar){
     if(!data || !data.ok || !Array.isArray(data.resumen)) throw new Error((data && data.error) || "Respuesta inesperada del servidor.");
     data.resumen.forEach(f=>{ f[2] = tnUnidad(f[1], f[2]); });
     if(Array.isArray(data.detalle)) data.detalle.forEach(f=>{ f[4] = tnUnidad(f[1], f[4]); });
+    tnOrdenarNombres(data);
     TN.datos = data; TN.clave = clave;
   }catch(err){
     console.error("Detalle técnico (TNPS):", err);
@@ -14671,7 +14691,7 @@ function tnHtmlDetalle(){
     && (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor)
     && (!TN.detSkill || tnSkillDe([f[0], f[1], f[4], f[5]])===TN.detSkill)
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
-    && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[16]].join(" ").toLowerCase().includes(q)));
+    && (!q || [f[8],f[9],f[12],f[13],f[14],f[5]].join(" ").toLowerCase().includes(q)));
   const max = 500;
   TN.detFilas = filas.slice(0, max);
   const aviso = d.detalleDesde && d.detalleDesde > tnRangoFechas()[0] ? `<p class="qa-nota">El detalle muestra como máximo 31 días: desde el ${tnFecha(d.detalleDesde)}.</p>` : "";
@@ -14684,8 +14704,8 @@ function tnHtmlDetalle(){
       <span class="mut">${filas.length.toLocaleString("es-HN")} encuesta${filas.length===1?"":"s"}</span>
     </div>${aviso}
     <div class="qa-card"><div class="tn-tabla-wrap alto"><table class="qa-tabla mini tn-tabla">
-      <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th><th>Comentario</th><th>Sentimiento</th><th>Temas</th></tr></thead>
-      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td><td class="nw">${qaEsc(f[15])}</td><td class="el" title="${qaEsc(f[16])}">${qaEsc(f[16])}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
+      <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th><th>Comentario</th></tr></thead>
+      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
     </table></div>${filas.length>max?`<p class="qa-nota">Se muestran las primeras ${max}. Usa el buscador o los filtros para acotar.</p>`:""}</div>
     <p class="qa-nota">🔒 Datos de clientes: solo para el equipo autorizado. Cada consulta queda registrada.</p>`;
 }
@@ -14771,7 +14791,7 @@ function tnHtmlVer(f){
   else if(!v.cands.length) h = `No se encontró la conversación en Genesys (${qaEsc(v.msg||"")}).`;
   else h = `<div class="tn-cands-t">${v.abierta ? "✅ Se abrió la más probable. " : ""}Conversaciones encontradas${v.via?` (${qaEsc(v.via)})`:""}:</div>
     <table class="qa-tabla mini"><tbody>${v.cands.map((c,i)=>`<tr><td class="nw">${qaEsc(qaFecha(c.inicio))} ${qaEsc(qaHora(c.inicio))}</td><td class="nw">${qaEsc(c.canal)}</td><td class="el">${qaEsc(c.cola)}</td><td class="el">${qaEsc(c.asesor)}${c._mismo?` <b class="g">· mismo asesor</b>`:""}</td><td><button type="button" class="qa-chip" data-abrirconv="${qaEsc(c.id)}">${i===0?"⭐ ":""}Abrir</button></td></tr>`).join("")}</tbody></table>`;
-  return `<tr class="qa-sub tn-cands"><td colspan="11">${h}</td></tr>`;
+  return `<tr class="qa-sub tn-cands"><td colspan="9">${h}</td></tr>`;
 }
 async function tnVerConversacion(f){
   if(!f) return;
