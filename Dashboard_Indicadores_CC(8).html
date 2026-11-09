@@ -917,6 +917,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
   .tn-sep{margin:18px 0 10px;}
   .tn-q-ayuda{font-size:12px;margin:2px 0 8px;}
+  .tn-herr{display:flex;justify-content:flex-end;gap:8px;margin:-4px 0 12px;}
+  .tn-tool{font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;}
+  #tnasesor-modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:110;align-items:center;justify-content:center;}
+  #tnasesor-modal{--qa-ink:#1F2430;--qa-mut:#5B6472;--qa-line:#E6E8EC;background:#fff;border-radius:16px;padding:22px 24px;width:1160px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.22),0 0 0 1px rgba(228,3,46,.14);color:var(--qa-ink);}
+  #tnasesor-modal .mut{color:var(--qa-mut);}
+  #tnasesor-modal .r{color:#B4021F;} #tnasesor-modal .g{color:#17733F;}
+  .tn-q-resumen{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;margin:14px 0 4px;padding:9px 12px;background:#F6F7F9;border-radius:10px;}
   .tn-q-m2m{display:block;margin-top:7px;padding:3px 8px;border-radius:7px;font-size:10.5px;font-weight:800;background:#EEF0F2;color:#3B4350;}
   .tn-q-m2m.up{background:rgba(30,158,75,.12);color:#166534;} .tn-q-m2m.down{background:rgba(228,3,46,.10);color:#B4021F;}
   .tn-q-m2m.sin{font-weight:600;color:var(--qa-mut);}
@@ -14751,12 +14758,66 @@ function tnHtmlCuartiles(filas){
       ? `<div class="tn-q-grid" style="grid-template-columns:repeat(${bloques.length},minmax(0,1fr));">${bloques.join("")}</div>`
       : `<p class="mut" style="margin:10px 0 0;">No hay ningún cuartil marcado — activá al menos uno para ver asesores.</p>`;
   }
-  return `<div class="qa-card tn-q">
-    <div class="tn-skill-h"><h3 class="tn-h3" style="margin:0">📊 TNPS por asesor en cuartiles</h3><span class="mut">${qaEsc(nombreSkill)} · ${tot.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
-    <p class="mut tn-q-ayuda">Para ver un skill, usá los filtros de arriba: <b>Encuesta</b> y <b>Unidad</b>.</p>
+  const [qDesde, qHasta] = tnRangoFechas();
+  return `<div class="tn-q">
+    <div class="tn-q-resumen"><span><b>${qaEsc(nombreSkill)}</b> · ${tnFecha(qDesde)}${qDesde!==qHasta?" al "+tnFecha(qHasta):""}</span><span>${tot.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
+    <p class="mut tn-q-ayuda">Para ver otro skill o período, cerrá esta ventana y cambiá los filtros de arriba (<b>Encuesta</b>, <b>Unidad</b> y período).</p>
     <div class="tn-q-filtro"><span class="mut">Mostrar (para capturas):</span>${[1,2,3,4].map(q=>`<label class="tn-q-chk"><input type="checkbox" data-cuartil="${q}" ${visibles.has(q)?"checked":""}/> Cuartil ${q}</label>`).join("")}<span class="mut">· Solo asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}.</span></div>
     ${cuerpo}
   </div>`;
+}
+
+/* ---------- v22.02: ventana "TNPS por Asesor" (como "TMO por Asesor") ---------- */
+function tnIrANotas(v){
+  TN.detAsesor = String(v[0]||"").toLowerCase(); TN.detAsesorNombre = v[1]||""; TN.detGrupo = v[2]||"todos"; TN.detSkill = v[3]||"";
+  TN.detBuscar = ""; TN.vista = "detalle"; TN.volverA = "asesores";
+  tnRender(); tnCargar();
+  const r = document.getElementById("tn-root"); if(r) r.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+function tnCerrarCuartiles(){
+  const ov = document.getElementById("tnasesor-modal-overlay");
+  if(ov) ov.style.display = "none";
+}
+function tnPintarCuartiles(){
+  const cont = document.getElementById("tnasesor-modal-cuerpo");
+  if(!cont) return;
+  const filas = tnFilasFiltradas();
+  cont.innerHTML = filas.length ? tnHtmlCuartiles(filas) : `<p class="mut">No hay encuestas con estos filtros.</p>`;
+  cont.querySelectorAll("[data-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
+    TN.cuartiles = Array.from(cont.querySelectorAll("[data-cuartil]")).filter(x=>x.checked).map(x=>Number(x.dataset.cuartil));
+    tnPintarCuartiles();
+  }));
+  cont.querySelectorAll("[data-verdet]").forEach(b=> b.addEventListener("click", ()=>{
+    let v = []; try{ v = JSON.parse(b.dataset.verdet); }catch(e){ return; }
+    tnCerrarCuartiles(); tnIrANotas(v);
+  }));
+}
+function tnAbrirCuartiles(){
+  let ov = document.getElementById("tnasesor-modal-overlay");
+  if(!ov){
+    ov = document.createElement("div");
+    ov.id = "tnasesor-modal-overlay";
+    ov.innerHTML = `<div id="tnasesor-modal" role="dialog" aria-modal="true" aria-labelledby="tnasesor-titulo">
+      <div class="modal2-hero">
+        <div class="modal2-bar"></div>
+        <div class="modal2-titlewrap">
+          <h3 id="tnasesor-titulo">😊 TNPS por Asesor</h3>
+          <div class="modal2-sub">TNPS, encuestas, promotores y detractores de cada asesor, con su M2M — agrupados en 4 cuartiles (25% con mejor TNPS, siguiente 25%, y así sucesivamente) para ver de un vistazo quién está mejor o peor. Usa los filtros de Encuesta, Unidad y período de la pestaña Qualtrics.</div>
+        </div>
+        <button class="modal2-close" type="button" title="Cerrar" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="tnasesor-modal-cuerpo"></div>
+      <div class="modal-actions" style="margin-top:14px;"><button class="btn-outline" type="button" id="tnasesor-cerrar">Cerrar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener("click", e=>{ if(e.target===ov) tnCerrarCuartiles(); });
+    ov.querySelector(".modal2-close").addEventListener("click", tnCerrarCuartiles);
+    ov.querySelector("#tnasesor-cerrar").addEventListener("click", tnCerrarCuartiles);
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape" && ov.style.display==="flex") tnCerrarCuartiles(); });
+  }
+  tnPintarCuartiles();
+  ov.style.display = "flex";
+  const cerrar = ov.querySelector(".modal2-close"); if(cerrar) cerrar.focus();
 }
 
 function tnHtmlAsesores(){
@@ -14768,11 +14829,13 @@ function tnHtmlAsesores(){
   let g = tnAgrupar(filas, f=>f[6], f=>f[7] || f[6]).filter(x=> x.n >= TN.minAsesor);
   g.forEach(x=>{ if(x.nombre !== x.k) x.extra = x.k; });
   const orden = TN.ordenAsesor==="peor" ? (a,b)=> (a.tnps-b.tnps) || (b.n-a.n) : TN.ordenAsesor==="mejor" ? (a,b)=> (b.tnps-a.tnps) || (b.n-a.n) : (a,b)=> b.n-a.n;
-  return tnKpis(tAs, tpAs) + `<div class="qa-card tn-filtros">
+  return tnKpis(tAs, tpAs)
+    + `<div class="tn-herr"><button class="btn-outline tn-tool" type="button" id="tn-abrir-cuartiles">😊 TNPS por Asesor</button></div>`
+    + `<div class="qa-card tn-filtros">
       <label class="qa-skill">Mínimo de encuestas <input type="number" id="tn-min" min="1" max="50" value="${TN.minAsesor}" style="width:64px"/></label>
       <div class="qa-chips">${[["n","Más encuestas"],["peor","Peor TNPS primero"],["mejor","Mejor TNPS primero"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.ordenAsesor===k?"on":""}" data-orden="${k}">${l}</button>`).join("")}</div>
     </div>`
-    + tnHtmlCuartiles(filas)   // v22.00: cuartiles por skill
+    // v22.02: los cuartiles se abren con el botón "TNPS por Asesor" (ventana como "TMO por Asesor")
     + tnHtmlTops(filas)   // v21.97: top 10 por skill
     + `<h3 class="tn-h3 tn-sep">Todos los asesores</h3>`
     + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden, verDet:true });
@@ -14992,17 +15055,11 @@ function tnWire(){
   // v21.98: del número (top / lista de asesores) a sus notas en el detalle
   body.querySelectorAll("[data-verdet]").forEach(b=> b.addEventListener("click", ()=>{
     let v = []; try{ v = JSON.parse(b.dataset.verdet); }catch(e){ return; }
-    TN.detAsesor = String(v[0]||"").toLowerCase(); TN.detAsesorNombre = v[1]||""; TN.detGrupo = v[2]||"todos"; TN.detSkill = v[3]||"";
-    TN.detBuscar = ""; TN.vista = "detalle"; TN.volverA = "asesores";
-    tnRender(); tnCargar();
-    const r = document.getElementById("tn-root"); if(r) r.scrollIntoView({ behavior:"smooth", block:"start" });
+    tnIrANotas(v);
   }));
+  const ac = document.getElementById("tn-abrir-cuartiles"); if(ac) ac.addEventListener("click", tnAbrirCuartiles);
   body.querySelectorAll("[data-quitar]").forEach(b=> b.addEventListener("click", ()=>{
     if(b.dataset.quitar==="asesor"){ TN.detAsesor = ""; TN.detAsesorNombre = ""; } else TN.detSkill = "";
-    tnRender();
-  }));
-  body.querySelectorAll("[data-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
-    TN.cuartiles = Array.from(body.querySelectorAll("[data-cuartil]")).filter(x=>x.checked).map(x=>Number(x.dataset.cuartil));
     tnRender();
   }));
   const vo = document.getElementById("tn-volver");
