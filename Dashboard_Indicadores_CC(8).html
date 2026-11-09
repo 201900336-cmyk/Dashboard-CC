@@ -907,6 +907,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-tabla tr.tn-visto:not(.tn-sel) > td{color:#5B6472;}
   @keyframes tnFlash{0%,100%{background:#FFF4D6;}50%{background:#FFE08A;}}
   .tn-tabla tr.tn-flash > td{animation:tnFlash .6s ease-in-out 3;}
+  .tn-skill-card{padding-top:14px;}
+  .tn-skill-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .tn-skill-h .mut{font-size:12px;}
+  .tn-tops{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tn-top{border:1px solid var(--qa-line);border-radius:10px;padding:10px 12px;border-top:3px solid #B4021F;}
+  .tn-top.pro{border-top-color:#17733F;}
+  .tn-top-t{font-weight:800;font-size:13px;margin-bottom:6px;}
+  .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
+  .tn-sep{margin:18px 0 10px;}
+  @media (max-width:900px){ .tn-tops{grid-template-columns:1fr;} }
   .tn-buscar{flex:1;min-width:220px;border:1px solid var(--qa-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;}
   .tn-aviso{font-size:13px;}
   .tn-error{border-color:#F3B4BE;background:#FFF6F7;}
@@ -14578,6 +14588,52 @@ function tnHtmlResumen(){
     + `</div>`
     + tnTabla("Por servicio (cola)", tnAgrupar(filas, f=>f[3]), { col:"Servicio" });   // v21.94: sin "Por supervisor" (Oscar)
 }
+
+/* ---------- v21.97: Top 10 de detractores y de promotores por skill ----------
+   Skills con las equivalencias de Oscar (WhatsApp separado en Fijo y Móvil,
+   como en el resto de la pestaña). Top detractores = asesores con más
+   encuestas detractoras; Top promotores = con más encuestas promotoras
+   (empate: el de mejor/peor TNPS). Respetan los filtros de arriba. */
+const TN_SKILLS = [
+  ["Fijo",                 f=> tnpsQxNorm(f[1])==="masivo call center" && tnpsQxNorm(f[2])==="nivel 1 multimedia"],
+  ["Móvil",                f=> tnpsQxNorm(f[1])==="masivo call center" && tnpsQxNorm(f[2])==="call center movil"],
+  ["WhatsApp Fijo",        f=> tnpsQxNorm(f[1])==="genesys whatsapp" && tnpsQxNorm(f[2])==="whatsapp fijo"],
+  ["WhatsApp Móvil",       f=> tnpsQxNorm(f[1])==="genesys whatsapp" && tnpsQxNorm(f[2])==="whatsapp movil"],
+  ["Corporativo",          f=> tnpsQxNorm(f[1])==="empresas call center"],
+  ["Mail Corporativo",     f=> tnpsQxNorm(f[1])==="empresas rrss" && tnpsQxNorm(f[3])==="correo clientes vip"],
+  ["WhatsApp Corporativo", f=> tnpsQxNorm(f[1])==="empresas rrss" && tnpsQxNorm(f[3])==="whatsapp corporativo"],
+  ["Redes Sociales",       f=> tnpsQxNorm(f[1])==="masivo rrss"],
+];
+function tnSkillDe(f){ const s = TN_SKILLS.find(([,fn])=> fn(f)); return s ? s[0] : "Otros"; }
+function tnTops(filas){
+  const porSkill = new Map();
+  filas.forEach(f=>{ const k = tnSkillDe(f); if(!porSkill.has(k)) porSkill.set(k, []); porSkill.get(k).push(f); });
+  const orden = TN_SKILLS.map(x=>x[0]).concat(["Otros"]);
+  return orden.filter(k=> porSkill.has(k)).map(skill=>{
+    const g = tnAgrupar(porSkill.get(skill), f=>f[6], f=>f[7] || f[6]);
+    g.forEach(x=>{ if(x.nombre !== x.k) x.extra = x.k; });
+    const det = g.filter(x=> x.d>0).sort((a,b)=> (b.d-a.d) || (a.tnps-b.tnps)).slice(0,10);
+    const pro = g.filter(x=> x.pr>0).sort((a,b)=> (b.pr-a.pr) || (b.tnps-a.tnps)).slice(0,10);
+    const t = tnCalc(g.reduce((a,x)=>a+x.d,0), g.reduce((a,x)=>a+x.p,0), g.reduce((a,x)=>a+x.pr,0));
+    return { skill, det, pro, t };
+  });
+}
+function tnHtmlTopTabla(lista, tipo){
+  const esDet = tipo==="det";
+  if(!lista.length) return `<div class="tn-top ${tipo}"><div class="tn-top-t">${esDet?"☹️ Top 10 detractores":"😊 Top 10 promotores"}</div><p class="mut" style="margin:6px 0 0;font-size:12px;">${esDet?"Sin detractores en este período. 🎉":"Sin promotores en este período."}</p></div>`;
+  return `<div class="tn-top ${tipo}"><div class="tn-top-t">${esDet?"☹️ Top 10 detractores":"😊 Top 10 promotores"}</div>
+    <table class="qa-tabla mini tn-tabla"><thead><tr><th class="num">#</th><th>Asesor</th><th class="num">${esDet?"Detractores":"Promotores"}</th><th class="num">Encuestas</th><th class="num">TNPS</th></tr></thead>
+    <tbody>${lista.map((x,i)=>`<tr><td class="num mut">${i+1}</td><td class="el" title="${qaEsc(x.extra||x.nombre)}">${qaEsc(x.nombre||"(sin dato)")}</td><td class="num"><b class="${esDet?"r":"g"}">${esDet?x.d:x.pr}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.tnps<0?"r":x.tnps>=50?"g":""}">${x.tnps===null?"—":tnFmt(x.tnps)+"%"}</b></td></tr>`).join("")}</tbody></table></div>`;
+}
+function tnHtmlTops(filas){
+  const tops = tnTops(filas);
+  if(!tops.length) return `<div class="qa-card tn-aviso">No hay encuestas en este período.</div>`;
+  return tops.map(x=>`<div class="qa-card tn-skill-card">
+      <div class="tn-skill-h"><h3 class="tn-h3" style="margin:0">${qaEsc(x.skill)}</h3><span class="mut">${x.t.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${x.t.tnps<0?"r":x.t.tnps>=50?"g":""}">${x.t.tnps===null?"—":tnFmt(x.t.tnps)+"%"}</b></span></div>
+      <div class="tn-tops">${tnHtmlTopTabla(x.det,"det")}${tnHtmlTopTabla(x.pro,"pro")}</div>
+    </div>`).join("");
+}
+
 function tnHtmlAsesores(){
   const filas = tnFilasFiltradas();
   let g = tnAgrupar(filas, f=>f[6], f=>f[7] || f[6]).filter(x=> x.n >= TN.minAsesor);
@@ -14587,6 +14643,8 @@ function tnHtmlAsesores(){
       <label class="qa-skill">Mínimo de encuestas <input type="number" id="tn-min" min="1" max="50" value="${TN.minAsesor}" style="width:64px"/></label>
       <div class="qa-chips">${[["peor","Peor TNPS primero"],["mejor","Mejor TNPS primero"],["n","Más encuestas"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.ordenAsesor===k?"on":""}" data-orden="${k}">${l}</button>`).join("")}</div>
     </div>`
+    + tnHtmlTops(filas)   // v21.97: top 10 por skill
+    + `<h3 class="tn-h3 tn-sep">Todos los asesores</h3>`
     + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden });
 }
 function tnHtmlDetalle(){
@@ -14766,6 +14824,12 @@ function tnExcel(){
   XLSX.utils.book_append_sheet(wb, hoja("enc", tnAgrupar(filas, f=>f[1]), "Encuesta"), "Por encuesta");
   XLSX.utils.book_append_sheet(wb, hoja("serv", tnAgrupar(filas, f=>f[3]), "Servicio"), "Por servicio");
   XLSX.utils.book_append_sheet(wb, hoja("ase", tnAgrupar(filas, f=>f[6], f=>f[7]||f[6]), "Asesor"), "Por asesor");
+  const topsFilas = [["Skill","Tipo","#","Asesor","Usuario","Detractores","Promotores","Encuestas","TNPS"]];
+  tnTops(filas).forEach(x=>{
+    x.det.forEach((a,i)=> topsFilas.push([x.skill,"Top detractores",i+1,a.nombre,a.k,a.d,a.pr,a.n,a.tnps]));
+    x.pro.forEach((a,i)=> topsFilas.push([x.skill,"Top promotores",i+1,a.nombre,a.k,a.d,a.pr,a.n,a.tnps]));
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(topsFilas), "Top por skill");
   XLSX.writeFile(wb, `TNPS_${desde}_${hasta}.xlsx`);
 }
 
