@@ -917,6 +917,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
   .tn-sep{margin:18px 0 10px;}
   .tn-q-ayuda{font-size:12px;margin:2px 0 8px;}
+  .tn-q-filtros{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:10px 0 8px;font-size:12px;}
+  .tn-q-filtros .qa-skill{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12px;margin:0;}
+  .tn-q-filtros select{width:auto;min-width:180px;padding:6px 8px;border:1px solid var(--qa-line);border-radius:8px;font:inherit;font-size:12.5px;}
   .tn-herr{display:flex;justify-content:flex-end;gap:8px;margin:-4px 0 12px;}
   .tn-tool{font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;}
   #tnasesor-modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:110;align-items:center;justify-content:center;}
@@ -14456,8 +14459,11 @@ function tnNombrePropio(t){
     .join(" ");
 }
 // usuario → nombre: el nombre real si alguna encuesta lo trae; si no, se arma desde el usuario
+const TN_PREFIJOS_USUARIO = new Set(["clarohn","clarogt","claro","hn","gt","ext","externo","usr","user"]);   // v22.03: "clarohn.luis.noguera" → "Luis Noguera"
 function tnNombreDesdeUsuario(u){
-  const base = String(u||"").split("@")[0].replace(/[._-]+/g," ").replace(/\d+/g," ").trim();
+  const partes = String(u||"").split("@")[0].replace(/[._-]+/g," ").replace(/\d+/g," ").trim().split(/\s+/).filter(Boolean);
+  while(partes.length > 1 && TN_PREFIJOS_USUARIO.has(partes[0].toLowerCase())) partes.shift();
+  const base = partes.join(" ");
   return base ? tnNombrePropio(base) : String(u||"");
 }
 function tnOrdenarNombres(data){
@@ -14761,13 +14767,26 @@ function tnHtmlCuartiles(filas){
   const [qDesde, qHasta] = tnRangoFechas();
   return `<div class="tn-q">
     <div class="tn-q-resumen"><span><b>${qaEsc(nombreSkill)}</b> · ${tnFecha(qDesde)}${qDesde!==qHasta?" al "+tnFecha(qHasta):""}</span><span>${tot.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
-    <p class="mut tn-q-ayuda">Para ver otro skill o período, cerrá esta ventana y cambiá los filtros de arriba (<b>Encuesta</b>, <b>Unidad</b> y período).</p>
+    ${tnHtmlFiltrosVentana()}
     <div class="tn-q-filtro"><span class="mut">Mostrar (para capturas):</span>${[1,2,3,4].map(q=>`<label class="tn-q-chk"><input type="checkbox" data-cuartil="${q}" ${visibles.has(q)?"checked":""}/> Cuartil ${q}</label>`).join("")}<span class="mut">· Solo asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}.</span></div>
     ${cuerpo}
   </div>`;
 }
 
 /* ---------- v22.02: ventana "TNPS por Asesor" (como "TMO por Asesor") ---------- */
+// v22.03: filtros de Encuesta y Unidad dentro de la ventana — son los MISMOS
+// de la pestaña (TN.encuesta / TN.unidad): cambiar uno cambia el otro.
+function tnHtmlFiltrosVentana(){
+  const d = TN.datos;
+  const [desde, hasta] = tnRangoFechas();
+  const encuestas = (d && d.encuestas) || [];
+  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta)).map(f=>f[2]).filter(Boolean))).sort();
+  return `<div class="tn-q-filtros">
+    <label class="qa-skill">Encuesta <select id="tnq-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></label>
+    <label class="qa-skill">Unidad <select id="tnq-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></label>
+    <span class="mut">Son los mismos filtros de la pestaña Qualtrics. Para cambiar el período, cerrá la ventana.</span>
+  </div>`;
+}
 function tnIrANotas(v){
   TN.detAsesor = String(v[0]||"").toLowerCase(); TN.detAsesorNombre = v[1]||""; TN.detGrupo = v[2]||"todos"; TN.detSkill = v[3]||"";
   TN.detBuscar = ""; TN.vista = "detalle"; TN.volverA = "asesores";
@@ -14782,7 +14801,10 @@ function tnPintarCuartiles(){
   const cont = document.getElementById("tnasesor-modal-cuerpo");
   if(!cont) return;
   const filas = tnFilasFiltradas();
-  cont.innerHTML = filas.length ? tnHtmlCuartiles(filas) : `<p class="mut">No hay encuestas con estos filtros.</p>`;
+  cont.innerHTML = filas.length ? tnHtmlCuartiles(filas) : `<div class="tn-q">${tnHtmlFiltrosVentana()}<p class="mut">No hay encuestas con estos filtros.</p></div>`;
+  const fe = cont.querySelector("#tnq-encuesta"), fu = cont.querySelector("#tnq-unidad");
+  if(fe) fe.addEventListener("change", ()=>{ TN.encuesta = fe.value; TN.unidad = ""; tnRender(); tnPintarCuartiles(); });
+  if(fu) fu.addEventListener("change", ()=>{ TN.unidad = fu.value; tnRender(); tnPintarCuartiles(); });
   cont.querySelectorAll("[data-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
     TN.cuartiles = Array.from(cont.querySelectorAll("[data-cuartil]")).filter(x=>x.checked).map(x=>Number(x.dataset.cuartil));
     tnPintarCuartiles();
