@@ -916,6 +916,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-top-t{font-weight:800;font-size:13px;margin-bottom:6px;}
   .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
   .tn-sep{margin:18px 0 10px;}
+  .tn-link{background:none;border:0;padding:0 2px;font:inherit;font-weight:800;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;color:inherit;}
+  .tn-link.r{color:#B4021F;} .tn-link.g{color:#17733F;}
+  .tn-link:hover{text-decoration-style:solid;}
+  .tn-link:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px;border-radius:3px;}
+  .tn-fchip{display:inline-flex;align-items:center;gap:6px;background:#EEF2FF;border:1px solid #C7D2FE;color:#1E3A8A;border-radius:999px;padding:4px 6px 4px 10px;font-size:12px;font-weight:700;}
+  .tn-fchip button{border:0;background:#C7D2FE;color:#1E3A8A;border-radius:999px;width:18px;height:18px;line-height:18px;padding:0;cursor:pointer;font-size:10px;}
   @media (max-width:900px){ .tn-tops{grid-template-columns:1fr;} }
   .tn-buscar{flex:1;min-width:220px;border:1px solid var(--qa-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;}
   .tn-aviso{font-size:13px;}
@@ -14360,7 +14366,8 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
      decide y lo anota; aquí solo se muestra lo que llega.
    ============================================================ */
 const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"resumen",
-  datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"peor",
+  datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"n",
+  detAsesor:"", detAsesorNombre:"", detSkill:"", volverA:"",   // v21.98: del top / lista de asesores al detalle
   detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
   sel:"" };                  // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
@@ -14477,7 +14484,8 @@ function renderTnps(){
     </div>`;
     document.getElementById("tn-nav").addEventListener("click", e=>{
       const b = e.target.closest("button[data-vista]"); if(!b) return;
-      TN.vista = b.dataset.vista; tnRender(); tnCargar();
+      TN.vista = b.dataset.vista; TN.volverA = ""; TN.detAsesor = ""; TN.detAsesorNombre = ""; TN.detSkill = "";
+      tnRender(); tnCargar();
     });
   }
   tnRender();
@@ -14570,7 +14578,7 @@ function tnTabla(titulo, grupos, opts){
   if(!filas.length) return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><p class="mut">Sin encuestas en este período.</p></div>`;
   return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><div class="tn-tabla-wrap"><table class="qa-tabla mini tn-tabla">
     <thead><tr><th>${opts.col||"Nombre"}</th><th class="num">Encuestas</th><th class="num">Promotores</th><th class="num">Pasivos</th><th class="num">Detractores</th><th class="num">TNPS</th></tr></thead>
-    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${g.pr}</td><td class="num">${g.p}</td><td class="num">${g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td></tr>`).join("")}</tbody>${tnHtmlTotal(filas)}
+    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${opts.verDet ? tnLinkNotas(g.pr, g.k, g.nombre, "3", "", "") : g.pr}</td><td class="num">${g.p}</td><td class="num">${opts.verDet ? tnLinkNotas(g.d, g.k, g.nombre, "1", "", "") : g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td></tr>`).join("")}</tbody>${tnHtmlTotal(filas)}
   </table></div></div>`;
 }
 function tnHtmlResumen(){
@@ -14618,19 +14626,25 @@ function tnTops(filas){
     return { skill, det, pro, t };
   });
 }
-function tnHtmlTopTabla(lista, tipo){
+function tnLinkNotas(valor, usuario, nombre, grupo, skill, cls){
+  const d = TN.datos;
+  if(!valor || !usuario || !(d && d.puedeVerDetalle)) return `<b class="${cls}">${valor}</b>`;
+  const que = grupo==="1" ? "detractoras" : grupo==="3" ? "promotoras" : "";
+  return `<button type="button" class="tn-link ${cls}" data-verdet="${qaEsc(JSON.stringify([usuario, nombre||usuario, grupo, skill||""]))}" title="Ver las notas ${que} de ${qaEsc(nombre||usuario)}${skill?" en "+qaEsc(skill):""}">${valor}</button>`;
+}
+function tnHtmlTopTabla(lista, tipo, skill){
   const esDet = tipo==="det";
   if(!lista.length) return `<div class="tn-top ${tipo}"><div class="tn-top-t">${esDet?"☹️ Top 10 detractores":"😊 Top 10 promotores"}</div><p class="mut" style="margin:6px 0 0;font-size:12px;">${esDet?"Sin detractores en este período. 🎉":"Sin promotores en este período."}</p></div>`;
   return `<div class="tn-top ${tipo}"><div class="tn-top-t">${esDet?"☹️ Top 10 detractores":"😊 Top 10 promotores"}</div>
     <table class="qa-tabla mini tn-tabla"><thead><tr><th class="num">#</th><th>Asesor</th><th class="num">${esDet?"Detractores":"Promotores"}</th><th class="num">Encuestas</th><th class="num">TNPS</th></tr></thead>
-    <tbody>${lista.map((x,i)=>`<tr><td class="num mut">${i+1}</td><td class="el" title="${qaEsc(x.extra||x.nombre)}">${qaEsc(x.nombre||"(sin dato)")}</td><td class="num"><b class="${esDet?"r":"g"}">${esDet?x.d:x.pr}</b></td><td class="num">${x.n}</td><td class="num"><b class="${x.tnps<0?"r":x.tnps>=50?"g":""}">${x.tnps===null?"—":tnFmt(x.tnps)+"%"}</b></td></tr>`).join("")}</tbody></table></div>`;
+    <tbody>${lista.map((x,i)=>`<tr><td class="num mut">${i+1}</td><td class="el" title="${qaEsc(x.extra||x.nombre)}">${qaEsc(x.nombre||"(sin dato)")}</td><td class="num">${tnLinkNotas(esDet?x.d:x.pr, x.k, x.nombre, esDet?"1":"3", skill, esDet?"r":"g")}</td><td class="num">${x.n}</td><td class="num"><b class="${x.tnps<0?"r":x.tnps>=50?"g":""}">${x.tnps===null?"—":tnFmt(x.tnps)+"%"}</b></td></tr>`).join("")}</tbody></table></div>`;
 }
 function tnHtmlTops(filas){
   const tops = tnTops(filas);
   if(!tops.length) return `<div class="qa-card tn-aviso">No hay encuestas en este período.</div>`;
   return tops.map(x=>`<div class="qa-card tn-skill-card">
       <div class="tn-skill-h"><h3 class="tn-h3" style="margin:0">${qaEsc(x.skill)}</h3><span class="mut">${x.t.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${x.t.tnps<0?"r":x.t.tnps>=50?"g":""}">${x.t.tnps===null?"—":tnFmt(x.t.tnps)+"%"}</b></span></div>
-      <div class="tn-tops">${tnHtmlTopTabla(x.det,"det")}${tnHtmlTopTabla(x.pro,"pro")}</div>
+      <div class="tn-tops">${tnHtmlTopTabla(x.det,"det",x.skill)}${tnHtmlTopTabla(x.pro,"pro",x.skill)}</div>
     </div>`).join("");
 }
 
@@ -14641,11 +14655,11 @@ function tnHtmlAsesores(){
   const orden = TN.ordenAsesor==="peor" ? (a,b)=> (a.tnps-b.tnps) || (b.n-a.n) : TN.ordenAsesor==="mejor" ? (a,b)=> (b.tnps-a.tnps) || (b.n-a.n) : (a,b)=> b.n-a.n;
   return `<div class="qa-card tn-filtros">
       <label class="qa-skill">Mínimo de encuestas <input type="number" id="tn-min" min="1" max="50" value="${TN.minAsesor}" style="width:64px"/></label>
-      <div class="qa-chips">${[["peor","Peor TNPS primero"],["mejor","Mejor TNPS primero"],["n","Más encuestas"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.ordenAsesor===k?"on":""}" data-orden="${k}">${l}</button>`).join("")}</div>
+      <div class="qa-chips">${[["n","Más encuestas"],["peor","Peor TNPS primero"],["mejor","Mejor TNPS primero"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.ordenAsesor===k?"on":""}" data-orden="${k}">${l}</button>`).join("")}</div>
     </div>`
     + tnHtmlTops(filas)   // v21.97: top 10 por skill
     + `<h3 class="tn-h3 tn-sep">Todos los asesores</h3>`
-    + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden });
+    + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden, verDet:true });
 }
 function tnHtmlDetalle(){
   const d = TN.datos;
@@ -14654,6 +14668,8 @@ function tnHtmlDetalle(){
   const q = TN.detBuscar.trim().toLowerCase();
   const [dDesde, dHasta] = tnRangoFechas();
   const filas = d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[4]===TN.unidad)
+    && (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor)
+    && (!TN.detSkill || tnSkillDe([f[0], f[1], f[4], f[5]])===TN.detSkill)
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
     && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[16]].join(" ").toLowerCase().includes(q)));
   const max = 500;
@@ -14661,6 +14677,9 @@ function tnHtmlDetalle(){
   const aviso = d.detalleDesde && d.detalleDesde > tnRangoFechas()[0] ? `<p class="qa-nota">El detalle muestra como máximo 31 días: desde el ${tnFecha(d.detalleDesde)}.</p>` : "";
   return `<div class="qa-card tn-filtros">
       <div class="qa-chips">${[["1","Detractores"],["2","Pasivos"],["3","Promotores"],["todos","Todos"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.detGrupo===k?"on":""}" data-grupo="${k}">${l}</button>`).join("")}</div>
+      ${TN.volverA ? `<button type="button" class="qa-chip" id="tn-volver">‹ Volver a Por asesor</button>` : ""}
+      ${TN.detAsesor ? `<span class="tn-fchip">👤 ${qaEsc(TN.detAsesorNombre||TN.detAsesor)} <button type="button" data-quitar="asesor" aria-label="Quitar filtro de asesor">✕</button></span>` : ""}
+      ${TN.detSkill ? `<span class="tn-fchip">🏷️ ${qaEsc(TN.detSkill)} <button type="button" data-quitar="skill" aria-label="Quitar filtro de skill">✕</button></span>` : ""}
       <input type="search" id="tn-buscar" class="tn-buscar" value="${qaEsc(TN.detBuscar)}" placeholder="Buscar asesor, cliente, teléfono o comentario" aria-label="Buscar en el detalle"/>
       <span class="mut">${filas.length.toLocaleString("es-HN")} encuesta${filas.length===1?"":"s"}</span>
     </div>${aviso}
@@ -14848,6 +14867,20 @@ function tnWire(){
   body.querySelectorAll("[data-orden]").forEach(b=> b.addEventListener("click", ()=>{ TN.ordenAsesor = b.dataset.orden; tnRender(); }));
   body.querySelectorAll("[data-grupo]").forEach(b=> b.addEventListener("click", ()=>{ TN.detGrupo = b.dataset.grupo; tnRender(); }));
   body.querySelectorAll("[data-ver]").forEach(b=> b.addEventListener("click", ()=> tnVerConversacion(TN.detFilas[Number(b.dataset.ver)])));
+  // v21.98: del número (top / lista de asesores) a sus notas en el detalle
+  body.querySelectorAll("[data-verdet]").forEach(b=> b.addEventListener("click", ()=>{
+    let v = []; try{ v = JSON.parse(b.dataset.verdet); }catch(e){ return; }
+    TN.detAsesor = String(v[0]||"").toLowerCase(); TN.detAsesorNombre = v[1]||""; TN.detGrupo = v[2]||"todos"; TN.detSkill = v[3]||"";
+    TN.detBuscar = ""; TN.vista = "detalle"; TN.volverA = "asesores";
+    tnRender(); tnCargar();
+    const r = document.getElementById("tn-root"); if(r) r.scrollIntoView({ behavior:"smooth", block:"start" });
+  }));
+  body.querySelectorAll("[data-quitar]").forEach(b=> b.addEventListener("click", ()=>{
+    if(b.dataset.quitar==="asesor"){ TN.detAsesor = ""; TN.detAsesorNombre = ""; } else TN.detSkill = "";
+    tnRender();
+  }));
+  const vo = document.getElementById("tn-volver");
+  if(vo) vo.addEventListener("click", ()=>{ TN.vista = TN.volverA || "asesores"; TN.volverA = ""; TN.detAsesor = ""; TN.detAsesorNombre = ""; TN.detSkill = ""; tnRender(); tnCargar(); });
   body.querySelectorAll("[data-abrirconv]").forEach(b=> b.addEventListener("click", ()=>{ const tr = b.closest("tr.tn-cands"); const prev = tr && tr.previousElementSibling; if(prev && prev.dataset.rid){ TN.sel = prev.dataset.rid; } qaAbrirDetalle(b.dataset.abrirconv); }));
   const bu = document.getElementById("tn-buscar");
   if(bu){ let t = null; bu.addEventListener("input", ()=>{ clearTimeout(t); t = setTimeout(()=>{ TN.detBuscar = bu.value; const pos = bu.selectionStart; tnRender(); const n = document.getElementById("tn-buscar"); if(n){ n.focus(); n.setSelectionRange(pos,pos); } }, 250); }); }
