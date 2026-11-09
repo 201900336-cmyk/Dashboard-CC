@@ -917,6 +917,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-top.det .tn-top-t{color:#B4021F;} .tn-top.pro .tn-top-t{color:#17733F;}
   .tn-sep{margin:18px 0 10px;}
   .tn-q-ayuda{font-size:12px;margin:2px 0 8px;}
+  .tn-q-rangos{margin:12px 0 0;align-items:center;}
+  .tn-q-rangos .qa-fecha{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin:0;}
+  .tn-q-rangos .qa-fecha input{width:auto;padding:5px 8px;border:1px solid var(--qa-line);border-radius:8px;font:inherit;font-size:12.5px;}
   .tn-q-filtros{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:10px 0 8px;font-size:12px;}
   .tn-q-filtros .qa-skill{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12px;margin:0;}
   .tn-q-filtros select{width:auto;min-width:180px;padding:6px 8px;border:1px solid var(--qa-line);border-radius:8px;font:inherit;font-size:12.5px;}
@@ -14781,10 +14784,14 @@ function tnHtmlFiltrosVentana(){
   const [desde, hasta] = tnRangoFechas();
   const encuestas = (d && d.encuestas) || [];
   const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta)).map(f=>f[2]).filter(Boolean))).sort();
-  return `<div class="tn-q-filtros">
+  const rangos = [["hoy","Hoy"],["ayer","Ayer"],["7","Últimos 7 días"],["mes","Este mes"],["mesant","Mes anterior"],["90","Últimos 90 días"],["rango","Rango"]];
+  return `<div class="qa-chips tn-q-rangos">${rangos.map(([k,l])=>`<button type="button" class="qa-chip ${TN.rango===k?"on":""}" data-qrango="${k}">${l}</button>`).join("")}
+    ${TN.rango==="rango" ? `<label class="qa-fecha">Desde <input type="date" id="tnq-desde" value="${desde}" max="${qaHoyIso()}"/></label><label class="qa-fecha">Hasta <input type="date" id="tnq-hasta" value="${hasta}" max="${qaHoyIso()}"/></label>` : ""}
+    ${TN.cargando ? `<span class="mut">⏳ Actualizando…</span>` : ""}</div>
+  <div class="tn-q-filtros">
     <label class="qa-skill">Encuesta <select id="tnq-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></label>
     <label class="qa-skill">Unidad <select id="tnq-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></label>
-    <span class="mut">Son los mismos filtros de la pestaña Qualtrics. Para cambiar el período, cerrá la ventana.</span>
+    <span class="mut">Son los mismos filtros de la pestaña Qualtrics.</span>
   </div>`;
 }
 function tnIrANotas(v){
@@ -14802,6 +14809,12 @@ function tnPintarCuartiles(){
   if(!cont) return;
   const filas = tnFilasFiltradas();
   cont.innerHTML = filas.length ? tnHtmlCuartiles(filas) : `<div class="tn-q">${tnHtmlFiltrosVentana()}<p class="mut">No hay encuestas con estos filtros.</p></div>`;
+  // v22.04: período dentro de la ventana (el mismo de la pestaña); al cambiarlo se traen los datos y se vuelve a pintar
+  const cambiarPeriodo = ()=>{ tnRender(); tnPintarCuartiles(); tnCargar().then(()=> tnPintarCuartiles()); };
+  cont.querySelectorAll("[data-qrango]").forEach(b=> b.addEventListener("click", ()=>{ TN.rango = b.dataset.qrango; cambiarPeriodo(); }));
+  const qd = cont.querySelector("#tnq-desde"), qh = cont.querySelector("#tnq-hasta");
+  if(qd) qd.addEventListener("change", ()=>{ TN.desde = qd.value; cambiarPeriodo(); });
+  if(qh) qh.addEventListener("change", ()=>{ TN.hasta = qh.value; cambiarPeriodo(); });
   const fe = cont.querySelector("#tnq-encuesta"), fu = cont.querySelector("#tnq-unidad");
   if(fe) fe.addEventListener("change", ()=>{ TN.encuesta = fe.value; TN.unidad = ""; tnRender(); tnPintarCuartiles(); });
   if(fu) fu.addEventListener("change", ()=>{ TN.unidad = fu.value; tnRender(); tnPintarCuartiles(); });
@@ -14824,7 +14837,7 @@ function tnAbrirCuartiles(){
         <div class="modal2-bar"></div>
         <div class="modal2-titlewrap">
           <h3 id="tnasesor-titulo">😊 TNPS por Asesor</h3>
-          <div class="modal2-sub">TNPS, encuestas, promotores y detractores de cada asesor, con su M2M — agrupados en 4 cuartiles (25% con mejor TNPS, siguiente 25%, y así sucesivamente) para ver de un vistazo quién está mejor o peor. Usa los filtros de Encuesta, Unidad y período de la pestaña Qualtrics.</div>
+          <div class="modal2-sub">TNPS, encuestas, promotores y detractores de cada asesor, con su M2M — agrupados en 4 cuartiles (25% con mejor TNPS, siguiente 25%, y así sucesivamente) para ver de un vistazo quién está mejor o peor.</div>
         </div>
         <button class="modal2-close" type="button" title="Cerrar" aria-label="Cerrar">✕</button>
       </div>
