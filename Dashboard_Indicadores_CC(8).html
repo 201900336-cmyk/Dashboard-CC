@@ -425,6 +425,20 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   /* A pedido de Oscar (2026-09-15): reflow del resultado en 4 columnas
      lado a lado (una por cuartil) para aprovechar el modal ahora más ancho,
      en vez de 4 tablas apiladas verticalmente. */
+  /* v22.05: antigüedad (TMO y TNPS por Asesor) */
+  .antig-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:12px 0 6px;}
+  .antig-chips-t{font-size:12px;font-weight:800;color:#3B4350;margin-right:2px;}
+  .antig-chip{border:1px solid #DADDE2;background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:11.5px;font-weight:700;color:#3B4350;cursor:pointer;}
+  .antig-chip.on{border-color:#E4032E;color:#B4021F;background:#FDECEF;}
+  .antig-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:6px 0 4px;}
+  .antig-res:empty{display:none;}
+  .antig-res-item{border:1px solid #E6E8EC;border-radius:10px;padding:7px 10px;background:#F9FAFB;display:flex;flex-direction:column;gap:2px;}
+  .antig-res-item .k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5B6472;}
+  .antig-res-item .v{font-size:12px;}
+  .antig-res-item .v b.g{color:#17733F;} .antig-res-item .v b.r{color:#B4021F;}
+  .antig-aviso{font-size:12px;color:#8A5A00;background:#FFF8E1;border:1px solid #F2D27A;border-radius:8px;padding:7px 10px;margin:6px 0;}
+  .antig-v{font-size:12px !important;}
+  .antig-desde{font-weight:500;color:#5B6472;font-size:10.5px;}
   #tmoasesor-modal .tmo-cuartil-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px;}
   #tmoasesor-modal .tmo-cuartil-block{margin-top:0;min-width:0;}
   #tmoasesor-modal .tmo-cuartil-titulo{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--gray);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
@@ -5672,12 +5686,41 @@ function asistenciaFechaCeldaAIso(v){
 // posición de columnas que asistenciaParsearMalla: 5, 8, 11... una por cada
 // grupo de 3 días) — sin parsear todavía los datos de los asesores, solo lo
 // necesario para poder comparar "qué tan actual" es cada hoja.
+// v22.05: las columnas de la malla se buscan por NOMBRE en la fila de
+// encabezados (fila 3 del Excel), no por posición: la malla nueva trae
+// "FECHA DE INGRESO" antes de WDID y eso corría todo un lugar. Si no se
+// encuentran los nombres, se usa el formato viejo (WDID, Login, Correo
+// Aliado, Nombre, Skill y los días desde la columna 6).
+function asistenciaNormEnc(v){ return String(v==null?"":v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }
+function asistenciaColumnas(aoa){
+  for(let r=0; r<Math.min(6, aoa.length); r++){
+    const enc = (aoa[r]||[]).map(asistenciaNormEnc);
+    const buscar = (nombres)=> enc.findIndex(h=> nombres.includes(h));
+    const login = buscar(["login","usuario"]), correo = buscar(["correo aliado","correo"]), nombre = buscar(["nombre"]), skill = buscar(["skill"]);
+    if(login<0 || correo<0 || nombre<0 || skill<0) continue;
+    let inicioDias = enc.findIndex((h,i)=> i>skill && h.startsWith("entrada"));
+    if(inicioDias<0) inicioDias = skill+1;
+    return { filaEnc:r, wdid: buscar(["wdid"]), login, correo, nombre, skill, ingreso: buscar(["fecha de ingreso","fecha ingreso","ingreso"]), inicioDias };
+  }
+  return { filaEnc:2, wdid:0, login:1, correo:2, nombre:3, skill:4, ingreso:-1, inicioDias:5 };
+}
+// Fecha de ingreso de una celda: fecha de Excel, número de serie o texto dd/mm/aaaa
+function asistenciaIngresoAIso(v){
+  if(v instanceof Date) return asistenciaFechaCeldaAIso(v);
+  if(typeof v==="number" && v>20000 && v<80000){ const d = new Date(Math.round((v-25569)*864e5)); return d.toISOString().slice(0,10); }
+  const t = String(v==null?"":v).trim();
+  let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(m){ const y = m[3].length===2 ? "20"+m[3] : m[3]; return `${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`; }
+  m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : "";
+}
 function asistenciaFechasDeHoja(ws){
   const aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:null, raw:true, range:0 });
   const filaFechas = aoa[1] || [];
+  const col0 = asistenciaColumnas(aoa).inicioDias;
   const fechas = [];
   for(let i=0; i<7; i++){
-    const v = filaFechas[5 + i*3];
+    const v = filaFechas[col0 + i*3];
     if(!(v instanceof Date)) break;
     fechas.push(v);
   }
@@ -5727,9 +5770,10 @@ function asistenciaElegirMejorHoja(wb){
 function asistenciaParsearHoja(ws){
   const aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:null, raw:true });
   const filaFechas = aoa[1] || [];
+  const cols = asistenciaColumnas(aoa);   // v22.05: columnas por nombre
   const fechas = [];
   const colInicioPorDia = [];
-  for(let col=5; col<filaFechas.length; col+=3){
+  for(let col=cols.inicioDias; col<filaFechas.length; col+=3){
     const iso = asistenciaFechaCeldaAIso(filaFechas[col]);
     if(!iso) break;
     fechas.push(iso);
@@ -5737,14 +5781,15 @@ function asistenciaParsearHoja(ws){
   }
   const filasPorFecha = {};
   fechas.forEach(iso=> filasPorFecha[iso] = []);
-  for(let r=3; r<aoa.length; r++){
+  for(let r=cols.filaEnc+1; r<aoa.length; r++){
     const fila = aoa[r];
     if(!fila) continue;
-    const wdid = fila[0], login = (fila[1]||"").toString().trim();
+    const wdid = cols.wdid>=0 ? fila[cols.wdid] : null, login = (fila[cols.login]||"").toString().trim();
     if((wdid===null || wdid===undefined || wdid==="") && !login) continue;
-    let correo = (fila[2]||"").toString().trim();
-    let nombre = (fila[3]||"").toString().trim();
-    const skill = (fila[4]||"").toString().trim();
+    let correo = (fila[cols.correo]||"").toString().trim();
+    let nombre = (fila[cols.nombre]||"").toString().trim();
+    const skill = (fila[cols.skill]||"").toString().trim();
+    const ingreso = cols.ingreso>=0 ? asistenciaIngresoAIso(fila[cols.ingreso]) : "";   // v22.05
     // v21.60: filas sin Correo/Nombre (bajas o promociones, según Oscar) —
     // en vez de descartarlas, se arma el correo con el Login (patrón
     // login@aliados.claro.com.hn, que cumplen ~90% de las filas completas).
@@ -5762,7 +5807,7 @@ function asistenciaParsearHoja(ws){
       const descanso = asistenciaCeldaAMinutos(fila[col+1]);
       const salida = asistenciaCeldaAMinutos(fila[col+2]);
       filasPorFecha[iso].push({
-        correo, nombre, skill, correoDeducido,
+        correo, nombre, skill, correoDeducido, ingreso,
         entradaMin: entrada.minutos, salidaMin: salida.minutos,
         descansoMin: descanso.minutos,
         estado: entrada.estado || salida.estado,
@@ -5831,9 +5876,10 @@ function parseMallaAsistenciaRows(json){
     // en el futuro se agrega, y mientras tanto pickField devuelve undefined y
     // descansoMin queda en null (igual que si Oscar no la hubiera llenado).
     const descanso = asistenciaCeldaAMinutos(pickField(r,["Descanso"]));
+    const ingresoTxt = pickField(r,["Ingreso"]);   // v22.05: fecha de ingreso (vacía en mallas viejas)
     if(!filasPorFecha[iso]) filasPorFecha[iso] = [];
     filasPorFecha[iso].push({
-      correo, nombre, skill,
+      correo, nombre, skill, ingreso: ingresoTxt ? fmtDateStr(ingresoTxt) : "",
       entradaMin: entrada.minutos, salidaMin: salida.minutos,
       descansoMin: descanso.minutos,
       estado: entrada.estado || salida.estado,
@@ -7013,7 +7059,7 @@ async function asistenciaGuardarParaTodos(){
   fechasAGuardar.forEach(iso=>{
     (asistenciaMallaData.filasPorFecha[iso]||[]).forEach(f=>{
       filas.push({
-        Fecha: iso, Correo: f.correo, Nombre: f.nombre, Skill: f.skill,
+        Fecha: iso, Correo: f.correo, Nombre: f.nombre, Skill: f.skill, Ingreso: f.ingreso || "",
         Entrada: f.entradaMin!==null ? asistenciaFmtMinutos(f.entradaMin) : (f.estado||""),
         // Bug real encontrado (2026-09-15, al revisar el Apps Script): esto
         // nunca mandaba el Descanso, así que una malla "guardada para todo el
@@ -7336,9 +7382,121 @@ let tmoAsesorUltimoCalculo = null;
 // (2026-09-28): quiere poder sacar capturas de pantalla mostrando nada más
 // que "los que están bien" o "los que están mal" sin tener que recortar la
 // imagen. Si no hay ningún cálculo todavía, no hace nada.
+/* ============================================================
+   v22.05 (2026-11-09) — ANTIGÜEDAD de los asesores (FECHA DE INGRESO de la malla)
+   ============================================================
+   La malla trae "FECHA DE INGRESO" por asesor; se guarda con la malla
+   (columna Ingreso). Aquí se arma un índice correo / login / nombre → fecha
+   de ingreso y se calcula la antigüedad a la FECHA FINAL del período que se
+   está viendo. Grupos (Oscar): 0 a 3 meses, 3 a 6 meses, 6 a 12 meses y
+   Más de 12 meses. Si un asesor no se puede cruzar con la malla, queda como
+   "Sin dato" (nunca se inventa). Lo usan "TMO por Asesor" y "TNPS por Asesor". */
+const ANTIG_GRUPOS = [
+  { k:"0-3",  label:"0 a 3 meses",     min:0,  max:3 },
+  { k:"3-6",  label:"3 a 6 meses",     min:3,  max:6 },
+  { k:"6-12", label:"6 a 12 meses",    min:6,  max:12 },
+  { k:"12+",  label:"Más de 12 meses", min:12, max:Infinity },
+];
+const ANTIG = { estado:"", indice:null, conFecha:0, total:0 };
+const ANTIG_PREFIJOS = new Set(["clarohn","clarogt","claro","hn","gt","ext","externo","usr","user"]);
+function antigNombreNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim(); }
+function antigLogin(u){
+  const partes = String(u||"").toLowerCase().split("@")[0].split(/[._-]+/).filter(Boolean);
+  while(partes.length > 1 && ANTIG_PREFIJOS.has(partes[0])) partes.shift();
+  return partes.join(".");
+}
+function antigConstruir(){
+  const malla = asistenciaMallaData || asistenciaMallaGuardada;
+  const idx = { correo:new Map(), login:new Map(), nombre:new Map() };
+  const asesores = new Map();   // correo → ingreso
+  if(malla && malla.filasPorFecha){
+    Object.keys(malla.filasPorFecha).sort().forEach(iso=>{   // la fecha más reciente gana
+      (malla.filasPorFecha[iso]||[]).forEach(f=>{
+        const correo = String(f.correo||"").toLowerCase();
+        if(!correo) return;
+        if(!asesores.has(correo) || f.ingreso) asesores.set(correo, f.ingreso || asesores.get(correo) || "");
+        if(!f.ingreso) return;
+        idx.correo.set(correo, f.ingreso);
+        idx.login.set(antigLogin(correo), f.ingreso);
+        const n = antigNombreNorm(f.nombre); if(n) idx.nombre.set(n, f.ingreso);
+      });
+    });
+  }
+  ANTIG.indice = idx;
+  ANTIG.total = asesores.size;
+  ANTIG.conFecha = Array.from(asesores.values()).filter(Boolean).length;
+}
+// Carga la malla guardada si todavía no está en memoria (una vez)
+async function antigAsegurar(){
+  if(ANTIG.estado==="ok" && ANTIG.indice) return;
+  if(!asistenciaMallaData && !asistenciaMallaGuardada){
+    try{ await asistenciaCargarMallaDirecta(); }catch(e){ console.error("Detalle técnico (antigüedad / malla):", e); }
+  }
+  antigConstruir();
+  ANTIG.estado = "ok";
+}
+// { correo, usuario, nombre } → fecha de ingreso (yyyy-MM-dd) o ""
+function antigIngreso(q){
+  const idx = ANTIG.indice; if(!idx) return "";
+  const correo = String(q.correo||"").toLowerCase();
+  if(correo && idx.correo.has(correo)) return idx.correo.get(correo);
+  for(const u of [q.correo, q.usuario]){ const l = antigLogin(u); if(l && idx.login.has(l)) return idx.login.get(l); }
+  const n = antigNombreNorm(q.nombre);
+  if(n && idx.nombre.has(n)) return idx.nombre.get(n);
+  return "";
+}
+function antigMeses(ingreso, refIso){
+  if(!ingreso || !refIso) return null;
+  const a = new Date(ingreso+"T12:00:00Z"), b = new Date(refIso+"T12:00:00Z");
+  let m = (b.getUTCFullYear()-a.getUTCFullYear())*12 + (b.getUTCMonth()-a.getUTCMonth());
+  if(b.getUTCDate() < a.getUTCDate()) m--;
+  return m < 0 ? null : m;
+}
+function antigGrupo(meses){ if(meses===null || meses===undefined) return "sin"; const g = ANTIG_GRUPOS.find(x=> meses>=x.min && meses<x.max); return g ? g.k : "sin"; }
+function antigLabel(k){ const g = ANTIG_GRUPOS.find(x=>x.k===k); return g ? g.label : "Sin dato"; }
+function antigTexto(meses){
+  if(meses===null || meses===undefined) return "Sin dato";
+  if(meses < 1) return "Menos de 1 mes";
+  if(meses < 12) return `${meses} mes${meses===1?"":"es"}`;
+  const a = Math.floor(meses/12), r = meses%12;
+  return `${a} año${a===1?"":"s"}${r?` ${r} mes${r===1?"":"es"}`:""}`;
+}
+// Chips de filtro por antigüedad (data-antig) — "actual" = clave elegida ("" = todas)
+function antigHtmlChips(actual, conteos){
+  const opc = [["","Todas"]].concat(ANTIG_GRUPOS.map(g=>[g.k, g.label]), [["sin","Sin dato"]]);
+  return `<div class="antig-chips"><span class="antig-chips-t">Antigüedad:</span>${opc.filter(([k])=> k==="" || k!=="sin" || (conteos && conteos.sin)).map(([k,l])=>`<button type="button" class="antig-chip ${actual===k?"on":""}" data-antig="${k}">${l}${conteos && k!=="" ? ` (${conteos[k]||0})` : ""}</button>`).join("")}</div>`;
+}
+// Aviso cuando la malla guardada todavía no trae fechas de ingreso
+function antigHtmlAviso(){
+  if(ANTIG.total && !ANTIG.conFecha) return `<p class="antig-aviso">La malla guardada todavía no trae FECHA DE INGRESO: sube la malla nueva (con esa columna) y guárdala para todo el equipo.</p>`;
+  if(!ANTIG.total) return `<p class="antig-aviso">No se pudo leer la malla guardada para calcular la antigüedad.</p>`;
+  return "";
+}
+
+let tmoAsesorAntig = "";   // v22.05: filtro de antigüedad ("" = todas)
 function tmoAsesorRenderResultado(){
   if(!tmoAsesorUltimoCalculo) return;
-  const { agentes, meta } = tmoAsesorUltimoCalculo;
+  const { meta } = tmoAsesorUltimoCalculo;
+  // v22.05: antigüedad de cada asesor a la fecha "Hasta" del rango
+  const refIso = (document.getElementById("tmoasesor-input-hasta")||{}).value || "";
+  const todos = tmoAsesorUltimoCalculo.agentes.map(a=>{
+    const ingreso = antigIngreso({ correo: (genesysState.usersEmailById||{})[a.userId], nombre: a.nombre });
+    const meses = antigMeses(ingreso, refIso);
+    return { ...a, ingreso, meses, antig: antigGrupo(meses) };
+  });
+  const conteos = {}; todos.forEach(a=>{ conteos[a.antig] = (conteos[a.antig]||0) + 1; });
+  const resumenAntig = ANTIG_GRUPOS.concat([{ k:"sin", label:"Sin dato" }]).map(g=>{
+    const del = todos.filter(a=> a.antig===g.k);
+    if(!del.length) return "";
+    const cont = del.reduce((s,a)=>s+a.contestadas,0);
+    const tmo = cont ? del.reduce((s,a)=>s+a.tmoProm*a.contestadas,0)/cont : null;
+    return `<div class="antig-res-item"><span class="k">${g.label}</span><span class="v">${del.length} asesor${del.length===1?"":"es"} · TMO <b>${tmo===null?"—":tmoFmtMMSS(tmo)}</b></span></div>`;
+  }).join("");
+  // dentro del grupo elegido se vuelven a repartir los cuartiles
+  let agentes = todos.filter(a=> !tmoAsesorAntig || a.antig===tmoAsesorAntig).sort((a,b)=> a.tmoProm - b.tmoProm);
+  const nA = agentes.length;
+  agentes = agentes.map((a,i)=> ({ ...a, cuartil: Math.min(4, Math.floor(i/nA*4)+1) }));
+  const cabeceraAntig = antigHtmlChips(tmoAsesorAntig, conteos) + antigHtmlAviso() + `<div class="antig-res">${resumenAntig}</div>`;
   const chks = Array.from(document.querySelectorAll(".tmoasesor-cuartil-chk"));
   const cuartilesVisibles = chks.length ? new Set(chks.filter(c=>c.checked).map(c=>Number(c.value))) : new Set([1,2,3,4]);
   const resultadoEl = document.getElementById("tmoasesor-resultado");
@@ -7361,14 +7519,17 @@ function tmoAsesorRenderResultado(){
             <div class="tmo-card-body">
               <div class="tmo-stat"><span class="k">Contestadas</span><span class="v">${fmtNum(a.contestadas)}</span></div>
               <div class="tmo-stat"><span class="k">TMO</span><span class="v">${tmoFmtMMSS(a.tmoProm)}</span></div>
+              <div class="tmo-stat" style="grid-column:1 / -1;"><span class="k">Antigüedad</span><span class="v antig-v">${antigTexto(a.meses)}${a.ingreso?` <span class="antig-desde">(ingreso ${fmtFechaGenesys(a.ingreso)})</span>`:""}</span></div>
             </div>
           </div>`;
         }).join("")}
         </div>
       </div>`);
   }
+  const conectarAntig = ()=> resultadoEl.querySelectorAll("[data-antig]").forEach(b=> b.addEventListener("click", ()=>{ tmoAsesorAntig = b.dataset.antig; tmoAsesorRenderResultado(); }));
   if(!bloques.length){
-    resultadoEl.innerHTML = `<p class="erlang-hint">No hay ningún cuartil marcado — activá al menos uno arriba para ver asesores.</p>`;
+    resultadoEl.innerHTML = cabeceraAntig + (nA ? `<p class="erlang-hint">No hay ningún cuartil marcado — activá al menos uno arriba para ver asesores.</p>` : `<p class="erlang-hint">Ningún asesor en ese grupo de antigüedad.</p>`);
+    conectarAntig();
     return;
   }
   // Ancho de columna dinámico: con menos de 4 cuartiles marcados, cada uno
@@ -7377,7 +7538,8 @@ function tmoAsesorRenderResultado(){
   // CSS normal sin forzar nada por inline, para no romper el apilado a 2/1
   // columnas en pantallas chicas que ya maneja el media query existente.
   const styleAttr = bloques.length < 4 ? ` style="grid-template-columns:repeat(${bloques.length},1fr);"` : "";
-  resultadoEl.innerHTML = `<div class="tmo-cuartil-grid"${styleAttr}>${bloques.join("")}</div>`;
+  resultadoEl.innerHTML = cabeceraAntig + `<div class="tmo-cuartil-grid"${styleAttr}>${bloques.join("")}</div>`;
+  conectarAntig();
 }
 document.getElementById("tmoasesor-cuartil-grid").addEventListener("change", (e)=>{
   if(e.target.classList.contains("tmoasesor-cuartil-chk")) tmoAsesorRenderResultado();
@@ -7463,6 +7625,8 @@ async function tmoAsesorCalcular(){
     // filtro (sin tener que volver a consultar Genesys) — así puede sacar
     // capturas limpias de nada más "los que están bien" o "los que están mal".
     tmoAsesorUltimoCalculo = { agentes, meta };
+    statusEl.textContent = "Cruzando con la fecha de ingreso de la malla...";
+    try{ await antigAsegurar(); }catch(e){ /* sin antigüedad: los asesores quedan como "Sin dato" */ }
     const cuartilesConDatos = new Set(agentes.map(a=>a.cuartil));
     const grid = document.getElementById("tmoasesor-cuartil-grid");
     grid.innerHTML = [1,2,3,4].filter(q=>cuartilesConDatos.has(q)).map(q=>
@@ -9259,7 +9423,10 @@ async function genesysEnsureUsersLoaded(userIds){
     const qs = chunk.map(id=>`id=${encodeURIComponent(id)}`).join("&");
     try{
       const res = await genesysFetch(`/api/v2/users?${qs}&pageSize=100`);
-      (res.entities||[]).forEach(u=>{ genesysState.usersById[u.id] = u.name || u.username || u.id; });
+      (res.entities||[]).forEach(u=>{
+        genesysState.usersById[u.id] = u.name || u.username || u.id;
+        (genesysState.usersEmailById = genesysState.usersEmailById || {})[u.id] = String(u.email || u.username || "").toLowerCase();   // v22.05: para la antigüedad
+      });
     }catch(e){ if(e.message!=="NOT_SIGNED_IN") console.error(e); }
     // Cualquier id que no haya venido en la respuesta (ej. usuario eliminado
     // de Genesys pero con conversaciones históricas) igual queda cacheado
@@ -14407,7 +14574,7 @@ a.length>D&&(D=a.length,p=0|1.25*D+7200,r=new Int8Array(p));a=u.lame_encode_buff
 const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"resumen",
   datos:null, clave:"", cargando:false, error:"", detGrupo:"1", detBuscar:"", minAsesor:3, ordenAsesor:"n",
   detAsesor:"", detAsesorNombre:"", detSkill:"", volverA:"",   // v21.98: del top / lista de asesores al detalle
-  cuSkill:"", cuartiles:[1,2,3,4],   // v22.00: cuartiles de TNPS por asesor (como el TMO por Asesor)
+  cuSkill:"", cuartiles:[1,2,3,4], antig:"",   // v22.05: + filtro de antigüedad   // v22.00: cuartiles de TNPS por asesor (como el TMO por Asesor)
   detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
   sel:"" };                  // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
@@ -14718,18 +14885,29 @@ function tnHtmlTops(filas){
    mejor a peor TNPS (empate: más encuestas) y se reparten en 4 cuartiles.
    Cada tarjeta compara al asesor contra el TNPS de lo filtrado. */
 const TN_CUARTIL_LABELS = { 1:"Cuartil 1 — 25% mejor TNPS", 2:"Cuartil 2", 3:"Cuartil 3", 4:"Cuartil 4 — 25% TNPS más bajo" };
-function tnCuartilesDe(filas, skill){
+function tnCuartilesDe(filas, skill, conAntig){
   const delSkill = skill==="__todos" ? filas : filas.filter(f=> tnSkillDe(f)===skill);
   const tot = tnCalc(delSkill.reduce((a,f)=>a+f[9],0), delSkill.reduce((a,f)=>a+f[10],0), delSkill.reduce((a,f)=>a+f[11],0));
-  let ag = tnAgrupar(delSkill, f=>f[6], f=>f[7] || f[6]).filter(x=> x.n >= TN.minAsesor && x.tnps!==null);
+  const refIso = tnRangoFechas()[1];
+  let todos = tnAgrupar(delSkill, f=>f[6], f=>f[7] || f[6]);
+  todos.forEach(a=>{ a.ingreso = antigIngreso({ usuario: a.k, nombre: a.nombre }); a.meses = antigMeses(a.ingreso, refIso); a.antig = antigGrupo(a.meses); });
+  let ag = todos.filter(x=> x.n >= TN.minAsesor && x.tnps!==null && (!conAntig || !TN.antig || x.antig===TN.antig));
   ag.sort((a,b)=> (b.tnps-a.tnps) || (b.n-a.n));
   const n = ag.length;
   ag = ag.map((a,i)=> Object.assign(a, { cuartil: Math.min(4, Math.floor(i/n*4)+1) }));
-  return { asesores: ag, tot };
+  return { asesores: ag, tot, todos };
 }
 function tnHtmlCuartiles(filas){
   if(!filas.length) return "";
-  const { asesores, tot } = tnCuartilesDe(filas, "__todos");
+  const { asesores, tot, todos } = tnCuartilesDe(filas, "__todos", true);
+  // v22.05: antigüedad — conteo de asesores por grupo y TNPS de cada grupo (todas sus encuestas)
+  const conteosAntig = {}; todos.forEach(a=>{ conteosAntig[a.antig] = (conteosAntig[a.antig]||0) + 1; });
+  const resumenAntig = ANTIG_GRUPOS.concat([{ k:"sin", label:"Sin dato" }]).map(g=>{
+    const del = todos.filter(a=> a.antig===g.k);
+    if(!del.length) return "";
+    const t = tnCalc(del.reduce((s,a)=>s+a.d,0), del.reduce((s,a)=>s+a.p,0), del.reduce((s,a)=>s+a.pr,0));
+    return `<div class="antig-res-item"><span class="k">${g.label}</span><span class="v">${del.length} asesor${del.length===1?"":"es"} · ${t.n} enc. · TNPS <b class="${t.tnps<0?"r":t.tnps>=50?"g":""}">${t.tnps===null?"—":tnFmt(t.tnps)+"%"}</b></span></div>`;
+  }).join("");
   // v22.01: M2M de cada asesor (mismos filtros, período anterior: en "Este mes" son los mismos días del mes anterior)
   const pr = tnRangoPrevio();
   const prevPorAsesor = new Map(pr ? tnAgrupar(tnFilasPrevias(), f=>f[6]).map(g=>[g.k, g]) : []);
@@ -14746,7 +14924,7 @@ function tnHtmlCuartiles(filas){
   const visibles = new Set(TN.cuartiles);
   const nombreSkill = [TN.encuesta || "Todas las encuestas", TN.unidad || "todas las unidades"].join(" · ");
   let cuerpo;
-  if(!asesores.length) cuerpo = `<p class="mut" style="margin:10px 0 0;">Ningún asesor de ${qaEsc(nombreSkill)} llega al mínimo de ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"} en este período.</p>`;
+  if(!asesores.length) cuerpo = `<p class="mut" style="margin:10px 0 0;">Ningún asesor${TN.antig?` de ${antigLabel(TN.antig).toLowerCase()}`:""} llega al mínimo de ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"} en este período.</p>`;
   else {
     const bloques = [1,2,3,4].filter(q=> visibles.has(q)).map(q=>{
       const lista = asesores.filter(a=> a.cuartil===q);
@@ -14760,6 +14938,7 @@ function tnHtmlCuartiles(filas){
             <div class="tn-q-stat"><span class="k">Encuestas</span><span class="v">${a.n}</span></div>
             <div class="tn-q-stat"><span class="k">Promotores</span><span class="v">${tnLinkNotas(a.pr, a.k, a.nombre, "3", "", "g")}</span></div>
             <div class="tn-q-stat"><span class="k">Detractores</span><span class="v">${tnLinkNotas(a.d, a.k, a.nombre, "1", "", "r")}</span></div>
+            <div class="tn-q-stat" style="grid-column:1 / -1;"><span class="k">Antigüedad</span><span class="v antig-v">${antigTexto(a.meses)}${a.ingreso?` <span class="antig-desde">(ingreso ${tnFecha(a.ingreso)})</span>`:""}</span></div>
           </div>${chipM2M(a)}</div>`;
       }).join("")}</div></div>`;
     }).filter(Boolean);
@@ -14771,6 +14950,7 @@ function tnHtmlCuartiles(filas){
   return `<div class="tn-q">
     <div class="tn-q-resumen"><span><b>${qaEsc(nombreSkill)}</b> · ${tnFecha(qDesde)}${qDesde!==qHasta?" al "+tnFecha(qHasta):""}</span><span>${tot.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
     ${tnHtmlFiltrosVentana()}
+    ${antigHtmlChips(TN.antig, conteosAntig)}${antigHtmlAviso()}<div class="antig-res">${resumenAntig}</div>
     <div class="tn-q-filtro"><span class="mut">Mostrar (para capturas):</span>${[1,2,3,4].map(q=>`<label class="tn-q-chk"><input type="checkbox" data-cuartil="${q}" ${visibles.has(q)?"checked":""}/> Cuartil ${q}</label>`).join("")}<span class="mut">· Solo asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}.</span></div>
     ${cuerpo}
   </div>`;
@@ -14815,6 +14995,7 @@ function tnPintarCuartiles(){
   const qd = cont.querySelector("#tnq-desde"), qh = cont.querySelector("#tnq-hasta");
   if(qd) qd.addEventListener("change", ()=>{ TN.desde = qd.value; cambiarPeriodo(); });
   if(qh) qh.addEventListener("change", ()=>{ TN.hasta = qh.value; cambiarPeriodo(); });
+  cont.querySelectorAll("[data-antig]").forEach(b=> b.addEventListener("click", ()=>{ TN.antig = b.dataset.antig; tnPintarCuartiles(); }));
   const fe = cont.querySelector("#tnq-encuesta"), fu = cont.querySelector("#tnq-unidad");
   if(fe) fe.addEventListener("change", ()=>{ TN.encuesta = fe.value; TN.unidad = ""; tnRender(); tnPintarCuartiles(); });
   if(fu) fu.addEventListener("change", ()=>{ TN.unidad = fu.value; tnRender(); tnPintarCuartiles(); });
@@ -14852,6 +15033,7 @@ function tnAbrirCuartiles(){
   }
   tnPintarCuartiles();
   ov.style.display = "flex";
+  if(ANTIG.estado!=="ok") antigAsegurar().then(()=> tnPintarCuartiles());   // v22.05: antigüedad desde la malla
   const cerrar = ov.querySelector(".modal2-close"); if(cerrar) cerrar.focus();
 }
 
@@ -15063,10 +15245,10 @@ function tnExcel(){
     x.pro.forEach((a,i)=> topsFilas.push([x.skill,"Top promotores",i+1,a.nombre,a.k,a.d,a.pr,a.n,a.tnps]));
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(topsFilas), "Top por skill");
-  const cuFilas = [["Skill","Cuartil","Asesor","Usuario","Encuestas","Promotores","Pasivos","Detractores","TNPS","TNPS del skill"]];
+  const cuFilas = [["Skill","Cuartil","Asesor","Usuario","Encuestas","Promotores","Pasivos","Detractores","TNPS","TNPS del skill","Fecha de ingreso","Antigüedad"]];
   TN_SKILLS.map(x=>x[0]).forEach(sk=>{
     const { asesores, tot } = tnCuartilesDe(filas, sk);
-    asesores.forEach(a=> cuFilas.push([sk, a.cuartil, a.nombre, a.k, a.n, a.pr, a.p, a.d, a.tnps, tot.tnps]));
+    asesores.forEach(a=> cuFilas.push([sk, a.cuartil, a.nombre, a.k, a.n, a.pr, a.p, a.d, a.tnps, tot.tnps, a.ingreso||"", a.meses===null||a.meses===undefined ? "Sin dato" : antigLabel(a.antig)]));
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cuFilas), "Cuartiles");
   XLSX.writeFile(wb, `TNPS_${desde}_${hasta}.xlsx`);
