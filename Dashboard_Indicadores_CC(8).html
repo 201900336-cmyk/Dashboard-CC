@@ -407,7 +407,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
      skill y un rango de fechas elegidos. Mismos estilos base que los demás
      modales de Genesys (Calculadora/Pronóstico/Asistencia). */
   #tmoasesor-modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:110;align-items:center;justify-content:center;}
-  #tmoasesor-modal{background:#fff;border-radius:16px;padding:22px 24px;width:1160px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.22),0 0 0 1px rgba(228,3,46,.14);}
+  #tmoasesor-modal{background:#fff;border-radius:16px;padding:22px 24px;width:1720px;max-width:96vw;max-height:94vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.22),0 0 0 1px rgba(228,3,46,.14);}
   #tmoasesor-modal .justif-sub{font-size:11.5px;color:var(--gray);margin:0 0 14px;}
   #tmoasesor-modal label{display:block;font-size:12px;font-weight:700;color:var(--black);margin:10px 0 4px;}
   #tmoasesor-modal select,#tmoasesor-modal input[type="date"],#tmoasesor-modal input[type="number"],#tmoasesor-modal input[type="text"]{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;font-family:inherit;box-sizing:border-box;background:#fff;}
@@ -439,6 +439,119 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .antig-aviso{font-size:12px;color:#8A5A00;background:#FFF8E1;border:1px solid #F2D27A;border-radius:8px;padding:7px 10px;margin:6px 0;}
   .antig-v{font-size:12px !important;}
   .antig-desde{font-weight:500;color:#5B6472;font-size:10.5px;}
+  /* v22.07 (2026-11-10): "TMO por Asesor" y "TNPS por Asesor" con el mismo
+     diseño (opción 3 que eligió Oscar): ventana más ancha, filtros en una
+     línea, resumen del equipo + gráfica por antigüedad con línea de
+     referencia, y cuartiles con la casilla en el encabezado de cada columna.
+     Las clases .pa- ("por asesor") las usan las dos ventanas. */
+  :is(#tmoasesor-modal,#tnasesor-modal) .modal2-hero{position:sticky;top:-22px;z-index:6;background:#fff;margin-bottom:0;}
+  .pa-barra{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;margin:0 -24px 16px;padding:13px 24px 15px;background:#F6F7F8;border-bottom:1px solid var(--border);}
+  .pa-campo{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .pa-campo-sel{flex:0 1 220px;}
+  .pa-campo-fecha{flex:0 1 165px;}
+  :is(#tmoasesor-modal,#tnasesor-modal) .pa-campo > label,.pa-lbl{display:block;margin:0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#5B6472;}
+  :is(#tmoasesor-modal,#tnasesor-modal) .pa-campo select,:is(#tmoasesor-modal,#tnasesor-modal) .pa-campo input[type="date"]{width:100%;height:42px;padding:0 10px;border:1px solid #C9CDD3;border-radius:8px;font:inherit;font-size:13.5px;font-weight:600;color:var(--black);background:#fff;box-sizing:border-box;}
+  :is(#tmoasesor-modal,#tnasesor-modal) .pa-campo input[type="date"][readonly]{background:#EEF0F3;color:#5B6472;}
+  .pa-seg{display:flex;flex-wrap:wrap;border:1px solid #C9CDD3;border-radius:8px;overflow:hidden;background:#fff;}
+  :is(#tmoasesor-modal,#tnasesor-modal) .pa-seg label{position:relative;display:block;margin:0;padding:0;font-size:13px;font-weight:600;color:var(--black);cursor:pointer;border-left:1px solid #C9CDD3;}
+  :is(#tmoasesor-modal,#tnasesor-modal) .pa-seg label:first-child{border-left:0;}
+  .pa-seg label span{display:flex;align-items:center;height:40px;padding:0 14px;white-space:nowrap;}
+  .pa-seg input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;}
+  .pa-seg input:checked + span{background:var(--black);color:#fff;font-weight:700;}
+  .pa-seg input:focus-visible + span{outline:2px solid #1D4ED8;outline-offset:-2px;}
+  .pa-seg button{height:40px;margin:0;padding:0 13px;border:0;border-left:1px solid #C9CDD3;background:#fff;font:inherit;font-size:13px;font-weight:600;color:var(--black);cursor:pointer;white-space:nowrap;}
+  .pa-seg button:first-child{border-left:0;}
+  .pa-seg button.on{background:var(--black);color:#fff;font-weight:700;}
+  .pa-seg button:focus-visible{outline:2px solid #1D4ED8;outline-offset:-2px;}
+  .pa-barra .pa-calcular{height:42px;padding:0 28px;border-radius:21px;font-size:13.5px;}
+  .pa-metas-btn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 4px;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--red-dark);cursor:pointer;}
+  .pa-metas-btn:hover{text-decoration:underline;}
+  .pa-metas{margin:-4px 0 16px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#FBFBFC;}
+  .pa-nota{margin-left:auto;align-self:center;font-size:12px;color:#5B6472;}
+  #tmoasesor-modal .pa-hint{margin:-8px 0 12px;}
+  .pa-vacio{font-size:13px;color:#5B6472;margin:10px 0 0;}
+  .pa-top{display:flex;flex-wrap:wrap;align-items:stretch;gap:16px;}
+  .pa-equipo{flex:1 1 420px;min-width:0;box-sizing:border-box;border:1px solid var(--border);border-radius:14px;padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+  .pa-eq-k{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#5B6472;}
+  .pa-eq-fila{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;}
+  .pa-eq-num{font-size:68px;font-weight:800;letter-spacing:-.03em;line-height:.95;color:var(--black);}
+  .pa-eq-num.crit{color:#B4021F;} .pa-eq-num.warn{color:#7A5600;} .pa-eq-num.ok{color:#166534;}
+  .pa-eq-lado{display:flex;flex-direction:column;gap:2px;}
+  .pa-eq-delta{font-size:15px;font-weight:800;color:#3B4350;}
+  .pa-eq-delta.crit{color:#B4021F;} .pa-eq-delta.warn{color:#7A5600;} .pa-eq-delta.ok{color:#166534;}
+  .pa-eq-meta{font-size:14px;color:#3B4350;}
+  .pa-dist{display:flex;flex-direction:column;gap:7px;}
+  .pa-dist-t{font-size:12.5px;font-weight:700;color:#3B4350;}
+  .pa-dist-bar{display:flex;gap:2px;height:16px;border-radius:8px;overflow:hidden;background:#EEF0F3;}
+  .pa-dist-bar i{display:block;height:100%;}
+  .pa-dist-bar i.ok{background:#1E9E4B;} .pa-dist-bar i.warn{background:#E0A100;} .pa-dist-bar i.crit{background:#E4032E;}
+  .pa-dist-ley{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:13px;color:#3B4350;}
+  .pa-dist-ley b.ok{color:#166534;} .pa-dist-ley b.warn{color:#7A5600;} .pa-dist-ley b.crit{color:#B4021F;}
+  .pa-eq-pie{display:flex;flex-wrap:wrap;gap:10px 34px;margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+  .pa-eq-pie .k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#5B6472;}
+  .pa-eq-pie .v{font-size:22px;font-weight:800;line-height:1.2;}
+  .pa-eq-pie .v.t{font-size:15px;font-weight:700;line-height:1.75;}
+  .pa-graf{flex:1.7 1 560px;min-width:0;box-sizing:border-box;border:1px solid var(--border);border-radius:14px;padding:16px 18px 14px;}
+  .pa-graf-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:0 4px;}
+  .pa-graf-h h4{display:inline;margin:0 10px 0 0;font-size:16px;font-weight:800;}
+  .pa-graf-h .a{font-size:13px;color:#5B6472;}
+  .pa-todas{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 14px;border-radius:20px;border:2px solid #E1E4E8;background:#fff;color:#3B4350;font:inherit;font-size:13px;font-weight:800;cursor:pointer;}
+  .pa-todas.on{border-color:var(--red);background:#FDECEF;color:#B4021F;}
+  .pa-eje,.pa-fila{display:grid;grid-template-columns:130px minmax(0,1fr) 64px var(--pa-n,96px);gap:12px;padding:0 10px;box-sizing:border-box;}
+  .pa-eje{margin-top:10px;}
+  .pa-eje .t{position:relative;height:24px;}
+  .pa-eje .t span{position:absolute;top:0;transform:translateX(-50%);padding:3px 9px;border-radius:10px;background:var(--black);color:#fff;font-size:11.5px;font-weight:700;white-space:nowrap;}
+  .pa-fila{align-items:center;width:100%;min-height:44px;border:0;border-radius:8px;background:transparent;font:inherit;color:var(--black);cursor:pointer;text-align:left;}
+  .pa-fila:hover{background:#F6F7F8;}
+  .pa-fila.on{background:#FDECEF;box-shadow:inset 0 0 0 2px var(--red);}
+  .pa-fila:disabled{cursor:default;background:transparent;}
+  .pa-fila.vacia .l,.pa-fila.vacia .v,.pa-fila.vacia .n{color:#8A919C;}
+  .pa-fila .l{font-size:13.5px;font-weight:700;}
+  .pa-fila .t{position:relative;display:block;height:18px;background:#EEF0F3;border-radius:4px;}
+  .pa-fila .t i{position:absolute;top:0;bottom:0;border-radius:4px;background:#6B7482;}
+  .pa-fila .t i.ok{background:#1E9E4B;} .pa-fila .t i.warn{background:#E0A100;} .pa-fila .t i.crit{background:#E4032E;} .pa-fila .t i.sin{background:#8D95A0;}
+  .pa-fila .t u{position:absolute;top:-13px;bottom:-13px;width:2px;margin-left:-1px;background:var(--black);}
+  .pa-fila .t s{position:absolute;top:-13px;bottom:-13px;width:1px;background:#9AA1AB;}
+  .pa-fila .v{font-size:17px;font-weight:800;text-align:right;white-space:nowrap;}
+  .pa-fila .v.ok{color:#166534;} .pa-fila .v.warn{color:#7A5600;} .pa-fila .v.crit{color:#B4021F;}
+  .pa-fila .n{font-size:12.5px;color:#5B6472;text-align:right;white-space:nowrap;}
+  .pa-cu-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;margin:24px 0 12px;}
+  .pa-cu-h h4{display:inline;margin:0 10px 0 0;font-size:16px;font-weight:800;}
+  .pa-cu-h .a{font-size:13px;color:#5B6472;}
+  .pa-cu-ocultos{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:#5B6472;}
+  .pa-cu-ocultos button{border:1px dashed #8A919C;background:#fff;border-radius:16px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:#3B4350;cursor:pointer;}
+  .pa-cu-ocultos button:hover{border-color:var(--red);color:#B4021F;}
+  .pa-cu-grid{display:grid;grid-template-columns:repeat(var(--pa-cols,4),minmax(0,1fr));gap:16px;}
+  .pa-cu-col{min-width:0;}
+  .pa-cu-t{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:0 12px;margin-bottom:10px;background:#F6F7F8;border:1px solid var(--border);border-radius:10px;}
+  :is(#tmoasesor-modal,#tnasesor-modal) .pa-cu-t label{display:flex;align-items:center;gap:9px;flex:1;min-width:0;min-height:44px;margin:0;font-size:13.5px;font-weight:800;color:var(--black);cursor:pointer;}
+  .pa-cu-t input{width:18px;height:18px;margin:0;accent-color:var(--red);flex-shrink:0;}
+  .pa-cu-t .x{font-weight:600;color:#5B6472;}
+  .pa-cu-t .c{font-size:12.5px;font-weight:700;color:#5B6472;white-space:nowrap;}
+  .pa-cu-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;}
+  .pa-card{background:#fff;border:1px solid var(--border);border-top:3px solid #C9CDD3;border-radius:10px;padding:10px 12px 11px;min-width:0;}
+  .pa-card.ok{border-top-color:#1E9E4B;} .pa-card.warn{border-top-color:#C98A00;} .pa-card.crit{border-top-color:#B4021F;}
+  .pa-card-nom{font-size:13px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pa-card-fila{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
+  .pa-card-num{font-size:23px;font-weight:800;letter-spacing:-.01em;line-height:1;}
+  .pa-card-sec{font-size:12.5px;color:#5B6472;white-space:nowrap;}
+  .pa-card-chips{margin-top:7px;}
+  .pa-chip{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;background:#EEF0F2;color:#3B4350;border:1px solid #DADDE2;}
+  .pa-chip.ok{background:#E3F4E9;color:#166534;border-color:#A9DDB9;}
+  .pa-chip.warn{background:#FBF0D0;color:#7A5600;border-color:#E8CE85;}
+  .pa-chip.crit{background:#FDE3E8;color:#B4021F;border-color:#F3A8B5;}
+  .pa-card-det{margin-top:8px;font-size:12.5px;color:#5B6472;line-height:1.45;}
+  .pa-card-det b{color:var(--black);}
+  .pa-card-det .ing{font-size:12px;}
+  .pa-card-det .pd{display:flex;flex-wrap:wrap;gap:0 14px;}
+  .pa-card-det .pd span{white-space:nowrap;}
+  .pa-card .tn-q-m2m{font-size:11.5px;margin-top:8px;}
+  @media (max-width:1100px){ .pa-cu-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));} }
+  @media (max-width:640px){
+    .pa-eje,.pa-fila{grid-template-columns:104px minmax(0,1fr) 58px;}
+    .pa-fila .n,.pa-eje > :last-child{display:none;}
+    .pa-eq-num{font-size:52px;}
+  }
   #tmoasesor-modal .tmo-cuartil-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px;}
   #tmoasesor-modal .tmo-cuartil-block{margin-top:0;min-width:0;}
   #tmoasesor-modal .tmo-cuartil-titulo{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--gray);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
@@ -940,7 +1053,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-herr{display:flex;justify-content:flex-end;gap:8px;margin:-4px 0 12px;}
   .tn-tool{font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;}
   #tnasesor-modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:110;align-items:center;justify-content:center;}
-  #tnasesor-modal{--qa-ink:#1F2430;--qa-mut:#5B6472;--qa-line:#E6E8EC;background:#fff;border-radius:16px;padding:22px 24px;width:1160px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.22),0 0 0 1px rgba(228,3,46,.14);color:var(--qa-ink);}
+  #tnasesor-modal{--qa-ink:#1F2430;--qa-mut:#5B6472;--qa-line:#E6E8EC;background:#fff;border-radius:16px;padding:22px 24px;width:1720px;max-width:96vw;max-height:94vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.22),0 0 0 1px rgba(228,3,46,.14);color:var(--qa-ink);}
   #tnasesor-modal .mut{color:var(--qa-mut);}
   #tnasesor-modal .r{color:#B4021F;} #tnasesor-modal .g{color:#17733F;}
   .tn-q-resumen{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;margin:14px 0 4px;padding:9px 12px;background:#F6F7F9;border-radius:10px;}
@@ -1628,45 +1741,37 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div class="modal2-bar"></div>
       <div class="modal2-titlewrap">
         <h3>⏱️ TMO por Asesor</h3>
-        <div class="modal2-sub">TMO promedio y llamadas contestadas de cada asesor de un skill, en el rango de fechas que elijas — agrupados en 4 cuartiles (25% más rápido, siguiente 25%, y así sucesivamente) para ver de un vistazo quién está mejor o peor posicionado frente a la meta.</div>
+        <div class="modal2-sub">Primero el resumen del equipo y la comparación por antigüedad. Abajo, cada asesor en su cuartil (25% más rápidos, siguiente 25%, y así sucesivamente).</div>
       </div>
       <button class="modal2-close" type="button" onclick="closeTmoAsesorModal()" title="Cerrar" aria-label="Cerrar">✕</button>
     </div>
-    <div class="erlang-fila">
-      <div><label>Skill</label><select id="tmoasesor-input-categoria"></select></div>
-    </div>
-    <div class="erlang-modo">
-      <label><input type="radio" name="tmoasesor-periodo" value="estemes" checked/> 📅 Este mes (días transcurridos)</label>
-      <label><input type="radio" name="tmoasesor-periodo" value="mesanterior"/> 🗓️ Mes anterior (completo)</label>
-      <label><input type="radio" name="tmoasesor-periodo" value="personalizado"/> ✏️ Rango personalizado</label>
-    </div>
-    <div class="erlang-fila" style="margin-top:10px;">
-      <div><label id="tmoasesor-label-desde">Desde</label><input type="date" id="tmoasesor-input-desde" readonly/></div>
-      <div><label id="tmoasesor-label-hasta">Hasta</label><input type="date" id="tmoasesor-input-hasta" readonly/></div>
-    </div>
-    <p class="erlang-hint">El rango máximo de una sola vez es de 92 días (~3 meses) — para períodos más largos, consultá por partes.</p>
-    <details class="modal-details" style="margin-top:12px;">
-      <summary>🎯 Metas de TMO por skill (compartidas para todo el equipo)</summary>
-      <div style="margin-top:8px;">
-        <p class="erlang-hint" id="tmoasesor-meta-actual" style="margin:0 0 8px;">—</p>
-        <div class="tmo-meta-row">
-          <div><label>Nueva meta para este skill (mm:ss)</label><input type="text" id="tmoasesor-input-meta" placeholder="ej. 06:30"/></div>
-          <div><label>Código (4 dígitos)</label><input type="text" id="tmoasesor-input-codigo" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="••••" style="letter-spacing:.3em;font-weight:700;max-width:90px;"/></div>
-          <button class="btn-outline" type="button" id="tmoasesor-meta-guardar">💾 Guardar para todo el equipo</button>
+    <!-- v22.07: filtros en una sola línea (Skill, período, fechas, Calcular) -->
+    <div class="pa-barra">
+      <div class="pa-campo pa-campo-sel"><label for="tmoasesor-input-categoria">Skill</label><select id="tmoasesor-input-categoria"></select></div>
+      <div class="pa-campo">
+        <span class="pa-lbl" id="tmoasesor-label-periodo">Período</span>
+        <div class="pa-seg" role="radiogroup" aria-labelledby="tmoasesor-label-periodo">
+          <label><input type="radio" name="tmoasesor-periodo" value="estemes" checked/><span>Este mes</span></label>
+          <label><input type="radio" name="tmoasesor-periodo" value="mesanterior"/><span>Mes anterior</span></label>
+          <label><input type="radio" name="tmoasesor-periodo" value="personalizado"/><span>Rango de fechas</span></label>
         </div>
-        <div class="justif-status" id="tmoasesor-meta-status"></div>
       </div>
-    </details>
-    <div class="modal-actions" style="margin-top:14px;">
-      <button class="btn-outline" id="tmoasesor-cancel">Cerrar</button>
-      <button class="btn-update" id="tmoasesor-calcular">Calcular</button>
+      <div class="pa-campo pa-campo-fecha"><label id="tmoasesor-label-desde" for="tmoasesor-input-desde">Desde</label><input type="date" id="tmoasesor-input-desde" readonly/></div>
+      <div class="pa-campo pa-campo-fecha"><label id="tmoasesor-label-hasta" for="tmoasesor-input-hasta">Hasta</label><input type="date" id="tmoasesor-input-hasta" readonly/></div>
+      <button class="btn-update pa-calcular" type="button" id="tmoasesor-calcular">Calcular</button>
+      <button class="pa-metas-btn" type="button" id="tmoasesor-metas-toggle" aria-expanded="false" aria-controls="tmoasesor-metas-panel">🎯 Metas de TMO por skill</button>
+    </div>
+    <p class="erlang-hint pa-hint" id="tmoasesor-hint-rango" style="display:none;">El rango máximo de una sola vez es de 92 días (~3 meses) — para períodos más largos, consultá por partes.</p>
+    <div class="pa-metas" id="tmoasesor-metas-panel" hidden>
+      <p class="erlang-hint" id="tmoasesor-meta-actual" style="margin:0 0 8px;">—</p>
+      <div class="tmo-meta-row">
+        <div><label>Nueva meta para este skill (mm:ss)</label><input type="text" id="tmoasesor-input-meta" placeholder="ej. 06:30"/></div>
+        <div><label>Código (4 dígitos)</label><input type="text" id="tmoasesor-input-codigo" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="••••" style="letter-spacing:.3em;font-weight:700;max-width:90px;"/></div>
+        <button class="btn-outline" type="button" id="tmoasesor-meta-guardar">💾 Guardar para todo el equipo</button>
+      </div>
+      <div class="justif-status" id="tmoasesor-meta-status"></div>
     </div>
     <div class="justif-status" id="tmoasesor-modal-status"></div>
-    <div class="erlang-resumen" id="tmoasesor-resumen" style="display:none;"></div>
-    <div id="tmoasesor-cuartil-filtro" style="display:none;margin-top:14px;">
-      <label>Mostrar cuartiles (para capturas — desmarcá los que no querés que salgan)</label>
-      <div class="exportcolas-check-grid" id="tmoasesor-cuartil-grid"></div>
-    </div>
     <div id="tmoasesor-resultado"></div>
   </div>
 </div>
@@ -7246,6 +7351,9 @@ const TMO_ASESOR_MAX_DIAS_RANGO = 92; // ~3 meses — una sola consulta agrupada
 
 function tmoAsesorActualizarPeriodo(){
   const modo = document.querySelector('input[name="tmoasesor-periodo"]:checked').value;
+  // v22.07: el aviso del máximo de días solo sale con "Rango de fechas"
+  const hintRango = document.getElementById("tmoasesor-hint-rango");
+  if(hintRango) hintRango.style.display = modo === "personalizado" ? "block" : "none";
   const desdeInput = document.getElementById("tmoasesor-input-desde");
   const hastaInput = document.getElementById("tmoasesor-input-hasta");
   if(modo === "personalizado"){
@@ -7294,8 +7402,7 @@ function openTmoAsesorModal(){
   document.getElementById("tmoasesor-meta-status").textContent = "";
   document.getElementById("tmoasesor-modal-status").className = "justif-status";
   document.getElementById("tmoasesor-modal-status").textContent = "";
-  document.getElementById("tmoasesor-resumen").style.display = "none";
-  document.getElementById("tmoasesor-cuartil-filtro").style.display = "none";
+  tmoAsesorMetasMostrar(false);   // v22.07: el panel de metas arranca cerrado
   document.getElementById("tmoasesor-resultado").innerHTML = "";
   tmoAsesorUltimoCalculo = null;
   document.getElementById("tmoasesor-modal-overlay").style.display = "flex";
@@ -7303,7 +7410,15 @@ function openTmoAsesorModal(){
 function closeTmoAsesorModal(){
   document.getElementById("tmoasesor-modal-overlay").style.display = "none";
 }
-document.getElementById("tmoasesor-cancel").addEventListener("click", closeTmoAsesorModal);
+// v22.07: "Metas de TMO por skill" abre o cierra su panel debajo de la barra de filtros
+// (la ventana se cierra con la X, que ahora queda siempre a la vista arriba).
+function tmoAsesorMetasMostrar(abrir){
+  const panel = document.getElementById("tmoasesor-metas-panel"), btn = document.getElementById("tmoasesor-metas-toggle");
+  if(!panel || !btn) return;
+  panel.hidden = !abrir;
+  btn.setAttribute("aria-expanded", abrir ? "true" : "false");
+}
+document.getElementById("tmoasesor-metas-toggle").addEventListener("click", ()=> tmoAsesorMetasMostrar(document.getElementById("tmoasesor-metas-panel").hidden));
 
 async function tmoAsesorGuardarMeta(){
   const statusEl = document.getElementById("tmoasesor-meta-status");
@@ -7474,83 +7589,179 @@ function antigHtmlAviso(){
   return "";
 }
 
+/* ============================================================
+   v22.07 (2026-11-10) — Diseño compartido de "TMO por Asesor" y "TNPS por Asesor"
+   ============================================================
+   Opción 3 que eligió Oscar: arriba el resumen del equipo y una gráfica de
+   barras por antigüedad (con una línea de referencia: la meta en TMO, el
+   promedio en TNPS); abajo, los asesores por cuartil con la casilla
+   "mostrar" en el encabezado de cada columna. Estas dos funciones arman las
+   piezas que comparten las dos ventanas (clases .pa-). */
+const PA_ICO_CHECK = '<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function paDeAntig(k){ return !k ? "" : k==="sin" ? " sin fecha de ingreso" : ` de ${antigLabel(k).toLowerCase()}`; }
+// Gráfica de barras por antigüedad. Cada fila es un botón [data-antig] que filtra.
+// o = { titulo, actual, total, filas:[{k,label,n,ini,ancho,cls,valor,valorCls,detalle,titulo}],
+//       ref:{pos,label}|null, cero:pos|null, aviso, anchoN }   (ini / ancho / pos = % del ancho de la barra)
+function paHtmlGrafica(o){
+  const lineaRef = o.ref ? `<u style="left:${o.ref.pos}%"></u>` : "";
+  const lineaCero = (o.cero!==null && o.cero!==undefined && o.cero>0.5) ? `<s style="left:${o.cero}%"></s>` : "";
+  const filas = o.filas.map(f=>{
+    const on = o.actual===f.k;
+    return `<button type="button" class="pa-fila${on?" on":""}${f.n?"":" vacia"}" data-antig="${f.k}" aria-pressed="${on}"${f.n?"":" disabled"} title="${qaEsc(f.titulo||"")}">
+      <span class="l">${f.label}</span>
+      <span class="t">${f.n && f.ancho!==null ? `<i class="${f.cls||""}" style="left:${f.ini}%;width:${f.ancho}%"></i>` : ""}${lineaCero}${lineaRef}</span>
+      <span class="v ${f.valorCls||""}">${f.valor}</span>
+      <span class="n">${f.detalle}</span>
+    </button>`;
+  }).join("");
+  return `<div class="pa-graf"${o.anchoN?` style="--pa-n:${o.anchoN}px"`:""}>
+    <div class="pa-graf-h">
+      <div><h4>${o.titulo}</h4><span class="a">Elegí un grupo para ver solo esos asesores.</span></div>
+      <button type="button" class="pa-todas${o.actual===""?" on":""}" data-antig="" aria-pressed="${o.actual===""}">${o.actual===""?PA_ICO_CHECK:""}Todas (${o.total})</button>
+    </div>
+    ${o.aviso||""}
+    <div class="pa-eje"><span></span><span class="t">${o.ref?`<span style="left:${o.ref.pos}%">${o.ref.label}</span>`:""}</span><span></span><span></span></div>
+    ${filas}
+  </div>`;
+}
+// Asesores por cuartil: una columna por cuartil, con casilla [data-pa-cuartil] en el
+// encabezado. Los cuartiles desmarcados salen como botones [data-pa-mostrar] para volver a verlos.
+// o = { sub, visibles:Set, bloques:[{q, extra, n, cards:[html]}], vacio }
+function paHtmlCuartiles(o){
+  const ocultos = o.bloques.map(b=>b.q).filter(q=> !o.visibles.has(q));
+  const lado = ocultos.length
+    ? `<span class="pa-cu-ocultos">Ocultos:${ocultos.map(q=>` <button type="button" data-pa-mostrar="${q}" title="Volver a mostrar el cuartil ${q}">+ Cuartil ${q}</button>`).join("")}</span>`
+    : (o.bloques.length > 1 ? `<span class="a">Para capturas: desmarcá el cuartil que no querés que salga.</span>` : "");
+  const cab = `<div class="pa-cu-h"><div><h4>Asesores por cuartil</h4><span class="a">${o.sub}</span></div>${lado}</div>`;
+  if(o.vacio) return cab + `<p class="pa-vacio">${o.vacio}</p>`;
+  const vis = o.bloques.filter(b=> o.visibles.has(b.q));
+  if(!vis.length) return cab + `<p class="pa-vacio">No hay ningún cuartil marcado. Tocá uno de los “Ocultos” para volver a mostrarlo.</p>`;
+  return cab + `<div class="pa-cu-grid" style="--pa-cols:${vis.length}">${vis.map(b=>`<section class="pa-cu-col">
+      <div class="pa-cu-t"><label><input type="checkbox" data-pa-cuartil="${b.q}" checked/><span>Cuartil ${b.q}${b.extra?` <span class="x">· ${b.extra}</span>`:""}</span></label><span class="c">${b.n} asesor${b.n===1?"":"es"}</span></div>
+      <div class="pa-cu-lista">${b.cards.join("")}</div>
+    </section>`).join("")}</div>`;
+}
+
 let tmoAsesorAntig = "";   // v22.05: filtro de antigüedad ("" = todas)
+let tmoAsesorCuartilesVis = new Set([1,2,3,4]);   // v22.07: cuartiles a la vista (casilla en el encabezado de cada columna)
 function tmoAsesorRenderResultado(){
   if(!tmoAsesorUltimoCalculo) return;
   const { meta } = tmoAsesorUltimoCalculo;
-  // v22.05: antigüedad de cada asesor a la fecha "Hasta" del rango
-  const refIso = (document.getElementById("tmoasesor-input-hasta")||{}).value || "";
+  const cat = tmoAsesorUltimoCalculo.cat || (document.getElementById("tmoasesor-input-categoria")||{}).value || "";
+  const desde = tmoAsesorUltimoCalculo.desde || (document.getElementById("tmoasesor-input-desde")||{}).value || "";
+  // v22.05: antigüedad de cada asesor a la fecha "Hasta" del rango consultado
+  const refIso = tmoAsesorUltimoCalculo.hasta || (document.getElementById("tmoasesor-input-hasta")||{}).value || "";
   const todos = tmoAsesorUltimoCalculo.agentes.map(a=>{
     const ingreso = antigIngreso({ correo: (genesysState.usersEmailById||{})[a.userId], nombre: a.nombre });
     const meses = antigMeses(ingreso, refIso);
-    return { ...a, ingreso, meses, antig: antigGrupo(meses) };
+    return { ...a, ingreso, meses, antig: antigGrupo(meses), clase: tmoAsesorSemaforoClase(a.tmoProm, meta) };
   });
-  const conteos = {}; todos.forEach(a=>{ conteos[a.antig] = (conteos[a.antig]||0) + 1; });
-  const resumenAntig = ANTIG_GRUPOS.concat([{ k:"sin", label:"Sin dato" }]).map(g=>{
+  const ponderado = (lista)=>{ const c = lista.reduce((s,a)=>s+a.contestadas,0); return c ? lista.reduce((s,a)=>s+a.tmoProm*a.contestadas,0)/c : null; };
+  const resultadoEl = document.getElementById("tmoasesor-resultado");
+  const TMO_CHIP_TEXTO = { ok:"Objetivo", warn:"Alerta", crit:"Sobre meta", neutro:"Sin meta" };
+
+  // --- Resumen del equipo (todos los asesores del skill, sin importar el filtro de antigüedad) ---
+  const nTodos = todos.length;
+  const contTotal = todos.reduce((s,a)=>s+a.contestadas,0);
+  const tmoEq = ponderado(todos);
+  const claseEq = tmoAsesorSemaforoClase(tmoEq, meta);
+  let lado;
+  if(meta){
+    const dif = Math.round(tmoEq) - Math.round(meta);
+    const txt = dif > 0 ? `${tmoFmtMMSS(dif)} arriba de la meta` : dif < 0 ? `${tmoFmtMMSS(-dif)} bajo la meta` : "Justo en la meta";
+    lado = `<span class="pa-eq-lado"><span class="pa-eq-delta ${claseEq}">${txt}</span><span class="pa-eq-meta">Meta del skill: <b>${tmoFmtMMSS(meta)}</b></span></span>`;
+  } else {
+    lado = `<span class="pa-eq-lado"><span class="pa-eq-meta">Sin meta configurada para “${qaEsc(cat)}” todavía.</span></span>`;
+  }
+  const cuenta = { ok:0, warn:0, crit:0 };
+  if(meta) todos.forEach(a=>{ cuenta[a.clase] = (cuenta[a.clase]||0) + 1; });
+  const dist = meta ? `<div class="pa-dist">
+      <div class="pa-dist-t">Asesores frente a la meta</div>
+      <div class="pa-dist-bar" role="img" aria-label="${cuenta.ok} cumplen la meta, ${cuenta.warn} en alerta y ${cuenta.crit} sobre la meta">${["ok","warn","crit"].filter(k=>cuenta[k]).map(k=>`<i class="${k}" style="flex:${cuenta[k]}"></i>`).join("")}</div>
+      <div class="pa-dist-ley"><span title="TMO igual o menor que la meta"><b class="ok">${cuenta.ok}</b> cumple${cuenta.ok===1?"":"n"}</span><span title="Hasta 15% arriba de la meta"><b class="warn">${cuenta.warn}</b> en alerta</span><span title="Más de 15% arriba de la meta"><b class="crit">${cuenta.crit}</b> sobre la meta</span></div>
+    </div>` : "";
+  const panelEquipo = `<div class="pa-equipo">
+      <div class="pa-eq-k">TMO del equipo · Skill ${qaEsc(cat)}</div>
+      <div class="pa-eq-fila"><span class="pa-eq-num ${meta?claseEq:""}" title="Promedio ponderado por volumen de llamadas">${tmoFmtMMSS(tmoEq)}</span>${lado}</div>
+      ${dist}
+      <div class="pa-eq-pie">
+        <div title="Asesores con llamadas contestadas en el período"><div class="k">Asesores</div><div class="v">${fmtNum(nTodos)}</div></div>
+        <div><div class="k">Contestadas</div><div class="v">${fmtNum(contTotal)}</div></div>
+        <div><div class="k">Período</div><div class="v t">${fmtFechaGenesys(desde)} al ${fmtFechaGenesys(refIso)}</div></div>
+      </div>
+    </div>`;
+
+  // --- TMO por antigüedad (cada fila filtra; la línea negra es la meta) ---
+  const grupos = ANTIG_GRUPOS.concat([{ k:"sin", label:"Sin dato" }]).map(g=>{
     const del = todos.filter(a=> a.antig===g.k);
-    if(!del.length) return "";
-    const cont = del.reduce((s,a)=>s+a.contestadas,0);
-    const tmo = cont ? del.reduce((s,a)=>s+a.tmoProm*a.contestadas,0)/cont : null;
-    return `<div class="antig-res-item"><span class="k">${g.label}</span><span class="v">${del.length} asesor${del.length===1?"":"es"} · TMO <b>${tmo===null?"—":tmoFmtMMSS(tmo)}</b></span></div>`;
-  }).join("");
-  // dentro del grupo elegido se vuelven a repartir los cuartiles
+    return { k:g.k, label:g.label, n:del.length, cont: del.reduce((s,a)=>s+a.contestadas,0), tmo: ponderado(del) };
+  }).filter(g=> g.k!=="sin" || g.n);
+  const tope = Math.max(meta||0, tmoEq||0, ...grupos.map(g=> g.tmo||0));
+  const escala = Math.max(60, Math.ceil(tope*1.1/30)*30);
+  const grafica = paHtmlGrafica({
+    titulo: "TMO por antigüedad", actual: tmoAsesorAntig, total: `${nTodos} asesor${nTodos===1?"":"es"}`,
+    filas: grupos.map(g=>{
+      const cls = g.k==="sin" ? "sin" : (g.tmo===null ? "" : tmoAsesorSemaforoClase(g.tmo, meta));
+      return { k:g.k, label:g.label, n:g.n, ini:0, ancho: g.tmo===null ? null : Math.min(100, g.tmo/escala*100), cls,
+        valor: g.tmo===null ? "—" : tmoFmtMMSS(g.tmo), valorCls: g.k==="sin" ? "" : cls,
+        detalle: `${g.n} asesor${g.n===1?"":"es"}`,
+        titulo: g.n ? `${g.label}: TMO ${tmoFmtMMSS(g.tmo)} en ${fmtNum(g.cont)} llamadas contestadas` : `${g.label}: sin asesores en este período` };
+    }),
+    ref: meta ? { pos: Math.min(100, meta/escala*100), label: `Meta ${tmoFmtMMSS(meta)}` } : null,
+    aviso: antigHtmlAviso(),
+  });
+
+  // --- Asesores por cuartil (dentro del grupo elegido se vuelven a repartir los cuartiles) ---
   let agentes = todos.filter(a=> !tmoAsesorAntig || a.antig===tmoAsesorAntig).sort((a,b)=> a.tmoProm - b.tmoProm);
   const nA = agentes.length;
   agentes = agentes.map((a,i)=> ({ ...a, cuartil: Math.min(4, Math.floor(i/nA*4)+1) }));
-  const cabeceraAntig = antigHtmlChips(tmoAsesorAntig, conteos) + antigHtmlAviso() + `<div class="antig-res">${resumenAntig}</div>`;
-  const chks = Array.from(document.querySelectorAll(".tmoasesor-cuartil-chk"));
-  const cuartilesVisibles = chks.length ? new Set(chks.filter(c=>c.checked).map(c=>Number(c.value))) : new Set([1,2,3,4]);
-  const resultadoEl = document.getElementById("tmoasesor-resultado");
-  const TMO_CHIP_TEXTO = { ok:"✓ Objetivo", warn:"⚠ Alerta", crit:"⛔ Sobre meta", neutro:"Sin meta" };
-  const bloques = [];
-  for(let q=1; q<=4; q++){
-    if(!cuartilesVisibles.has(q)) continue;
-    const filaCuartil = agentes.filter(a=>a.cuartil===q);
-    if(!filaCuartil.length) continue;
-    bloques.push(`<div class="tmo-cuartil-block">
-        <div class="tmo-cuartil-titulo">${TMO_CUARTIL_LABELS[q]} (${filaCuartil.length})</div>
-        <div class="tmo-lista">
-        ${filaCuartil.map(a=>{
-          const clase = tmoAsesorSemaforoClase(a.tmoProm, meta);
-          return `<div class="tmo-card ${clase}" title="${tmoAsesorSemaforoTexto(clase)}">
-            <div class="tmo-card-head">
-              <span class="tmo-card-nom">${a.nombre}</span>
-              <span class="tmo-chip ${clase}">${TMO_CHIP_TEXTO[clase] || ""}</span>
-            </div>
-            <div class="tmo-card-body">
-              <div class="tmo-stat"><span class="k">Contestadas</span><span class="v">${fmtNum(a.contestadas)}</span></div>
-              <div class="tmo-stat"><span class="k">TMO</span><span class="v">${tmoFmtMMSS(a.tmoProm)}</span></div>
-              <div class="tmo-stat" style="grid-column:1 / -1;"><span class="k">Antigüedad</span><span class="v antig-v">${antigTexto(a.meses)}${a.ingreso?` <span class="antig-desde">(ingreso ${fmtFechaGenesys(a.ingreso)})</span>`:""}</span></div>
-            </div>
-          </div>`;
-        }).join("")}
-        </div>
-      </div>`);
-  }
-  const conectarAntig = ()=> resultadoEl.querySelectorAll("[data-antig]").forEach(b=> b.addEventListener("click", ()=>{ tmoAsesorAntig = b.dataset.antig; tmoAsesorRenderResultado(); }));
-  if(!bloques.length){
-    resultadoEl.innerHTML = cabeceraAntig + (nA ? `<p class="erlang-hint">No hay ningún cuartil marcado — activá al menos uno arriba para ver asesores.</p>` : `<p class="erlang-hint">Ningún asesor en ese grupo de antigüedad.</p>`);
-    conectarAntig();
+  const EXTRA = { 1:"25% más rápidos", 4:"25% más lentos" };
+  const bloques = [1,2,3,4].map(q=>{
+    const lista = agentes.filter(a=> a.cuartil===q);
+    return { q, extra: EXTRA[q]||"", n: lista.length, cards: lista.map(a=>{
+      const nombre = a.nombre===a.userId ? a.nombre : tnNombrePropio(a.nombre);
+      return `<div class="pa-card ${a.clase}" title="${qaEsc(a.nombre)} · ${tmoAsesorSemaforoTexto(a.clase)}">
+          <div class="pa-card-nom">${qaEsc(nombre)}</div>
+          <div class="pa-card-fila"><span class="pa-card-num">${tmoFmtMMSS(a.tmoProm)}</span><span class="pa-chip ${a.clase}">${TMO_CHIP_TEXTO[a.clase] || ""}</span></div>
+          <div class="pa-card-det">
+            <div><b>${fmtNum(a.contestadas)}</b> contestada${a.contestadas===1?"":"s"}</div>
+            <div>Antigüedad: <b>${antigTexto(a.meses)}</b></div>
+            ${a.ingreso?`<div class="ing">Ingreso ${fmtFechaGenesys(a.ingreso)}</div>`:""}
+          </div>
+        </div>`;
+    }) };
+  }).filter(b=> b.n);
+  const cuartiles = paHtmlCuartiles({
+    sub: `${nA} asesor${nA===1?"":"es"}${paDeAntig(tmoAsesorAntig)}, del más rápido al más lento`,
+    visibles: tmoAsesorCuartilesVis, bloques,
+    vacio: nA ? "" : "Ningún asesor en ese grupo de antigüedad.",
+  });
+  resultadoEl.innerHTML = `<div class="pa-top">${panelEquipo}${grafica}</div>${cuartiles}`;
+}
+// v22.07: clics dentro del resultado (se conecta una sola vez; el contenido se vuelve a dibujar)
+document.getElementById("tmoasesor-resultado").addEventListener("click", (e)=>{
+  const fila = e.target.closest("[data-antig]");
+  if(fila && !fila.disabled){
+    tmoAsesorAntig = fila.dataset.antig;
+    tmoAsesorRenderResultado();
+    const foco = document.querySelector(`#tmoasesor-resultado [data-antig="${tmoAsesorAntig}"]`); if(foco) foco.focus();
     return;
   }
-  // Ancho de columna dinámico: con menos de 4 cuartiles marcados, cada uno
-  // ocupa más lugar (una captura de "solo Cuartil 4" no debería dejar 3/4 del
-  // modal en blanco). Con los 4 marcados (caso por defecto) se deja la clase
-  // CSS normal sin forzar nada por inline, para no romper el apilado a 2/1
-  // columnas en pantallas chicas que ya maneja el media query existente.
-  const styleAttr = bloques.length < 4 ? ` style="grid-template-columns:repeat(${bloques.length},1fr);"` : "";
-  resultadoEl.innerHTML = cabeceraAntig + `<div class="tmo-cuartil-grid"${styleAttr}>${bloques.join("")}</div>`;
-  conectarAntig();
-}
-document.getElementById("tmoasesor-cuartil-grid").addEventListener("change", (e)=>{
-  if(e.target.classList.contains("tmoasesor-cuartil-chk")) tmoAsesorRenderResultado();
+  const mostrar = e.target.closest("[data-pa-mostrar]");
+  if(mostrar){ tmoAsesorCuartilesVis.add(Number(mostrar.dataset.paMostrar)); tmoAsesorRenderResultado(); }
+});
+document.getElementById("tmoasesor-resultado").addEventListener("change", (e)=>{
+  const chk = e.target.closest("[data-pa-cuartil]");
+  if(!chk) return;
+  const q = Number(chk.dataset.paCuartil);
+  if(chk.checked) tmoAsesorCuartilesVis.add(q); else tmoAsesorCuartilesVis.delete(q);
+  tmoAsesorRenderResultado();
 });
 
 async function tmoAsesorCalcular(){
   const statusEl = document.getElementById("tmoasesor-modal-status");
-  const resumenEl = document.getElementById("tmoasesor-resumen");
   const resultadoEl = document.getElementById("tmoasesor-resultado");
-  resumenEl.style.display = "none"; resultadoEl.innerHTML = "";
+  resultadoEl.innerHTML = "";
   const cat = document.getElementById("tmoasesor-input-categoria").value;
   const desde = document.getElementById("tmoasesor-input-desde").value;
   const hasta = document.getElementById("tmoasesor-input-hasta").value;
@@ -7613,27 +7824,14 @@ async function tmoAsesorCalcular(){
     const n = agentes.length;
     agentes = agentes.map((a,i)=> ({...a, cuartil: Math.min(4, Math.floor(i/n*4)+1)}));
     const meta = genesysMetasTmo[cat] || null;
-    const totalContestadas = agentes.reduce((s,a)=>s+a.contestadas,0);
-    const tmoPromGeneral = totalContestadas ? agentes.reduce((s,a)=>s+a.tmoProm*a.contestadas,0)/totalContestadas : null;
-    const metaLabel = meta ? `Meta: <b>${tmoFmtMMSS(meta)}</b>.` : `Sin meta configurada para "${cat}" todavía.`;
-    resumenEl.innerHTML = `Período: <b>${fmtFechaGenesys(desde)} – ${fmtFechaGenesys(hasta)}</b> · Skill: <b>${cat}</b> · ${n} asesor${n===1?"":"es"} con llamadas contestadas · TMO promedio del equipo: <b>${tmoFmtMMSS(tmoPromGeneral)}</b> (ponderado por volumen) · Contestadas totales: <b>${fmtNum(totalContestadas)}</b>. ${metaLabel}`;
-    resumenEl.style.display = "block";
-    // Ajuste 2026-09-28, a pedido de Oscar: antes de esto se armaba el HTML de
-    // los 4 cuartiles acá mismo y se cortaba la conexión con los datos. Ahora
-    // el resultado (agentes + meta) queda guardado en tmoAsesorUltimoCalculo
-    // y el armado del HTML vive en tmoAsesorRenderResultado(), para poder
-    // volver a dibujar solo con los cuartiles que Oscar deje marcados en el
-    // filtro (sin tener que volver a consultar Genesys) — así puede sacar
-    // capturas limpias de nada más "los que están bien" o "los que están mal".
-    tmoAsesorUltimoCalculo = { agentes, meta };
+    // El resultado (asesores, meta, skill y fechas) queda guardado en
+    // tmoAsesorUltimoCalculo; el resumen, la gráfica por antigüedad y los
+    // cuartiles se arman en tmoAsesorRenderResultado() — así se puede filtrar
+    // por antigüedad u ocultar cuartiles sin volver a consultar Genesys.
+    tmoAsesorUltimoCalculo = { agentes, meta, cat, desde, hasta };
+    tmoAsesorCuartilesVis = new Set([1,2,3,4]);
     statusEl.textContent = "Cruzando con la fecha de ingreso de la malla...";
     try{ await antigAsegurar(); }catch(e){ /* sin antigüedad: los asesores quedan como "Sin dato" */ }
-    const cuartilesConDatos = new Set(agentes.map(a=>a.cuartil));
-    const grid = document.getElementById("tmoasesor-cuartil-grid");
-    grid.innerHTML = [1,2,3,4].filter(q=>cuartilesConDatos.has(q)).map(q=>
-      `<label><input type="checkbox" class="tmoasesor-cuartil-chk" value="${q}" checked/> ${TMO_CUARTIL_LABELS[q]}</label>`
-    ).join("");
-    document.getElementById("tmoasesor-cuartil-filtro").style.display = cuartilesConDatos.size>1 ? "block" : "none";
     tmoAsesorRenderResultado();
     statusEl.className = "justif-status"; statusEl.textContent = "";
   }catch(e){
@@ -14901,17 +15099,10 @@ function tnCuartilesDe(filas, skill, conAntig){
 function tnHtmlCuartiles(filas){
   if(!filas.length) return "";
   const { asesores, tot, todos } = tnCuartilesDe(filas, "__todos", true);
-  // v22.05: antigüedad — conteo de asesores por grupo y TNPS de cada grupo (todas sus encuestas)
-  const conteosAntig = {}; todos.forEach(a=>{ conteosAntig[a.antig] = (conteosAntig[a.antig]||0) + 1; });
-  const resumenAntig = ANTIG_GRUPOS.concat([{ k:"sin", label:"Sin dato" }]).map(g=>{
-    const del = todos.filter(a=> a.antig===g.k);
-    if(!del.length) return "";
-    const t = tnCalc(del.reduce((s,a)=>s+a.d,0), del.reduce((s,a)=>s+a.p,0), del.reduce((s,a)=>s+a.pr,0));
-    return `<div class="antig-res-item"><span class="k">${g.label}</span><span class="v">${del.length} asesor${del.length===1?"":"es"} · ${t.n} enc. · TNPS <b class="${t.tnps<0?"r":t.tnps>=50?"g":""}">${t.tnps===null?"—":tnFmt(t.tnps)+"%"}</b></span></div>`;
-  }).join("");
   // v22.01: M2M de cada asesor (mismos filtros, período anterior: en "Este mes" son los mismos días del mes anterior)
   const pr = tnRangoPrevio();
-  const prevPorAsesor = new Map(pr ? tnAgrupar(tnFilasPrevias(), f=>f[6]).map(g=>[g.k, g]) : []);
+  const filasPrev = tnFilasPrevias();
+  const prevPorAsesor = new Map(pr ? tnAgrupar(filasPrev, f=>f[6]).map(g=>[g.k, g]) : []);
   const etqPrev = TN.rango==="mes" || TN.rango==="mesant" ? "M2M" : "vs ant.";
   const chipM2M = (a)=>{
     if(!pr) return "";
@@ -14922,57 +15113,107 @@ function tnHtmlCuartiles(filas){
     const cls = Math.abs(diff) < 0.05 ? "flat" : diff>0 ? "up" : "down";
     return `<span class="tn-q-m2m ${cls}" title="${qaEsc(tnNombrePrevio())} (${tnFecha(pr[0])} al ${tnFecha(pr[1])}): ${tnFmt(g.tnps)}% con ${g.n} encuesta${g.n===1?"":"s"}">${etqPrev}: ${flecha} ${diff>0?"+":""}${(Math.round(diff*10)/10).toLocaleString("es-HN")} pts <span class="tn-q-m2m-ant">(antes ${tnFmt(g.tnps)}%)</span></span>`;
   };
-  const visibles = new Set(TN.cuartiles);
   const nombreSkill = [TN.encuesta || "Todas las encuestas", TN.unidad || "todas las unidades"].join(" · ");
-  let cuerpo;
-  if(!asesores.length) cuerpo = `<p class="mut" style="margin:10px 0 0;">Ningún asesor${TN.antig?` de ${antigLabel(TN.antig).toLowerCase()}`:""} llega al mínimo de ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"} en este período.</p>`;
-  else {
-    const bloques = [1,2,3,4].filter(q=> visibles.has(q)).map(q=>{
-      const lista = asesores.filter(a=> a.cuartil===q);
-      if(!lista.length) return "";
-      return `<div class="tn-q-block"><div class="tn-q-titulo q${q}">${TN_CUARTIL_LABELS[q]} (${lista.length})</div><div class="tn-q-lista">${lista.map(a=>{
-        const sobre = tot.tnps!==null && a.tnps >= tot.tnps;
-        return `<div class="tn-q-card ${sobre?"ok":"bajo"}" title="${qaEsc(a.k)}">
-          <div class="tn-q-head"><span class="tn-q-nom">${qaEsc(a.nombre||a.k)}</span><span class="tn-q-chip ${sobre?"ok":"bajo"}" title="TNPS de lo filtrado: ${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}">${sobre?"▲ Sobre el promedio":"▼ Bajo el promedio"}</span></div>
-          <div class="tn-q-body">
-            <div class="tn-q-stat"><span class="k">TNPS</span><span class="v ${a.tnps<0?"r":a.tnps>=50?"g":""}">${tnFmt(a.tnps)}%</span></div>
-            <div class="tn-q-stat"><span class="k">Encuestas</span><span class="v">${a.n}</span></div>
-            <div class="tn-q-stat"><span class="k">Promotores</span><span class="v">${tnLinkNotas(a.pr, a.k, a.nombre, "3", "", "g")}</span></div>
-            <div class="tn-q-stat"><span class="k">Detractores</span><span class="v">${tnLinkNotas(a.d, a.k, a.nombre, "1", "", "r")}</span></div>
-            <div class="tn-q-stat" style="grid-column:1 / -1;"><span class="k">Antigüedad</span><span class="v antig-v">${antigTexto(a.meses)}${a.ingreso?` <span class="antig-desde">(ingreso ${tnFecha(a.ingreso)})</span>`:""}</span></div>
-          </div>${chipM2M(a)}</div>`;
-      }).join("")}</div></div>`;
-    }).filter(Boolean);
-    cuerpo = bloques.length
-      ? `<div class="tn-q-grid" style="grid-template-columns:repeat(${bloques.length},minmax(0,1fr));">${bloques.join("")}</div>`
-      : `<p class="mut" style="margin:10px 0 0;">No hay ningún cuartil marcado — activá al menos uno para ver asesores.</p>`;
-  }
   const [qDesde, qHasta] = tnRangoFechas();
+  const num = (v)=> v.toLocaleString("es-HN");
+
+  // --- v22.07: resumen de lo filtrado (mismo diseño que "TMO por Asesor") ---
+  const tPrev = pr ? tnCalc(...[9,10,11].map(i=> filasPrev.reduce((s,f)=>s+f[i],0))) : null;
+  let lado = "";
+  if(tPrev && tPrev.tnps!==null && tot.tnps!==null){
+    const dif = Math.round((tot.tnps - tPrev.tnps)*10)/10;
+    const igual = Math.abs(dif) < 0.05;
+    lado = `<span class="pa-eq-lado"><span class="pa-eq-delta ${igual?"":dif>0?"ok":"crit"}">${igual?"■":dif>0?"▲":"▼"} ${dif>0?"+":""}${num(dif)} pts vs. ${qaEsc(tnNombrePrevio())}</span><span class="pa-eq-meta" title="${num(tPrev.n)} encuesta${tPrev.n===1?"":"s"}">Antes: <b>${tnFmt(tPrev.tnps)}%</b> (${tnFecha(pr[0])} al ${tnFecha(pr[1])})</span></span>`;
+  } else if(pr){
+    lado = `<span class="pa-eq-lado"><span class="pa-eq-meta">Sin encuestas en ${qaEsc(tnNombrePrevio().toLowerCase())} para comparar.</span></span>`;
+  }
+  const dist = `<div class="pa-dist">
+      <div class="pa-dist-t">Encuestas por tipo</div>
+      <div class="pa-dist-bar" role="img" aria-label="${tot.pr} promotores, ${tot.p} pasivos y ${tot.d} detractores">${[["ok",tot.pr],["warn",tot.p],["crit",tot.d]].filter(x=>x[1]).map(([k,v])=>`<i class="${k}" style="flex:${v}"></i>`).join("")}</div>
+      <div class="pa-dist-ley"><span><b class="ok">${num(tot.pr)}</b> promotor${tot.pr===1?"":"es"} (${tnPct(tot.pr,tot.n)})</span><span><b class="warn">${num(tot.p)}</b> pasivo${tot.p===1?"":"s"} (${tnPct(tot.p,tot.n)})</span><span><b class="crit">${num(tot.d)}</b> detractor${tot.d===1?"":"es"} (${tnPct(tot.d,tot.n)})</span></div>
+    </div>`;
+  const panelEquipo = `<div class="pa-equipo">
+      <div class="pa-eq-k">TNPS · ${qaEsc(nombreSkill)}</div>
+      <div class="pa-eq-fila"><span class="pa-eq-num ${tot.tnps===null?"":tot.tnps<0?"crit":tot.tnps>=50?"ok":""}" title="(Promotores − Detractores) ÷ Encuestas">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</span>${lado}</div>
+      ${dist}
+      <div class="pa-eq-pie">
+        <div title="Asesores con al menos una encuesta en el período"><div class="k">Asesores</div><div class="v">${num(todos.length)}</div></div>
+        <div><div class="k">Encuestas</div><div class="v">${num(tot.n)}</div></div>
+        <div><div class="k">Período</div><div class="v t">${tnFecha(qDesde)}${qDesde!==qHasta?" al "+tnFecha(qHasta):""}</div></div>
+      </div>
+    </div>`;
+
+  // --- TNPS por antigüedad (todas las encuestas de cada grupo; la línea negra es el TNPS de lo filtrado) ---
+  const grupos = ANTIG_GRUPOS.concat([{ k:"sin", label:"Sin dato" }]).map(g=>{
+    const del = todos.filter(a=> a.antig===g.k);
+    return { k:g.k, label:g.label, n:del.length, t: tnCalc(del.reduce((s,a)=>s+a.d,0), del.reduce((s,a)=>s+a.p,0), del.reduce((s,a)=>s+a.pr,0)) };
+  }).filter(g=> g.k!=="sin" || g.n);
+  const valores = grupos.filter(g=> g.n && g.t.tnps!==null).map(g=> g.t.tnps).concat(tot.tnps===null ? [] : [tot.tnps]);
+  const lo = Math.min(0, Math.floor(Math.min(0, ...valores)/10)*10), hi = 100;
+  const pos = (v)=> Math.max(0, Math.min(100, (v-lo)/(hi-lo)*100));
+  const grafica = paHtmlGrafica({
+    titulo: "TNPS por antigüedad", actual: TN.antig, total: `${todos.length} asesor${todos.length===1?"":"es"}`, anchoN: 150,
+    filas: grupos.map(g=>{
+      const v = g.t.tnps;
+      const cls = g.k==="sin" ? "sin" : (v===null || tot.tnps===null) ? "" : v >= tot.tnps ? "ok" : "crit";
+      return { k:g.k, label:g.label, n:g.n, ini: v===null ? 0 : pos(Math.min(0, v)), ancho: v===null ? null : Math.max(0.6, Math.abs(pos(v)-pos(0))), cls,
+        valor: v===null ? "—" : tnFmt(v)+"%", valorCls: g.k==="sin" ? "" : cls,
+        detalle: `${g.n} asesor${g.n===1?"":"es"} · ${num(g.t.n)} enc.`,
+        titulo: g.n ? `${g.label}: TNPS ${v===null?"—":tnFmt(v)+"%"} en ${num(g.t.n)} encuesta${g.t.n===1?"":"s"} (${g.t.pr} promotores, ${g.t.p} pasivos, ${g.t.d} detractores)` : `${g.label}: sin asesores en este período` };
+    }),
+    ref: tot.tnps===null ? null : { pos: pos(tot.tnps), label: `Promedio ${tnFmt(tot.tnps)}%` },
+    cero: lo < 0 ? pos(0) : null,
+    aviso: antigHtmlAviso(),
+  });
+
+  // --- Asesores por cuartil (solo los que llegan al mínimo de encuestas) ---
+  const EXTRA = { 1:"25% mejor TNPS", 4:"25% TNPS más bajo" };
+  const bloques = [1,2,3,4].map(q=>{
+    const lista = asesores.filter(a=> a.cuartil===q);
+    return { q, extra: EXTRA[q]||"", n: lista.length, cards: lista.map(a=>{
+      const sobre = tot.tnps!==null && a.tnps >= tot.tnps;
+      return `<div class="pa-card ${sobre?"ok":"crit"}" title="${qaEsc(a.k)}">
+          <div class="pa-card-nom">${qaEsc(a.nombre||a.k)}</div>
+          <div class="pa-card-fila"><span class="pa-card-num ${a.tnps<0?"r":a.tnps>=50?"g":""}">${tnFmt(a.tnps)}%</span><span class="pa-card-sec">${a.n} encuesta${a.n===1?"":"s"}</span></div>
+          <div class="pa-card-chips"><span class="pa-chip ${sobre?"ok":"crit"}" title="TNPS de lo filtrado: ${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}">${sobre?"Sobre el promedio":"Bajo el promedio"}</span></div>
+          <div class="pa-card-det">
+            <div class="pd"><span>Promotores ${tnLinkNotas(a.pr, a.k, a.nombre, "3", "", "g")}</span><span>Detractores ${tnLinkNotas(a.d, a.k, a.nombre, "1", "", "r")}</span></div>
+            <div>Antigüedad: <b>${antigTexto(a.meses)}</b></div>
+            ${a.ingreso?`<div class="ing">Ingreso ${tnFecha(a.ingreso)}</div>`:""}
+          </div>${chipM2M(a)}
+        </div>`;
+    }) };
+  }).filter(b=> b.n);
+  const nA = asesores.length;
+  const minimo = `al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}`;
+  const cuartiles = paHtmlCuartiles({
+    sub: `${nA} asesor${nA===1?"":"es"}${paDeAntig(TN.antig)} con ${minimo}, del mejor al más bajo TNPS`,
+    visibles: new Set(TN.cuartiles), bloques,
+    vacio: nA ? "" : `Ningún asesor${paDeAntig(TN.antig)} llega al mínimo de ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"} en este período.`,
+  });
   return `<div class="tn-q">
-    <div class="tn-q-resumen"><span><b>${qaEsc(nombreSkill)}</b> · ${tnFecha(qDesde)}${qDesde!==qHasta?" al "+tnFecha(qHasta):""}</span><span>${tot.n.toLocaleString("es-HN")} encuestas · TNPS <b class="${tot.tnps<0?"r":tot.tnps>=50?"g":""}">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</b></span></div>
     ${tnHtmlFiltrosVentana()}
-    ${antigHtmlChips(TN.antig, conteosAntig)}${antigHtmlAviso()}<div class="antig-res">${resumenAntig}</div>
-    <div class="tn-q-filtro"><span class="mut">Mostrar (para capturas):</span>${[1,2,3,4].map(q=>`<label class="tn-q-chk"><input type="checkbox" data-cuartil="${q}" ${visibles.has(q)?"checked":""}/> Cuartil ${q}</label>`).join("")}<span class="mut">· Solo asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}.</span></div>
-    ${cuerpo}
+    <div class="pa-top">${panelEquipo}${grafica}</div>
+    ${cuartiles}
   </div>`;
 }
 
 /* ---------- v22.02: ventana "TNPS por Asesor" (como "TMO por Asesor") ---------- */
 // v22.03: filtros de Encuesta y Unidad dentro de la ventana — son los MISMOS
 // de la pestaña (TN.encuesta / TN.unidad): cambiar uno cambia el otro.
+// v22.07: todos los filtros en una sola línea (misma barra que "TMO por Asesor").
 function tnHtmlFiltrosVentana(){
   const d = TN.datos;
   const [desde, hasta] = tnRangoFechas();
   const encuestas = (d && d.encuestas) || [];
   const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta)).map(f=>f[2]).filter(Boolean))).sort();
   const rangos = [["hoy","Hoy"],["ayer","Ayer"],["7","Últimos 7 días"],["mes","Este mes"],["mesant","Mes anterior"],["90","Últimos 90 días"],["rango","Rango"]];
-  return `<div class="qa-chips tn-q-rangos">${rangos.map(([k,l])=>`<button type="button" class="qa-chip ${TN.rango===k?"on":""}" data-qrango="${k}">${l}</button>`).join("")}
-    ${TN.rango==="rango" ? `<label class="qa-fecha">Desde <input type="date" id="tnq-desde" value="${desde}" max="${qaHoyIso()}"/></label><label class="qa-fecha">Hasta <input type="date" id="tnq-hasta" value="${hasta}" max="${qaHoyIso()}"/></label>` : ""}
-    ${TN.cargando ? `<span class="mut">⏳ Actualizando…</span>` : ""}</div>
-  <div class="tn-q-filtros">
-    <label class="qa-skill">Encuesta <select id="tnq-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></label>
-    <label class="qa-skill">Unidad <select id="tnq-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></label>
-    <span class="mut">Son los mismos filtros de la pestaña Qualtrics.</span>
+  return `<div class="pa-barra">
+    <div class="pa-campo pa-campo-sel"><label for="tnq-encuesta">Encuesta</label><select id="tnq-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></div>
+    <div class="pa-campo pa-campo-sel"><label for="tnq-unidad">Unidad</label><select id="tnq-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></div>
+    <div class="pa-campo"><span class="pa-lbl">Período</span><div class="pa-seg">${rangos.map(([k,l])=>`<button type="button" class="${TN.rango===k?"on":""}" aria-pressed="${TN.rango===k}" data-qrango="${k}">${l}</button>`).join("")}</div></div>
+    ${TN.rango==="rango" ? `<div class="pa-campo pa-campo-fecha"><label for="tnq-desde">Desde</label><input type="date" id="tnq-desde" value="${desde}" max="${qaHoyIso()}"/></div><div class="pa-campo pa-campo-fecha"><label for="tnq-hasta">Hasta</label><input type="date" id="tnq-hasta" value="${hasta}" max="${qaHoyIso()}"/></div>` : ""}
+    <span class="pa-nota">${TN.cargando ? "⏳ Actualizando…" : "Son los mismos filtros de la pestaña Qualtrics."}</span>
   </div>`;
 }
 function tnIrANotas(v){
@@ -15000,8 +15241,14 @@ function tnPintarCuartiles(){
   const fe = cont.querySelector("#tnq-encuesta"), fu = cont.querySelector("#tnq-unidad");
   if(fe) fe.addEventListener("change", ()=>{ TN.encuesta = fe.value; TN.unidad = ""; tnRender(); tnPintarCuartiles(); });
   if(fu) fu.addEventListener("change", ()=>{ TN.unidad = fu.value; tnRender(); tnPintarCuartiles(); });
-  cont.querySelectorAll("[data-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
-    TN.cuartiles = Array.from(cont.querySelectorAll("[data-cuartil]")).filter(x=>x.checked).map(x=>Number(x.dataset.cuartil));
+  // v22.07: la casilla de cada cuartil está en el encabezado de su columna; los ocultos se devuelven con "+ Cuartil N"
+  cont.querySelectorAll("[data-pa-cuartil]").forEach(c=> c.addEventListener("change", ()=>{
+    const q = Number(c.dataset.paCuartil);
+    TN.cuartiles = c.checked ? Array.from(new Set(TN.cuartiles.concat([q]))).sort() : TN.cuartiles.filter(x=> x!==q);
+    tnPintarCuartiles();
+  }));
+  cont.querySelectorAll("[data-pa-mostrar]").forEach(b=> b.addEventListener("click", ()=>{
+    TN.cuartiles = Array.from(new Set(TN.cuartiles.concat([Number(b.dataset.paMostrar)]))).sort();
     tnPintarCuartiles();
   }));
   cont.querySelectorAll("[data-verdet]").forEach(b=> b.addEventListener("click", ()=>{
@@ -15019,17 +15266,15 @@ function tnAbrirCuartiles(){
         <div class="modal2-bar"></div>
         <div class="modal2-titlewrap">
           <h3 id="tnasesor-titulo">😊 TNPS por Asesor</h3>
-          <div class="modal2-sub">TNPS, encuestas, promotores y detractores de cada asesor, con su M2M — agrupados en 4 cuartiles (25% con mejor TNPS, siguiente 25%, y así sucesivamente) para ver de un vistazo quién está mejor o peor.</div>
+          <div class="modal2-sub">Primero el resumen y la comparación por antigüedad. Abajo, cada asesor en su cuartil (25% con mejor TNPS, siguiente 25%, y así sucesivamente), con su M2M.</div>
         </div>
         <button class="modal2-close" type="button" title="Cerrar" aria-label="Cerrar">✕</button>
       </div>
       <div id="tnasesor-modal-cuerpo"></div>
-      <div class="modal-actions" style="margin-top:14px;"><button class="btn-outline" type="button" id="tnasesor-cerrar">Cerrar</button></div>
     </div>`;
     document.body.appendChild(ov);
     ov.addEventListener("click", e=>{ if(e.target===ov) tnCerrarCuartiles(); });
     ov.querySelector(".modal2-close").addEventListener("click", tnCerrarCuartiles);
-    ov.querySelector("#tnasesor-cerrar").addEventListener("click", tnCerrarCuartiles);
     document.addEventListener("keydown", e=>{ if(e.key==="Escape" && ov.style.display==="flex") tnCerrarCuartiles(); });
   }
   tnPintarCuartiles();
