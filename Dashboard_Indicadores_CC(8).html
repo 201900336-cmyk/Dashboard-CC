@@ -1090,6 +1090,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-fchip button{border:0;background:#C7D2FE;color:#1E3A8A;border-radius:999px;width:18px;height:18px;line-height:18px;padding:0;cursor:pointer;font-size:10px;}
   @media (max-width:900px){ .tn-tops{grid-template-columns:1fr;} }
   .tn-buscar{flex:1;min-width:220px;border:1px solid var(--qa-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;}
+  /* v22.08: contactos repetidos */
+  .tn-rep tr.tn-rep-ojo > td{background:#FFF6F7;}
+  .tn-rep .tn-rep-as{max-width:380px;line-height:1.45;}
   .tn-aviso{font-size:13px;}
   .tn-error{border-color:#F3B4BE;background:#FFF6F7;}
   .tn-cargando{font-size:12px;color:var(--qa-mut);margin:0 0 8px;}
@@ -14775,7 +14778,8 @@ const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"res
   detAsesor:"", detAsesorNombre:"", detSkill:"", volverA:"",   // v21.98: del top / lista de asesores al detalle
   cuSkill:"", cuartiles:[1,2,3,4], antig:"",   // v22.05: + filtro de antigüedad   // v22.00: cuartiles de TNPS por asesor (como el TMO por Asesor)
   detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
-  sel:"" };                  // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
+  sel:"",                    // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
+  repTipo:"", repMin:3 };    // v22.08: contactos repetidos ("" = correos si hay; mínimo de encuestas por contacto)
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
 const TN_VISTOS = new Set((()=>{ try{ return JSON.parse(localStorage.getItem("tn_vistos")||"[]"); }catch(e){ return []; } })());
 function tnMarcarVisto(rid){
@@ -14849,7 +14853,7 @@ function tnFecha(iso){ return iso ? `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.
 
 async function tnCargar(forzar){
   const [desde, hasta] = tnRangoFechas();
-  const conDetalle = TN.vista==="detalle";
+  const conDetalle = TN.vista==="detalle" || TN.vista==="repetidos";   // v22.08
   const previo = conDetalle ? null : tnRangoPrevio();
   const pedirDesde = previo ? previo[0] : desde;   // v21.92: se trae también el período anterior
   const clave = `${pedirDesde}|${desde}|${hasta}|${conDetalle?1:0}`;
@@ -14926,8 +14930,8 @@ function tnRender(){
   if(!body) return;
   const d = TN.datos;
   const nav = [["resumen","Resumen"],["asesores","Por asesor"]];
-  if(d && d.puedeVerDetalle) nav.push(["detalle","Detalle de clientes"]);
-  if(TN.vista==="detalle" && d && !d.puedeVerDetalle) TN.vista = "resumen";
+  if(d && d.puedeVerDetalle) nav.push(["detalle","Detalle de clientes"], ["repetidos","Contactos repetidos"]);   // v22.08
+  if((TN.vista==="detalle" || TN.vista==="repetidos") && d && !d.puedeVerDetalle) TN.vista = "resumen";
   document.getElementById("tn-nav").innerHTML = nav.map(([k,l])=>`<button type="button" role="tab" data-vista="${k}" class="${TN.vista===k?"active":""}" aria-selected="${TN.vista===k}">${l}</button>`).join("");
   const sub = document.getElementById("tn-sub");
   if(sub) sub.textContent = "Encuestas de satisfacción (TNPS) · Honduras" + (d && d.ultimaSinc && d.ultimaSinc.en ? ` · actualizado ${tnFecha(d.ultimaSinc.en.slice(0,10))} ${d.ultimaSinc.en.slice(11,16)}` : "") + ".";
@@ -14942,7 +14946,7 @@ function tnRender(){
     <label class="qa-skill">Encuesta <select id="tn-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></label>
     <label class="qa-skill">Unidad <select id="tn-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></label>
     <span class="mut tn-periodo">${tnFecha(desde)}${desde!==hasta?" al "+tnFecha(hasta):""}</span>
-    ${TN.vista!=="detalle" && d ? `<button type="button" class="btn-outline tn-excel" id="tn-excel">⬇️ Excel</button>` : ""}
+    ${TN.vista!=="detalle" && TN.vista!=="repetidos" && d ? `<button type="button" class="btn-outline tn-excel" id="tn-excel">⬇️ Excel</button>` : ""}
   </div>`;
 
   if(TN.cargando && !d) html += `<div class="qa-card tn-aviso">⏳ Consultando las encuestas…</div>`;
@@ -14951,6 +14955,7 @@ function tnRender(){
     if(TN.cargando) html += `<div class="tn-cargando">⏳ Actualizando…</div>`;
     if(TN.vista==="resumen") html += tnHtmlResumen();
     else if(TN.vista==="asesores") html += tnHtmlAsesores();
+    else if(TN.vista==="repetidos") html += tnHtmlRepetidos();   // v22.08
     else html += tnHtmlDetalle();
   }
   html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada.${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
@@ -15303,6 +15308,93 @@ function tnHtmlAsesores(){
     + `<h3 class="tn-h3 tn-sep">Todos los asesores</h3>`
     + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden, verDet:true });
 }
+/* ---------- v22.08: contactos repetidos (correo o teléfono al que se envió la encuesta) ----------
+   Oscar: las encuestas también se envían por correo y necesita ese dato para
+   revisar si a un mismo correo le llegan encuestas de varios clientes (por
+   ejemplo, un correo puesto a propósito para calificar bien a un asesor).
+   El servidor (v21.93) manda el correo en la columna 18 del detalle y el
+   canal de envío en la 19. Como todo el detalle, solo lo recibe la lista
+   autorizada. Esta vista agrupa por contacto; NO saca conclusiones: muestra
+   qué revisar primero. */
+function tnTelNorm(t){ let x = String(t||"").replace(/\D+/g,""); if(x.length>8 && x.startsWith("504")) x = x.slice(3); return x.length>=7 ? x : ""; }
+function tnCorreoDe(f){ return String(f[18]||"").trim().toLowerCase(); }
+// filas del detalle con los filtros de arriba (período, encuesta y unidad)
+function tnDetalleBase(){
+  const d = TN.datos;
+  if(!d || !Array.isArray(d.detalle)) return [];
+  const [dDesde, dHasta] = tnRangoFechas();
+  return d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[4]===TN.unidad));
+}
+function tnRepetidos(filas, tipo){
+  const m = new Map();
+  filas.forEach(f=>{
+    const v = tipo==="correo" ? tnCorreoDe(f) : tnTelNorm(f[13]);
+    if(!v) return;
+    let g = m.get(v);
+    if(!g){ g = { v, n:0, suma:0, conNota:0, prom:0, det:0, clientes:new Set(), asesores:new Map(), desde:f[0], hasta:f[0] }; m.set(v, g); }
+    g.n++;
+    const nota = Number(f[3]);
+    if(f[3]!=="" && f[3]!==null && !isNaN(nota)){ g.suma += nota; g.conNota++; }
+    if(String(f[2])==="3") g.prom++; else if(String(f[2])==="1") g.det++;
+    if(f[12]) g.clientes.add(String(f[12]));
+    const u = String(f[8]||"").toLowerCase() || "(sin asesor)";
+    const a = g.asesores.get(u) || { u, nombre: f[9] || f[8] || "(sin asesor)", n:0 };
+    a.n++; g.asesores.set(u, a);
+    if(f[0] < g.desde) g.desde = f[0];
+    if(f[0] > g.hasta) g.hasta = f[0];
+  });
+  return Array.from(m.values());
+}
+function tnHtmlRepetidos(){
+  const d = TN.datos;
+  if(d.detalleNegado) return `<div class="qa-card tn-aviso">${d.detalleNegado==="sin_permiso" ? "Tu usuario no tiene acceso al detalle de clientes." : SCRIPT_MSG_SESION}</div>`;
+  if(!Array.isArray(d.detalle)) return `<div class="qa-card tn-aviso">⏳ Consultando el detalle…</div>`;
+  const base = tnDetalleBase();
+  const conCorreo = base.filter(f=> tnCorreoDe(f)).length;
+  const conTel = base.filter(f=> tnTelNorm(f[13])).length;
+  const tipo = TN.repTipo || (conCorreo ? "correo" : "tel");
+  const esCorreo = tipo==="correo";
+  const todos = tnRepetidos(base, tipo);
+  const lista = todos.filter(g=> g.n >= TN.repMin).sort((a,b)=> (b.clientes.size-a.clientes.size) || (b.n-a.n) || (a.v<b.v?-1:1));
+  const max = 200;
+  const aviso = d.detalleDesde && d.detalleDesde > tnRangoFechas()[0] ? `<p class="qa-nota">Esta vista revisa como máximo 31 días: desde el ${tnFecha(d.detalleDesde)}.</p>` : "";
+  const num = (v)=> v.toLocaleString("es-HN");
+  let cuerpo;
+  if(esCorreo && !conCorreo){
+    cuerpo = `<div class="qa-card tn-aviso">Las encuestas de este período todavía no traen el correo al que se enviaron. Hay que actualizar el servidor y volver a cargar los últimos 90 días. Mientras tanto se pueden revisar los <button type="button" class="tn-link" data-reptipo="tel">teléfonos</button>.</div>`;
+  } else if(!lista.length){
+    cuerpo = `<div class="qa-card tn-aviso">Ningún ${esCorreo?"correo":"teléfono"} recibió ${TN.repMin} o más encuestas en este período con estos filtros.</div>`;
+  } else {
+    cuerpo = `<div class="qa-card"><div class="tn-tabla-wrap alto"><table class="qa-tabla mini tn-tabla tn-rep">
+      <thead><tr><th>${esCorreo?"Correo":"Teléfono"}</th><th class="num">Encuestas</th><th class="num" title="Cuántos clientes distintos (ID de cliente) tienen ese mismo contacto">Clientes distintos</th><th class="num">Promotoras</th><th class="num">Nota promedio</th><th>Asesores</th><th>Fechas</th><th></th></tr></thead>
+      <tbody>${lista.slice(0,max).map(g=>{
+        const ases = Array.from(g.asesores.values()).sort((a,b)=> b.n-a.n);
+        const interno = esCorreo && /(^|[.@])claro\.com(\.[a-z]{2,3})?$/i.test(g.v);
+        const variosClientes = g.clientes.size > 1;
+        const f1 = String(g.desde).slice(0,10), f2 = String(g.hasta).slice(0,10);
+        return `<tr class="${variosClientes?"tn-rep-ojo":""}">
+          <td class="nw"><b>${qaEsc(g.v)}</b>${interno?` <span class="qa-tag warn" title="El correo es de un dominio de Claro">correo de Claro</span>`:""}</td>
+          <td class="num"><b>${num(g.n)}</b></td>
+          <td class="num">${variosClientes?`<b class="r" title="El mismo contacto aparece en ${g.clientes.size} clientes distintos">${g.clientes.size}</b>`:(g.clientes.size||"—")}</td>
+          <td class="num">${g.prom}${g.n?` <span class="mut">(${Math.round(g.prom/g.n*100)}%)</span>`:""}</td>
+          <td class="num">${g.conNota ? (Math.round(g.suma/g.conNota*10)/10).toLocaleString("es-HN") : "—"}</td>
+          <td class="tn-rep-as" title="${qaEsc(ases.map(a=>`${a.nombre} (${a.n})`).join(", "))}">${ases.slice(0,3).map(a=>`${qaEsc(a.nombre)} <span class="mut">(${a.n})</span>`).join(", ")}${ases.length>3?` <span class="mut">y ${ases.length-3} más</span>`:""}</td>
+          <td class="nw">${qaEsc(tnFecha(f1))}${f2!==f1?" al "+qaEsc(tnFecha(f2)):""}</td>
+          <td class="nw"><button type="button" class="qa-chip" data-repver="${qaEsc(g.v)}" title="Ver las encuestas de este contacto en Detalle de clientes">Ver encuestas</button></td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>${lista.length>max?`<p class="qa-nota">Se muestran los primeros ${max}.</p>`:""}</div>`;
+  }
+  return `<div class="qa-card tn-filtros">
+      <div class="qa-chips">${[["correo",`Correos`],["tel","Teléfonos"]].map(([k,l])=>`<button type="button" class="qa-chip ${tipo===k?"on":""}" data-reptipo="${k}">${l}</button>`).join("")}</div>
+      <span class="mut">Recibieron</span>
+      <div class="qa-chips">${[2,3,5].map(n=>`<button type="button" class="qa-chip ${TN.repMin===n?"on":""}" data-repmin="${n}">${n} o más encuestas</button>`).join("")}</div>
+      <span class="mut">${num(lista.length)} ${esCorreo?"correo":"teléfono"}${lista.length===1?"":"s"} · ${num(esCorreo?conCorreo:conTel)} de ${num(base.length)} encuestas traen ${esCorreo?"correo":"teléfono"}</span>
+    </div>${aviso}
+    ${cuerpo}
+    <p class="qa-nota">Cómo leerlo: aquí salen los ${esCorreo?"correos":"teléfonos"} a los que la encuesta llegó varias veces. Un contacto repetido no prueba nada por sí solo: un mismo cliente puede comunicarse varias veces. Conviene revisar primero los que aparecen en <b>varios clientes distintos</b> (arriba en la lista), sobre todo si casi todas las notas son altas y son del mismo asesor.</p>
+    <p class="qa-nota">🔒 Datos de clientes: solo para el equipo autorizado. Cada consulta queda registrada.</p>`;
+}
 function tnHtmlDetalle(){
   const d = TN.datos;
   if(d.detalleNegado) return `<div class="qa-card tn-aviso">${d.detalleNegado==="sin_permiso" ? "Tu usuario no tiene acceso al detalle de clientes." : SCRIPT_MSG_SESION}</div>`;
@@ -15313,21 +15405,22 @@ function tnHtmlDetalle(){
     && (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor)
     && (!TN.detSkill || tnSkillDe([f[0], f[1], f[4], f[5]])===TN.detSkill)
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
-    && (!q || [f[8],f[9],f[12],f[13],f[14],f[5]].join(" ").toLowerCase().includes(q)));
+    && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[18]||""].join(" ").toLowerCase().includes(q)));
+  const verCorreo = d.detalle.some(f=> f[18]);   // v22.08: correo al que se envió la encuesta (servidor v21.93)
   const max = 500;
   TN.detFilas = filas.slice(0, max);
   const aviso = d.detalleDesde && d.detalleDesde > tnRangoFechas()[0] ? `<p class="qa-nota">El detalle muestra como máximo 31 días: desde el ${tnFecha(d.detalleDesde)}.</p>` : "";
   return `<div class="qa-card tn-filtros">
       <div class="qa-chips">${[["1","Detractores"],["2","Pasivos"],["3","Promotores"],["todos","Todos"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.detGrupo===k?"on":""}" data-grupo="${k}">${l}</button>`).join("")}</div>
-      ${TN.volverA ? `<button type="button" class="qa-chip" id="tn-volver">‹ Volver a Por asesor</button>` : ""}
+      ${TN.volverA ? `<button type="button" class="qa-chip" id="tn-volver">‹ Volver a ${TN.volverA==="repetidos"?"Contactos repetidos":"Por asesor"}</button>` : ""}
       ${TN.detAsesor ? `<span class="tn-fchip">👤 ${qaEsc(TN.detAsesorNombre||TN.detAsesor)} <button type="button" data-quitar="asesor" aria-label="Quitar filtro de asesor">✕</button></span>` : ""}
       ${TN.detSkill ? `<span class="tn-fchip">🏷️ ${qaEsc(TN.detSkill)} <button type="button" data-quitar="skill" aria-label="Quitar filtro de skill">✕</button></span>` : ""}
-      <input type="search" id="tn-buscar" class="tn-buscar" value="${qaEsc(TN.detBuscar)}" placeholder="Buscar asesor, cliente, teléfono o comentario" aria-label="Buscar en el detalle"/>
+      <input type="search" id="tn-buscar" class="tn-buscar" value="${qaEsc(TN.detBuscar)}" placeholder="Buscar asesor, cliente, teléfono, correo o comentario" aria-label="Buscar en el detalle"/>
       <span class="mut">${filas.length.toLocaleString("es-HN")} encuesta${filas.length===1?"":"s"}</span>
     </div>${aviso}
     <div class="qa-card"><div class="tn-tabla-wrap alto"><table class="qa-tabla mini tn-tabla">
-      <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th><th>Comentario</th></tr></thead>
-      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td><td class="tn-coment">${qaEsc(f[14])}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
+      <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th>${verCorreo?`<th title="Correo al que se envió la encuesta">Correo</th>`:""}<th>Comentario</th></tr></thead>
+      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td>${verCorreo?`<td class="el" title="${qaEsc(f[18]||"")}${f[19]?" · enviada por "+qaEsc(f[19]):""}">${qaEsc(f[18]||"")}</td>`:""}<td class="tn-coment">${qaEsc(f[14])}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
     </table></div>${filas.length>max?`<p class="qa-nota">Se muestran las primeras ${max}. Usa el buscador o los filtros para acotar.</p>`:""}</div>
     <p class="qa-nota">🔒 Datos de clientes: solo para el equipo autorizado. Cada consulta queda registrada.</p>`;
 }
@@ -15413,7 +15506,8 @@ function tnHtmlVer(f){
   else if(!v.cands.length) h = `No se encontró la conversación en Genesys (${qaEsc(v.msg||"")}).`;
   else h = `<div class="tn-cands-t">${v.abierta ? "✅ Se abrió la más probable. " : ""}Conversaciones encontradas${v.via?` (${qaEsc(v.via)})`:""}:</div>
     <table class="qa-tabla mini"><tbody>${v.cands.map((c,i)=>`<tr><td class="nw">${qaEsc(qaFecha(c.inicio))} ${qaEsc(qaHora(c.inicio))}</td><td class="nw">${qaEsc(c.canal)}</td><td class="el">${qaEsc(c.cola)}</td><td class="el">${qaEsc(c.asesor)}${c._mismo?` <b class="g">· mismo asesor</b>`:""}</td><td><button type="button" class="qa-chip" data-abrirconv="${qaEsc(c.id)}">${i===0?"⭐ ":""}Abrir</button></td></tr>`).join("")}</tbody></table>`;
-  return `<tr class="qa-sub tn-cands"><td colspan="9">${h}</td></tr>`;
+  const cols = TN.datos && Array.isArray(TN.datos.detalle) && TN.datos.detalle.some(x=> x[18]) ? 10 : 9;   // v22.08: + columna Correo
+  return `<tr class="qa-sub tn-cands"><td colspan="${cols}">${h}</td></tr>`;
 }
 async function tnVerConversacion(f){
   if(!f) return;
@@ -15526,7 +15620,15 @@ function tnWire(){
     tnRender();
   }));
   const vo = document.getElementById("tn-volver");
-  if(vo) vo.addEventListener("click", ()=>{ TN.vista = TN.volverA || "asesores"; TN.volverA = ""; TN.detAsesor = ""; TN.detAsesorNombre = ""; TN.detSkill = ""; tnRender(); tnCargar(); });
+  if(vo) vo.addEventListener("click", ()=>{ TN.vista = TN.volverA || "asesores"; if(TN.vista==="repetidos") TN.detBuscar = ""; TN.volverA = ""; TN.detAsesor = ""; TN.detAsesorNombre = ""; TN.detSkill = ""; tnRender(); tnCargar(); });
+  // v22.08: contactos repetidos
+  body.querySelectorAll("[data-reptipo]").forEach(b=> b.addEventListener("click", ()=>{ TN.repTipo = b.dataset.reptipo; tnRender(); }));
+  body.querySelectorAll("[data-repmin]").forEach(b=> b.addEventListener("click", ()=>{ TN.repMin = Number(b.dataset.repmin) || 3; tnRender(); }));
+  body.querySelectorAll("[data-repver]").forEach(b=> b.addEventListener("click", ()=>{
+    TN.detBuscar = b.dataset.repver; TN.detGrupo = "todos"; TN.detAsesor = ""; TN.detAsesorNombre = ""; TN.detSkill = "";
+    TN.vista = "detalle"; TN.volverA = "repetidos"; tnRender(); tnCargar();
+    const r = document.getElementById("tn-root"); if(r) r.scrollIntoView({ behavior:"smooth", block:"start" });
+  }));
   body.querySelectorAll("[data-abrirconv]").forEach(b=> b.addEventListener("click", ()=>{ const tr = b.closest("tr.tn-cands"); const prev = tr && tr.previousElementSibling; if(prev && prev.dataset.rid){ TN.sel = prev.dataset.rid; } qaAbrirDetalle(b.dataset.abrirconv); }));
   const bu = document.getElementById("tn-buscar");
   if(bu){ let t = null; bu.addEventListener("input", ()=>{ clearTimeout(t); t = setTimeout(()=>{ TN.detBuscar = bu.value; const pos = bu.selectionStart; tnRender(); const n = document.getElementById("tn-buscar"); if(n){ n.focus(); n.setSelectionRange(pos,pos); } }, 250); }); }
