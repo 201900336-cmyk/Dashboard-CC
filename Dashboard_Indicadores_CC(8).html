@@ -9064,8 +9064,10 @@ const TNPS_QX_MAP = {
   // v22.09 (Oscar, 2026-11-11): desde el 10/11/2026 las encuestas de llamadas de Fijo y Móvil
   // salen de "Genesys Call Center" (antes, de "Masivo Call Center"). Se suman las dos para
   // que el historial quede seguido.
-  "Fijo":                 [{ enc:"masivo call center", unidad:"nivel 1 multimedia" }, { enc:"genesys call center", unidadIncluye:"fijo" }],
-  "Móvil":                [{ enc:"masivo call center", unidad:"call center movil" },  { enc:"genesys call center", unidadIncluye:"movil" }],
+  // v22.15: la unidad de "Genesys Call Center" puede venir como "Fijo" / "Móvil" (10/11/2026) o como
+  // el nombre de la cola de Genesys (desde el 11/11/2026); tnpsQxSkillDeUnidad reconoce las dos.
+  "Fijo":                 [{ enc:"masivo call center", unidad:"nivel 1 multimedia" }, { enc:"genesys call center", skillUnidad:"Fijo" }],
+  "Móvil":                [{ enc:"masivo call center", unidad:"call center movil" },  { enc:"genesys call center", skillUnidad:"Móvil" }],
   "Corporativo":          [{ enc:"empresas call center", unidad:"vip nivel 1" }],
   "Redes Sociales":       [{ enc:"masivo rrss", unidad:"redes sociales" }],
   "WhatsApp":             [{ enc:"genesys whatsapp" }],                       // Fijo y Móvil
@@ -9074,10 +9076,21 @@ const TNPS_QX_MAP = {
 };
 const TNPS_QX = { meses:null, estado:"", intentoEn:0 };   // meses: [[yyyy-MM, encuesta, unidad, servicio, D, P, PR], ...]
 function tnpsQxNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }
+// v22.15: skill de llamadas ("Fijo" | "Móvil" | "") según la unidad de la encuesta: el texto mismo
+// ("Fijo", "Call Center Móvil") o el nombre de una cola de Genesys que el dashboard ya tiene clasificada.
+function tnpsQxSkillDeUnidad(unidad){
+  const u = tnpsQxNorm(unidad);
+  if(!u) return "";
+  if(u.includes("fijo")) return "Fijo";
+  if(u.includes("movil")) return "Móvil";
+  const cat = genesysCategoriaDeCola("", String(unidad||"").trim());
+  return (cat==="Fijo" || cat==="Móvil") ? cat : "";
+}
 function tnpsQxCoincide(cat, f){
   return (TNPS_QX_MAP[cat]||[]).some(r=> tnpsQxNorm(f[1])===r.enc
     && (!r.unidad || tnpsQxNorm(f[2])===r.unidad)
     && (!r.unidadIncluye || tnpsQxNorm(f[2]).includes(r.unidadIncluye))
+    && (!r.skillUnidad || tnpsQxSkillDeUnidad(f[2])===r.skillUnidad)
     && (!r.servicio || tnpsQxNorm(f[3])===r.servicio));
 }
 // TNPS (0..1, igual que el Sheet) de un mes para varios skills; null si no hay encuestas
@@ -14876,8 +14889,9 @@ function tnUnidad(enc, unidad){
   const e2 = e.replace(/\s+/g," ").trim(), u2 = u.replace(/\s+/g," ");
   if(e2==="masivo call center" && u2==="nivel 1 multimedia") return "Fijo";
   if(e2==="masivo call center" && u2==="call center movil") return "Móvil";
-  if(e2==="genesys call center" && u2.includes("fijo")) return "Fijo";
-  if(e2==="genesys call center" && u2.includes("movil")) return "Móvil";
+  // v22.15: desde el 11/11/2026 "Genesys Call Center" trae en la unidad el nombre de la cola
+  // ("HN_Residencial_Soporte_Concentrix", "HN_LINEA_MOVIL") en vez de "Fijo" / "Móvil".
+  if(e2==="genesys call center"){ const sk = tnpsQxSkillDeUnidad(unidad); if(sk) return sk; }
   return unidad;
 }
 // v21.92: período anterior del mismo largo, para comparar día contra día
