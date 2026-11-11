@@ -9002,8 +9002,11 @@ function genesysTnpsForMonths(periods, cats){
    servicio de Qualtrics): */
 const TNPS_QX_DESDE = "2026-10";
 const TNPS_QX_MAP = {
-  "Fijo":                 [{ enc:"masivo call center", unidad:"nivel 1 multimedia" }],
-  "Móvil":                [{ enc:"masivo call center", unidad:"call center movil" }],
+  // v22.09 (Oscar, 2026-11-11): desde el 10/11/2026 las encuestas de llamadas de Fijo y Móvil
+  // salen de "Genesys Call Center" (antes, de "Masivo Call Center"). Se suman las dos para
+  // que el historial quede seguido.
+  "Fijo":                 [{ enc:"masivo call center", unidad:"nivel 1 multimedia" }, { enc:"genesys call center", unidadIncluye:"fijo" }],
+  "Móvil":                [{ enc:"masivo call center", unidad:"call center movil" },  { enc:"genesys call center", unidadIncluye:"movil" }],
   "Corporativo":          [{ enc:"empresas call center", unidad:"vip nivel 1" }],
   "Redes Sociales":       [{ enc:"masivo rrss", unidad:"redes sociales" }],
   "WhatsApp":             [{ enc:"genesys whatsapp" }],                       // Fijo y Móvil
@@ -9015,6 +9018,7 @@ function tnpsQxNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g
 function tnpsQxCoincide(cat, f){
   return (TNPS_QX_MAP[cat]||[]).some(r=> tnpsQxNorm(f[1])===r.enc
     && (!r.unidad || tnpsQxNorm(f[2])===r.unidad)
+    && (!r.unidadIncluye || tnpsQxNorm(f[2]).includes(r.unidadIncluye))
     && (!r.servicio || tnpsQxNorm(f[3])===r.servicio));
 }
 // TNPS (0..1, igual que el Sheet) de un mes para varios skills; null si no hay encuestas
@@ -14805,6 +14809,14 @@ function tnUnidad(enc, unidad){
   const u = String(unidad||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
   if(e.includes("whatsapp") && u==="fijo") return "WhatsApp Fijo";
   if(e.includes("whatsapp") && u==="movil") return "WhatsApp Móvil";
+  // v22.09: llamadas de Fijo y Móvil → una sola unidad aunque cambió la encuesta
+  // ("Masivo Call Center" las llamaba "Nivel 1 Multimedia" y "Call Center Movil";
+  // "Genesys Call Center" las trae como "Fijo" y "Móvil"). Con Encuesta = Todas se ve el historial seguido.
+  const e2 = e.replace(/\s+/g," ").trim(), u2 = u.replace(/\s+/g," ");
+  if(e2==="masivo call center" && u2==="nivel 1 multimedia") return "Fijo";
+  if(e2==="masivo call center" && u2==="call center movil") return "Móvil";
+  if(e2==="genesys call center" && u2.includes("fijo")) return "Fijo";
+  if(e2==="genesys call center" && u2.includes("movil")) return "Móvil";
   return unidad;
 }
 // v21.92: período anterior del mismo largo, para comparar día contra día
@@ -14958,7 +14970,7 @@ function tnRender(){
     else if(TN.vista==="repetidos") html += tnHtmlRepetidos();   // v22.08
     else html += tnHtmlDetalle();
   }
-  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada.${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
+  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada. Fijo y Móvil suman las dos encuestas de llamadas: Masivo Call Center (la anterior) y Genesys Call Center (desde el 10/11/2026).${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
   body.innerHTML = html;
   tnWire();
   if(TN.vista==="resumen" && d) tnGrafica();
@@ -15036,9 +15048,11 @@ function tnHtmlResumen(){
    como en el resto de la pestaña). Top detractores = asesores con más
    encuestas detractoras; Top promotores = con más encuestas promotoras
    (empate: el de mejor/peor TNPS). Respetan los filtros de arriba. */
+const TN_ENC_LLAMADAS = new Set(["masivo call center","genesys call center"]);
 const TN_SKILLS = [
-  ["Fijo",                 f=> tnpsQxNorm(f[1])==="masivo call center" && tnpsQxNorm(f[2])==="nivel 1 multimedia"],
-  ["Móvil",                f=> tnpsQxNorm(f[1])==="masivo call center" && tnpsQxNorm(f[2])==="call center movil"],
+  // v22.09: Fijo y Móvil = "Masivo Call Center" (hasta noviembre 2026) + "Genesys Call Center" (desde el 10/11/2026); la unidad ya viene unificada por tnUnidad
+  ["Fijo",                 f=> TN_ENC_LLAMADAS.has(tnpsQxNorm(f[1])) && tnpsQxNorm(f[2])==="fijo"],
+  ["Móvil",                f=> TN_ENC_LLAMADAS.has(tnpsQxNorm(f[1])) && tnpsQxNorm(f[2])==="movil"],
   ["WhatsApp Fijo",        f=> tnpsQxNorm(f[1])==="genesys whatsapp" && tnpsQxNorm(f[2])==="whatsapp fijo"],
   ["WhatsApp Móvil",       f=> tnpsQxNorm(f[1])==="genesys whatsapp" && tnpsQxNorm(f[2])==="whatsapp movil"],
   ["Corporativo",          f=> tnpsQxNorm(f[1])==="empresas call center"],
@@ -15529,9 +15543,24 @@ async function tnVerConversacion(f){
       const wrap = await qaCompletarWrapups(convs);
       return convs.map(c=> qaResumen(c, wrap)).filter(c=> Date.parse(c.inicio) <= horaEnc);
     };
-    let cands = [], via = "";
+    let cands = [], via = "", exacta = false;
+    // v22.09: las encuestas que ahora salen de Genesys ("Genesys Call Center") pueden traer el ID de
+    // la conversación como ID de transacción. Si tiene forma de ID de Genesys se prueba primero; si
+    // no es una conversación, se sigue buscando por teléfono y por asesor como siempre.
+    const idTx = String(f[11]||"").trim();
+    if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idTx)){
+      TN.ver.msg = "Buscando por el ID que trae la encuesta…"; pintar();
+      try{
+        const c = await qaFetch(`/api/v2/analytics/conversations/${encodeURIComponent(idTx)}/details`);
+        if(c && c.conversationId){
+          await genesysEnsureUsersLoaded((c.participants||[]).map(p=>p.userId).filter(Boolean));
+          cands = [qaResumen(c, await qaCompletarWrapups([c]))];
+          via = "por el ID de la llamada que trae la encuesta"; exacta = true;
+        }
+      }catch(e){ /* ese ID no es una conversación de Genesys */ }
+    }
     const tel = [f[13], f[12]].find(t=> qaTelefonoVariantes(t).length);
-    if(tel){
+    if(!cands.length && tel){
       TN.ver.msg = "Buscando por el teléfono del cliente…"; pintar();
       const vars = qaTelefonoVariantes(tel);
       cands = await traer([{ type:"or", predicates: vars.flatMap(v=> [{ type:"dimension", dimension:"ani", operator:"matches", value:v }, { type:"dimension", dimension:"dnis", operator:"matches", value:v }]) }], qaSumarDias(fechaEnc,-3));
@@ -15551,9 +15580,9 @@ async function tnVerConversacion(f){
     cands.forEach(c=>{ c._mismo = tnMismoAsesor(c.asesor, f); QA.convCache.set(c.id, c); });
     cands.sort((a,b)=> (b._mismo - a._mismo) || (Date.parse(b.inicio) - Date.parse(a.inicio)));
     cands = cands.slice(0, 6);
-    TN.ver = { rid, estado:"ok", cands, via, msg: tel ? "ni por teléfono ni por asesor" : "la encuesta no trae teléfono y no se encontró al asesor", abierta: !!(cands[0] && cands[0]._mismo) };
+    TN.ver = { rid, estado:"ok", cands, via, msg: tel ? "ni por teléfono ni por asesor" : "la encuesta no trae teléfono y no se encontró al asesor", abierta: !!(cands[0] && (cands[0]._mismo || exacta)) };
     pintar();
-    if(cands[0] && cands[0]._mismo) qaAbrirDetalle(cands[0].id);
+    if(cands[0] && (cands[0]._mismo || exacta)) qaAbrirDetalle(cands[0].id);
   }catch(e){
     TN.ver = { rid, estado:"error", cands:[], msg: qaMensajeError(e) };
     pintar();
