@@ -14891,10 +14891,27 @@ async function tnCargar(forzar){
   TN.cargando = false; tnRender();
 }
 
+// v22.10 (Oscar, 2026-11-11): en el filtro de Encuesta las dos encuestas de llamadas van como
+// una sola opción. Al elegirla salen "Genesys Call Center" (la actual, desde el 10/11/2026) y
+// "Masivo Call Center" (la anterior), para ver el historial de Fijo y Móvil seguido. En la tabla
+// "Por encuesta" se siguen viendo separadas.
+const TN_ENC_GRUPO = { valor:"Genesys Call Center", etiqueta:"Genesys + Masivo Call Center" };
+function tnEncEsLlamadas(e){ return TN_ENC_LLAMADAS.has(tnpsQxNorm(e)); }
+function tnEncOk(e){ return !TN.encuesta || e===TN.encuesta || (tnEncEsLlamadas(TN.encuesta) && tnEncEsLlamadas(e)); }
+function tnEncNombre(){ return !TN.encuesta ? "" : tnEncEsLlamadas(TN.encuesta) ? TN_ENC_GRUPO.etiqueta : TN.encuesta; }
+function tnEncHtmlOpciones(encuestas){
+  const sel = tnEncEsLlamadas(TN.encuesta) ? TN_ENC_GRUPO.valor : TN.encuesta;
+  const ops = []; let puesto = false;
+  (encuestas||[]).forEach(e=>{
+    if(!tnEncEsLlamadas(e)) ops.push([e, e]);
+    else if(!puesto){ ops.push([TN_ENC_GRUPO.valor, TN_ENC_GRUPO.etiqueta]); puesto = true; }
+  });
+  return ops.map(([v,l])=>`<option value="${qaEsc(v)}" ${sel===v?"selected":""}>${qaEsc(l)}</option>`).join("");
+}
 function tnFilasFiltradas(rango){
   const r = (TN.datos && TN.datos.resumen) || [];
   const [desde, hasta] = rango || tnRangoFechas();
-  return r.filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[2]===TN.unidad));
+  return r.filter(f=> f[0]>=desde && f[0]<=hasta && tnEncOk(f[1]) && (!TN.unidad || f[2]===TN.unidad));
 }
 function tnFilasPrevias(){ const pr = tnRangoPrevio(); return pr ? tnFilasFiltradas(pr) : []; }
 function tnAgrupar(filas, claveFn, nombreFn){
@@ -14951,11 +14968,11 @@ function tnRender(){
   const [desde, hasta] = tnRangoFechas();
   const rangos = [["hoy","Hoy"],["ayer","Ayer"],["7","Últimos 7 días"],["mes","Este mes"],["mesant","Mes anterior"],["90","Últimos 90 días"],["rango","Rango"]];
   const encuestas = (d && d.encuestas) || [];
-  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta)).map(f=>f[2]).filter(Boolean))).sort();
+  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && tnEncOk(f[1])).map(f=>f[2]).filter(Boolean))).sort();
   let html = `<div class="qa-card tn-filtros">
     <div class="qa-chips">${rangos.map(([k,l])=>`<button type="button" class="qa-chip ${TN.rango===k?"on":""}" data-rango="${k}">${l}</button>`).join("")}</div>
     ${TN.rango==="rango" ? `<label class="qa-fecha">Desde <input type="date" id="tn-desde" value="${desde}" max="${qaHoyIso()}"/></label><label class="qa-fecha">Hasta <input type="date" id="tn-hasta" value="${hasta}" max="${qaHoyIso()}"/></label>` : ""}
-    <label class="qa-skill">Encuesta <select id="tn-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></label>
+    <label class="qa-skill">Encuesta <select id="tn-encuesta"><option value="">Todas</option>${tnEncHtmlOpciones(encuestas)}</select></label>
     <label class="qa-skill">Unidad <select id="tn-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></label>
     <span class="mut tn-periodo">${tnFecha(desde)}${desde!==hasta?" al "+tnFecha(hasta):""}</span>
     ${TN.vista!=="detalle" && TN.vista!=="repetidos" && d ? `<button type="button" class="btn-outline tn-excel" id="tn-excel">⬇️ Excel</button>` : ""}
@@ -14970,7 +14987,7 @@ function tnRender(){
     else if(TN.vista==="repetidos") html += tnHtmlRepetidos();   // v22.08
     else html += tnHtmlDetalle();
   }
-  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada. Fijo y Móvil suman las dos encuestas de llamadas: Masivo Call Center (la anterior) y Genesys Call Center (desde el 10/11/2026).${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
+  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada. Las llamadas de Fijo y Móvil suman dos encuestas: Masivo Call Center (la anterior) y Genesys Call Center (desde el 10/11/2026).${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
   body.innerHTML = html;
   tnWire();
   if(TN.vista==="resumen" && d) tnGrafica();
@@ -15132,7 +15149,7 @@ function tnHtmlCuartiles(filas){
     const cls = Math.abs(diff) < 0.05 ? "flat" : diff>0 ? "up" : "down";
     return `<span class="tn-q-m2m ${cls}" title="${qaEsc(tnNombrePrevio())} (${tnFecha(pr[0])} al ${tnFecha(pr[1])}): ${tnFmt(g.tnps)}% con ${g.n} encuesta${g.n===1?"":"s"}">${etqPrev}: ${flecha} ${diff>0?"+":""}${(Math.round(diff*10)/10).toLocaleString("es-HN")} pts <span class="tn-q-m2m-ant">(antes ${tnFmt(g.tnps)}%)</span></span>`;
   };
-  const nombreSkill = [TN.encuesta || "Todas las encuestas", TN.unidad || "todas las unidades"].join(" · ");
+  const nombreSkill = [tnEncNombre() || "Todas las encuestas", TN.unidad || "todas las unidades"].join(" · ");
   const [qDesde, qHasta] = tnRangoFechas();
   const num = (v)=> v.toLocaleString("es-HN");
 
@@ -15225,10 +15242,10 @@ function tnHtmlFiltrosVentana(){
   const d = TN.datos;
   const [desde, hasta] = tnRangoFechas();
   const encuestas = (d && d.encuestas) || [];
-  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && (!TN.encuesta || f[1]===TN.encuesta)).map(f=>f[2]).filter(Boolean))).sort();
+  const unidades = Array.from(new Set(((d && d.resumen) || []).filter(f=> f[0]>=desde && f[0]<=hasta && tnEncOk(f[1])).map(f=>f[2]).filter(Boolean))).sort();
   const rangos = [["hoy","Hoy"],["ayer","Ayer"],["7","Últimos 7 días"],["mes","Este mes"],["mesant","Mes anterior"],["90","Últimos 90 días"],["rango","Rango"]];
   return `<div class="pa-barra">
-    <div class="pa-campo pa-campo-sel"><label for="tnq-encuesta">Encuesta</label><select id="tnq-encuesta"><option value="">Todas</option>${encuestas.map(e=>`<option ${TN.encuesta===e?"selected":""}>${qaEsc(e)}</option>`).join("")}</select></div>
+    <div class="pa-campo pa-campo-sel"><label for="tnq-encuesta">Encuesta</label><select id="tnq-encuesta"><option value="">Todas</option>${tnEncHtmlOpciones(encuestas)}</select></div>
     <div class="pa-campo pa-campo-sel"><label for="tnq-unidad">Unidad</label><select id="tnq-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></div>
     <div class="pa-campo"><span class="pa-lbl">Período</span><div class="pa-seg">${rangos.map(([k,l])=>`<button type="button" class="${TN.rango===k?"on":""}" aria-pressed="${TN.rango===k}" data-qrango="${k}">${l}</button>`).join("")}</div></div>
     ${TN.rango==="rango" ? `<div class="pa-campo pa-campo-fecha"><label for="tnq-desde">Desde</label><input type="date" id="tnq-desde" value="${desde}" max="${qaHoyIso()}"/></div><div class="pa-campo pa-campo-fecha"><label for="tnq-hasta">Hasta</label><input type="date" id="tnq-hasta" value="${hasta}" max="${qaHoyIso()}"/></div>` : ""}
@@ -15337,7 +15354,7 @@ function tnDetalleBase(){
   const d = TN.datos;
   if(!d || !Array.isArray(d.detalle)) return [];
   const [dDesde, dHasta] = tnRangoFechas();
-  return d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[4]===TN.unidad));
+  return d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && tnEncOk(f[1]) && (!TN.unidad || f[4]===TN.unidad));
 }
 function tnRepetidos(filas, tipo){
   const m = new Map();
@@ -15415,7 +15432,7 @@ function tnHtmlDetalle(){
   if(!Array.isArray(d.detalle)) return `<div class="qa-card tn-aviso">⏳ Consultando el detalle…</div>`;
   const q = TN.detBuscar.trim().toLowerCase();
   const [dDesde, dHasta] = tnRangoFechas();
-  const filas = d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && (!TN.encuesta || f[1]===TN.encuesta) && (!TN.unidad || f[4]===TN.unidad)
+  const filas = d.detalle.filter(f=> String(f[0]).slice(0,10)>=dDesde && String(f[0]).slice(0,10)<=dHasta && tnEncOk(f[1]) && (!TN.unidad || f[4]===TN.unidad)
     && (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor)
     && (!TN.detSkill || tnSkillDe([f[0], f[1], f[4], f[5]])===TN.detSkill)
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
