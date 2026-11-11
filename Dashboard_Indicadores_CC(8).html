@@ -12008,7 +12008,7 @@ function renderIncidencias(){
    alertas (cancelar, supervisor, reclamo…) y Excel.
    ============================================================ */
 const QA = {
-  vista: "buscar",            // buscar | bandeja | evaluaciones | permisos
+  vista: "buscar",            // buscar | bandeja
   modo: "telefono",           // telefono | asesor | conversacion
   texto: "",
   rango: "7d",                // hoy | ayer | 7d | 30d | rango
@@ -12240,33 +12240,35 @@ function renderQa(){
   if(!genesysGetStoredToken()){
     cont.innerHTML = `<div class="chart-card" style="max-width:560px;margin:24px auto;text-align:center;padding:32px 24px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:8px;">🎧 Calidad (QA)</div>
-      <div style="color:var(--gray);font-size:13px;margin-bottom:18px;line-height:1.5;">Inicia sesión con tu cuenta de Genesys Cloud para buscar llamadas, escuchar grabaciones y revisar evaluaciones.</div>
+      <div style="color:var(--gray);font-size:13px;margin-bottom:18px;line-height:1.5;">Inicia sesión con tu cuenta de Genesys Cloud para buscar llamadas y escuchar grabaciones.</div>
       <button type="button" class="btn-update" onclick="genesysSignIn()">🔑 Iniciar sesión con Genesys</button></div>`;
     return;
   }
-  const nav = [["buscar","Buscar llamadas"],["bandeja","Bandeja para evaluar"],["evaluaciones","Evaluaciones"],["permisos","Permisos"]];
+  // v22.11 (Oscar, 2026-11-11): QA queda solo con "Buscar llamadas" y "Bandeja para evaluar".
+  // Las vistas "Evaluaciones" y "Permisos" ya no se ofrecen. Ver y escuchar una llamada no depende
+  // de ellas: el panel de la llamada (qaAbrirDetalle) pide la grabación directo a Genesys.
+  const nav = [["buscar","Buscar llamadas"],["bandeja","Bandeja para evaluar"]];
   if(!document.getElementById("qa-root")){
     cont.innerHTML = `<div id="qa-root">
       <div class="qa-head">
-        <div class="qa-head-t"><h2>Calidad</h2><p>Llamadas, grabaciones y evaluaciones en vivo desde Genesys Cloud.</p></div>
+        <div class="qa-head-t"><h2>Calidad</h2><p>Llamadas y grabaciones en vivo desde Genesys Cloud.</p></div>
         <div class="qa-nav" role="tablist" aria-label="Secciones de Calidad">${nav.map(([k,l])=>`<button type="button" role="tab" data-vista="${k}">${l}</button>`).join("")}</div>
       </div>
       <div id="qa-body"></div>
     </div>`;
     cont.querySelector(".qa-nav").addEventListener("click", e=>{ const b = e.target.closest("button[data-vista]"); if(!b) return; QA.vista = b.dataset.vista; qaRender(); });
   }
-  genesysEnsureQueuesLoaded().then(()=>{ if(QA.vista==="buscar" || QA.vista==="bandeja" || QA.vista==="evaluaciones") qaRenderOpcionesSkill(); });
+  genesysEnsureQueuesLoaded().then(()=>{ qaRenderOpcionesSkill(); });
   qaRender();
 }
 function qaRender(){
+  if(QA.vista!=="buscar" && QA.vista!=="bandeja") QA.vista = "buscar";   // v22.11: ya no hay otras vistas
   document.querySelectorAll("#qa-root .qa-nav button").forEach(b=>{ const on = b.dataset.vista===QA.vista; b.classList.toggle("active", on); b.setAttribute("aria-selected", on); });
   const body = document.getElementById("qa-body");
   if(!body) return;
   const posFicha = qaGuardarAudio(document.getElementById("qa-ficha-det"));
   if(QA.vista==="buscar") body.innerHTML = qaHtmlBuscar();
-  else if(QA.vista==="bandeja") body.innerHTML = qaHtmlBandeja();
-  else if(QA.vista==="evaluaciones") body.innerHTML = qaHtmlEvaluaciones();
-  else body.innerHTML = qaHtmlPermisos();
+  else body.innerHTML = qaHtmlBandeja();
   qaWire();
   if(document.getElementById("qa-ficha-det") && QA.detalle && QA.detalle.modo==="ficha") qaPintarFicha(posFicha);
 }
@@ -12536,7 +12538,7 @@ async function qaBuscar(){
 function qaMensajeError(e){
   const m = (e && e.message) || String(e);
   if(m==="NOT_SIGNED_IN") return "Tu sesión de Genesys expiró — vuelve a iniciar sesión desde la pestaña Genesys.";
-  if(/HTTP 403/.test(m)) return "Genesys respondió \"sin permiso\" (403) — tu usuario o la aplicación del dashboard no tiene acceso a esta información. Revisa la sección Permisos.";
+  if(/HTTP 403/.test(m)) return "Genesys respondió \"sin permiso\" (403) — tu usuario o la aplicación del dashboard no tiene acceso a esta información. Pide a IT que revise los permisos de tu usuario en Genesys.";
   if(/HTTP 404/.test(m)) return "Genesys no encontró lo que buscas (404). Si es un ID de conversación, revisa que esté completo.";
   if(/HTTP 400/.test(m)) return "Genesys rechazó la consulta (400): " + m.replace(/^HTTP 400 en [^—]+— ?/,"");
   return m;
