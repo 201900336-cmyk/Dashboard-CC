@@ -7180,6 +7180,7 @@ document.getElementById("asistencia-input-archivo").addEventListener("change", a
     // mandan las fechas nuevas — el Apps Script ya las agrega al historial.
     const nuevas = asistenciaCombinarHojas(hojas);
     asistenciaFechasSubidas = new Set(nuevas.fechas);
+    asistenciaFechasGuardadasOk = new Set();   // v22.17: archivo nuevo → nada de esto se ha guardado todavía
     const base = (asistenciaMallaGuardada && asistenciaMallaGuardada.fechas.length)
       ? [{ fechas: asistenciaMallaGuardada.fechas, filasPorFecha: asistenciaMallaGuardada.filasPorFecha, etiqueta:"guardada" }] : [];
     asistenciaMallaData = asistenciaCombinarHojas(base.concat(hojas));
@@ -7204,6 +7205,9 @@ document.getElementById("asistencia-input-dia").addEventListener("change", asist
 // vía Apps Script, protegido con el mismo código de 4 dígitos que ya usan
 // Justificación y Pronóstico — a partir de ahí, cualquiera que abra el
 // dashboard (o presione Actualizar) la ve sin tener que subir nada.
+// v22.17: fechas del archivo subido que YA se guardaron en esta apertura. Si una semana falla y se
+// vuelve a tocar "Guardar para todo el equipo", se sigue desde esa semana en vez de empezar de cero.
+let asistenciaFechasGuardadasOk = new Set();
 async function asistenciaGuardarParaTodos(){
   const statusEl = document.getElementById("asistencia-guardar-status");
   if(!asistenciaMallaData || !asistenciaMallaData.fechas.length) return;
@@ -7254,36 +7258,68 @@ async function asistenciaGuardarParaTodos(){
     // falla se muestra el motivo real que devolvió el servidor.
     const porFecha = {};
     filas.forEach(f=>{ (porFecha[f.Fecha] = porFecha[f.Fecha] || []).push(f); });
-    const fechasOrd = Object.keys(porFecha).sort();
+    const fechasTodas = Object.keys(porFecha).sort();
+    const fechasOrd = fechasTodas.filter(iso=> !asistenciaFechasGuardadasOk.has(iso));   // v22.17: lo ya guardado no se repite
+    const yaGuardadas = Math.round((fechasTodas.length - fechasOrd.length)/7);
     const tandas = [];
     for(let i=0; i<fechasOrd.length; i+=7) tandas.push(fechasOrd.slice(i, i+7));
+    // v22.17 (Oscar, 2026-11-12): al guardar 49 días, la 4.ª semana falló con "Motivo: HTTP 200: GZB64:H4sI…".
+    // El servidor contestó con los datos del dashboard (comprimidos) en vez de confirmar el guardado: pasa
+    // cuando el pedido de guardar le llega al Apps Script como una lectura. Eso NO es un guardado, y tampoco
+    // se sabe si alcanzó a guardar. Por eso ahora: (1) la respuesta se lee con parseJsonUrlPayload y solo
+    // cuenta si trae "ok"; (2) ante una respuesta dudosa se lee la malla directo del servidor y se compara
+    // con lo enviado: si coincide, la semana quedó guardada; (3) si no, se reintenta hasta 4 veces.
     const enviar = async (lote)=>{
       const res = await fetch(url, { method: "POST", body: JSON.stringify({ accion: "malla_asistencia_guardar", filas: lote, codigo, token: scriptSesionToken() }) });
       const txt = await res.text();
-      let result = null; try{ result = JSON.parse(txt); }catch(e){}
-      if(!result) return { ok:false, error:"respuesta_rara", detalle:`HTTP ${res.status}: ${txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim().slice(0,160)}` };
-      return result;
+      let result = null; try{ result = await parseJsonUrlPayload(txt); }catch(e){}
+      if(result && typeof result.ok === "boolean") return result;
+      if(result) return { ok:false, error:"sin_confirmar", detalle:"el servidor contestó con los datos del dashboard en vez de confirmar el guardado" };
+      return { ok:false, error:"respuesta_rara", detalle:`HTTP ${res.status}: ${txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim().slice(0,160)}` };
     };
+    const firmaFila = f=> [String(f.correo||"").trim().toLowerCase(),
+      (f.entradaMin!==null && f.entradaMin!==undefined) ? f.entradaMin : String(f.estado||"").trim().toLowerCase(),
+      (f.salidaMin!==null && f.salidaMin!==undefined) ? f.salidaMin : ""].join("|");
+    const semanaGuardada = async (fs)=>{
+      await asistenciaCargarMallaDirecta();        // deja en asistenciaMallaGuardada lo que tiene el servidor
+      const g = asistenciaMallaGuardada;
+      if(!g) return false;
+      return fs.every(iso=>{
+        const mia = (asistenciaMallaData.filasPorFecha[iso]||[]).map(firmaFila).sort().join("\n");
+        const suya = (g.filasPorFecha[iso]||[]).map(firmaFila).sort().join("\n");
+        return !!mia && mia === suya;
+      });
+    };
+    const ESPERAS = [4000, 8000, 15000];
     for(let t=0; t<tandas.length; t++){
       const fs = tandas[t];
       const lote = fs.reduce((acc,iso)=> acc.concat(porFecha[iso]), []);
-      statusEl.textContent = `Guardando semana ${t+1} de ${tandas.length} (${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])})...`;
+      const rotulo = `semana ${t+1} de ${tandas.length} (${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])})`;
+      statusEl.className = "justif-status loading";
+      statusEl.textContent = `Guardando ${rotulo}...` + (yaGuardadas ? ` Las ${yaGuardadas} primeras ya estaban guardadas.` : "");
       let result = null;
-      for(let intento=0; intento<2; intento++){
+      for(let intento=0; intento<4; intento++){
         try{ result = await enviar(lote); }catch(e){ result = { ok:false, error:"conexion", detalle: String(e && e.message || e) }; }
-        if(result.ok || result.error==="codigo_invalido" || result.error==="sesion_requerida") break;
+        if(result.ok || result.error==="codigo_invalido" || result.error==="sesion_requerida" || result.error==="datos_incompletos") break;
         console.error("Detalle técnico (guardar malla, tanda "+(t+1)+", intento "+(intento+1)+"):", result);
-        await new Promise(r=> setTimeout(r, 4000));
+        statusEl.textContent = `Comprobando si quedó guardada la ${rotulo}...`;
+        try{ if(await semanaGuardada(fs)){ result = { ok:true, comprobado:true }; break; } }catch(e){ console.error("Detalle técnico (comprobar malla):", e); }
+        if(intento < 3){
+          statusEl.textContent = `El servidor no confirmó la ${rotulo}. Reintentando (intento ${intento+2} de 4)...`;
+          await new Promise(r=> setTimeout(r, ESPERAS[intento]));
+        }
       }
       if(!result.ok){
+        const hechas = yaGuardadas + t;
         const motivo = result.error === "codigo_invalido" ? "Código incorrecto."
           : result.error === "sesion_requerida" ? SCRIPT_MSG_SESION
           : result.error === "datos_incompletos" ? "Faltan datos en la malla."
-          : `No se pudo guardar la semana del ${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])}` + (t ? ` (las ${t} anteriores sí quedaron guardadas)` : "") + `. Motivo: ${result.detalle || result.error || "sin detalle"}`;
+          : `No se pudo guardar la semana del ${fmtFechaGenesys(fs[0])} al ${fmtFechaGenesys(fs[fs.length-1])}` + (hechas ? ` (las ${hechas} anteriores sí quedaron guardadas)` : "") + `. Vuelve a tocar "Guardar para todo el equipo": sigue desde esa semana. Motivo: ${result.detalle || result.error || "sin detalle"}`;
         statusEl.className = "justif-status error"; statusEl.textContent = motivo;
         btn.disabled = false; btn.textContent = "💾 Guardar para todo el equipo";
         return;
       }
+      fs.forEach(iso=> asistenciaFechasGuardadasOk.add(iso));
     }
     statusEl.className = "justif-status ok";
     statusEl.textContent = "Guardado ✓ Ya está disponible para todo el equipo.";
