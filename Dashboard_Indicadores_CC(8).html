@@ -7537,13 +7537,65 @@ function tmoAsesorActualizarPeriodo(){
 }
 document.querySelectorAll('input[name="tmoasesor-periodo"]').forEach(r=> r.addEventListener("change", tmoAsesorActualizarPeriodo));
 
+// v22.20 (Oscar, 2026-11-13): "guardé WhatsApp en 19:00 y los demás (y yo al recargar) siguen
+// viendo 8:00". Las metas se guardan en las Propiedades del Apps Script, pero el dashboard lee
+// los datos por las hojas publicadas, que no las traen: todos quedaban con los valores por
+// defecto de GENESYS_METAS_TMO_DEFAULT. Ahora el modal las pide directo al Apps Script
+// (POST accion "metas_tmo_leer", agregado del Apps Script v22.20) cada vez que se abre.
+let tmoMetasEstado = "default";   // "default" (nunca leídas) | "cargando" | "servidor" | "error"
+let tmoMetasDetalle = "";
+let tmoMetasPromesa = null;
+function tmoAsesorCargarMetasServidor(){
+  if(tmoMetasPromesa) return tmoMetasPromesa;   // si ya hay una lectura en curso, se espera esa misma
+  tmoMetasPromesa = (async ()=>{
+    const cfg = loadLiveConfig();
+    const url = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
+    if(!url){ tmoMetasEstado = "error"; tmoMetasDetalle = "sin URL del Apps Script"; return false; }
+    tmoMetasEstado = "cargando"; tmoMetasDetalle = "";
+    tmoAsesorActualizarMetaTexto();
+    try{
+      const res = await fetchWithTimeout(url, { method:"POST", body: JSON.stringify({ accion:"metas_tmo_leer", token: scriptSesionToken() }) }, 20000);
+      const txt = await res.text();
+      let data = null; try{ data = await parseJsonUrlPayload(txt); }catch(e){ data = null; }
+      if(data && data.ok === true && data.metasTmo && typeof data.metasTmo === "object" && !Array.isArray(data.metasTmo)){
+        const leidas = {};
+        Object.keys(data.metasTmo).forEach(k=>{ const v = Number(data.metasTmo[k]); if(isFinite(v) && v > 0) leidas[k] = v; });
+        // Igual que en refreshFromJsonUrl: lo guardado manda; un skill sin meta guardada queda con su default.
+        genesysMetasTmo = { ...GENESYS_METAS_TMO_DEFAULT, ...leidas };
+        tmoMetasEstado = "servidor";
+      } else {
+        tmoMetasEstado = "error";
+        tmoMetasDetalle = (data && data.error) ? String(data.error) : `HTTP ${res.status}`;
+      }
+    }catch(e){
+      tmoMetasEstado = "error";
+      tmoMetasDetalle = (e && e.message) || "sin conexión";
+    }
+    tmoAsesorActualizarMetaTexto();
+    // Si ya hay un cálculo en pantalla, se vuelve a pintar con la meta que vino del servidor.
+    if(tmoAsesorUltimoCalculo){
+      const m = genesysMetasTmo[tmoAsesorUltimoCalculo.cat] || null;
+      if(m !== tmoAsesorUltimoCalculo.meta){ tmoAsesorUltimoCalculo.meta = m; tmoAsesorRenderResultado(); }
+    }
+    return tmoMetasEstado === "servidor";
+  })();
+  tmoMetasPromesa.finally(()=>{ tmoMetasPromesa = null; });
+  return tmoMetasPromesa;
+}
 function tmoAsesorActualizarMetaTexto(){
   const cat = document.getElementById("tmoasesor-input-categoria").value;
   const el = document.getElementById("tmoasesor-meta-actual");
+  if(!el) return;
+  if(tmoMetasEstado === "cargando"){
+    el.textContent = `Leyendo la meta guardada para "${cat}"…`;
+    return;
+  }
   const meta = genesysMetasTmo[cat];
-  el.textContent = meta
+  let txt = meta
     ? `Meta actual para "${cat}": ${tmoFmtMMSS(meta)} (${Math.round(meta)}s).`
     : `Todavía no hay una meta configurada para "${cat}" — se muestra la tabla sin comparar contra ninguna meta.`;
+  if(tmoMetasEstado === "error") txt += " Ojo: no se pudo leer la meta guardada para el equipo; se muestra la que trae el dashboard por defecto.";
+  el.textContent = txt;
 }
 document.getElementById("tmoasesor-input-categoria").addEventListener("change", tmoAsesorActualizarMetaTexto);
 
@@ -7567,6 +7619,7 @@ function openTmoAsesorModal(){
   document.getElementById("tmoasesor-resultado").innerHTML = "";
   tmoAsesorUltimoCalculo = null;
   document.getElementById("tmoasesor-modal-overlay").style.display = "flex";
+  tmoAsesorCargarMetasServidor();   // v22.20: metas guardadas para el equipo (de fondo; repinta al llegar)
 }
 function closeTmoAsesorModal(){
   document.getElementById("tmoasesor-modal-overlay").style.display = "none";
@@ -7603,6 +7656,22 @@ async function tmoAsesorGuardarMeta(){
   const btn = document.getElementById("tmoasesor-meta-guardar");
   btn.disabled = true; btn.textContent = "Guardando...";
   statusEl.className = "justif-status loading"; statusEl.textContent = "";
+  // v22.20: se manda el juego COMPLETO de metas, así que antes hay que tener las que están
+  // guardadas en el servidor; si no, se pisarían las de los otros skills con los valores
+  // por defecto. Si no se pueden leer, no se guarda.
+  if(tmoMetasEstado !== "servidor"){
+    statusEl.textContent = "Leyendo las metas guardadas...";
+    const leidas = await tmoAsesorCargarMetasServidor();
+    if(!leidas){
+      statusEl.className = "justif-status error";
+      statusEl.textContent = (tmoMetasDetalle === "codigo_invalido" || tmoMetasDetalle === "datos_incompletos")
+        ? "No se guardó: falta actualizar el Apps Script (agregado v22.20) para poder leer las metas guardadas. Sin eso, guardar pisaría las metas de los otros skills."
+        : tmoMetasDetalle === "sesion_requerida" ? SCRIPT_MSG_SESION
+        : "No se guardó: no se pudieron leer las metas guardadas del equipo (para no pisar las de los otros skills). Intenta de nuevo en unos segundos.";
+      btn.disabled = false; btn.textContent = "💾 Guardar para todo el equipo";
+      return;
+    }
+  }
   try{
     // Mismo truco que Justificación/Pronóstico/Malla: sin header Content-Type
     // explícito para evitar el preflight OPTIONS que Apps Script no responde.
@@ -7621,8 +7690,9 @@ async function tmoAsesorGuardarMeta(){
       btn.disabled = false; btn.textContent = "💾 Guardar para todo el equipo";
       return;
     }
-    genesysMetasTmo = result.guardado || metas;
-    statusEl.className = "justif-status ok"; statusEl.textContent = `Meta guardada ✓ (${cat}: ${tmoFmtMMSS(nuevaSeg)}).`;
+    genesysMetasTmo = { ...GENESYS_METAS_TMO_DEFAULT, ...(result.guardado || metas) };
+    tmoMetasEstado = "servidor";
+    statusEl.className = "justif-status ok"; statusEl.textContent = `Meta guardada ✓ (${cat}: ${tmoFmtMMSS(nuevaSeg)}). Ya la ven todos al abrir este botón.`;
     document.getElementById("tmoasesor-input-codigo").value = "";
     document.getElementById("tmoasesor-input-meta").value = "";
     tmoAsesorActualizarMetaTexto();
