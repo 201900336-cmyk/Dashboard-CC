@@ -116,13 +116,47 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .btn-update:hover{background:var(--red-dark);border-color:var(--red-dark);}
 
   /* ---------- FILTER PILLS ---------- */
-  #filterbar{display:flex;flex-direction:column;gap:11px;margin-bottom:20px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 16px 14px;}
-  .filterbar-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:9px;margin-bottom:1px;border-bottom:1px solid var(--border);}
-  .filterbar-title{font-size:12.5px;font-weight:800;color:var(--black);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px;}
-  .filter-group{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  .filter-group-label{width:92px;flex-shrink:0;font-size:10.5px;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:.03em;display:flex;align-items:center;gap:5px;}
-  .filter-group-label .fg-icon{font-size:13px;}
-  .filter-group-pills{display:flex;flex-wrap:wrap;gap:7px;}
+  /* v22.18 (Oscar, 2026-11-13): barra de filtros con el diseño "Opción F" — mini calendario
+     (período rápido, año y mes) a la izquierda y fichas con ícono (skill o mercado) a la derecha.
+     Los botones siguen siendo .filter-pill (misma lógica de clic); todo el estilo nuevo va bajo
+     #filterbar para no tocar los .filter-pill de otras ventanas (p. ej. horas de Asistencia). */
+  #filterbar{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 18px 18px;box-shadow:0 1px 2px rgba(22,22,22,.04);}
+  .fb-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid #EFEFEF;}
+  .fb-title{font-size:14px;font-weight:800;color:var(--black);margin-right:2px;}
+  .fb-chip{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;background:#F5F5F6;font-size:12px;font-weight:600;color:#4A4A4A;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+  .fb-spacer{flex:1 1 auto;}
+  .fb-clear{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;background:transparent;border:0;border-radius:9px;color:var(--red-dark);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .fb-clear:hover{background:#FDEEF0;}
+  .fb-body{display:flex;gap:18px;flex-wrap:wrap;align-items:stretch;}
+  .fb-cal{flex:0 1 252px;display:flex;flex-direction:column;gap:12px;background:#FAFAFA;border:1px solid #EFEFEF;border-radius:12px;padding:14px;}
+  .fb-sec-title{display:flex;align-items:center;gap:8px;min-height:20px;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--black);}
+  .fb-sec-title svg{color:var(--red);flex-shrink:0;}
+  .fb-sec-title .fb-count{font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--gray);font-variant-numeric:tabular-nums;}
+  #filterbar .filter-pill{font-family:inherit;line-height:1.2;white-space:nowrap;box-shadow:none;transition:background .15s,border-color .15s,color .15s;}
+  #filterbar .filter-pill:focus-visible,.fb-clear:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .fb-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;background:#EDEDEE;border-radius:9px;padding:3px;}
+  #filterbar .fb-seg .filter-pill{height:30px;padding:0;background:transparent;border:0;border-radius:7px;color:#4A4A4A;font-size:12px;font-weight:600;}
+  #filterbar .fb-seg .filter-pill:hover{background:#E2E2E4;}
+  #filterbar .fb-seg .filter-pill.checked{background:var(--red);color:#fff;font-weight:700;}
+  .fb-years{display:grid;gap:6px;}
+  #filterbar .fb-years .filter-pill{height:30px;padding:0;background:#fff;border:1px solid var(--border);border-radius:8px;color:var(--black);font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;}
+  #filterbar .fb-years .filter-pill:hover{border-color:#BDBDBD;}
+  #filterbar .fb-years .filter-pill.checked{background:var(--black);border-color:var(--black);color:#fff;font-weight:700;}
+  .fb-months{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;}
+  #filterbar .fb-months .filter-pill{height:30px;padding:0;background:#fff;border:1px solid var(--border);border-radius:7px;color:var(--black);font-size:12px;font-weight:600;}
+  #filterbar .fb-months .filter-pill:not(:disabled):hover{border-color:#BDBDBD;}
+  #filterbar .fb-months .filter-pill.checked{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;}
+  #filterbar .fb-months .filter-pill:disabled{background:transparent;border-style:dashed;color:#ABABAB;cursor:default;}
+  .fb-tiles-wrap{flex:1 1 640px;min-width:0;display:flex;flex-direction:column;gap:10px;}
+  .fb-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(112px,100%),1fr));gap:8px;}
+  #filterbar .fb-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;min-height:100px;padding:12px 6px 10px;background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--black);font-size:12px;font-weight:600;line-height:1.25;text-align:center;white-space:normal;}
+  #filterbar .fb-tile:hover{border-color:#BDBDBD;}
+  .fb-tile .fb-ico{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#F3F3F4;color:#4A4A4A;flex-shrink:0;}
+  .fb-tile .fb-check{display:none;position:absolute;top:7px;right:7px;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;}
+  #filterbar .fb-tile.checked{background:#FFF6F7;border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red);color:var(--black);font-weight:700;}
+  .fb-tile.checked .fb-ico{background:var(--red);color:#fff;}
+  .fb-tile.checked .fb-check{display:flex;}
+  @media (max-width:700px){ .fb-cal{flex-basis:100%;} }
   .filter-pill{background:#F5F5F6;border:1px solid transparent;color:var(--black);padding:6px 14px;border-radius:18px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;white-space:nowrap;transition:background .15s,box-shadow .15s;}
   .filter-pill:hover{border-color:var(--border);}
   .filter-pill.checked{background:linear-gradient(160deg,var(--red) 0%,var(--red-dark) 100%);color:#fff;font-weight:700;box-shadow:0 3px 8px rgba(228,3,46,.30);}
@@ -7945,52 +7979,113 @@ document.getElementById("tmoasesor-calcular").addEventListener("click", tmoAseso
 /* ============================================================
    RENDER: SIDEBAR
    ============================================================ */
+// v22.18 (Oscar, 2026-11-13): íconos de línea (SVG) de la barra de filtros "Opción F", uno por
+// skill de Genesys (mismo sentido que los emojis de KPISDIA_CAT_ICON) y uno genérico para Mercado.
+const FB_TRAZOS = {
+  "Fijo": '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v12h14V9"/><path d="M10 21v-6h4v6"/>',
+  "Móvil": '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  "Despacho": '<path d="M7 18v-5a5 5 0 0 1 10 0v5"/><path d="M4 21h16"/><path d="M5 18h14"/><path d="M12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/>',
+  "Corporativo": '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8.5 7h1M14.5 7h1M8.5 11h1M14.5 11h1M8.5 15h1M14.5 15h1"/><path d="M10 21v-3h4v3"/>',
+  "WhatsApp": '<path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l2.1-5.2A8.5 8.5 0 1 1 21 11.5z"/>',
+  "Helpdesk": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/>',
+  "Redes Sociales": '<path d="M3 10v4a1 1 0 0 0 1 1h3l7 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M17.5 8.5a5 5 0 0 1 0 7"/>',
+  "Chat Web": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>',
+  "Mail Clientes": '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  "Mail Corporativo": '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>',
+  "WhatsApp Corporativo": '<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8M8 12h5"/>',
+  "BackOffice Despacho": '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  "Recuperación de equipos": '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  "WhatsApp No Contactados": '<path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l2.1-5.2A8.5 8.5 0 1 1 21 11.5z"/><path d="m9.5 9 5 5M14.5 9l-5 5"/>',
+  "Mail Despacho (Horario Hábil)": '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
+  "Mail Despacho (Fuera de Horario)": '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  _skill: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  _mercado: '<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>',
+  _calendario: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  _limpiar: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+  _check: '<path d="M20 6 9 17l-5-5"/>',
+};
+FB_TRAZOS["Canales Digitales"] = FB_TRAZOS["WhatsApp"];   // así se llama WhatsApp en el Sheet (pestaña FCR)
+function fbSvg(clave, tam, grosor){
+  const t = FB_TRAZOS[clave] || FB_TRAZOS._skill;
+  return `<svg width="${tam}" height="${tam}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${grosor||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t}</svg>`;
+}
+// "Fijo" · "Fijo y Móvil" · "Fijo, Móvil y WhatsApp"; con más de 3 devuelve null (se resume con el número).
+function fbLista(nombres){
+  if(nombres.length<=1) return nombres.join("");
+  if(nombres.length<=3) return nombres.slice(0,-1).join(", ") + " y " + nombres[nombres.length-1];
+  return null;
+}
+// Chip del período en la cabecera de la barra de filtros.
+function fbResumenPeriodo(){
+  const corto = m=> MESES[m-1].slice(0,3);
+  if(state.tab==="genesys"){
+    const qd = genesysQuickPeriodDate();
+    if(qd){
+      const p2 = n=> String(n).padStart(2,"0");
+      return `${state.genesysQuickPeriod==="hoy"?"Hoy":"Ayer"} · ${p2(qd.day)}/${p2(qd.month)}/${qd.year}`;
+    }
+    // Mismo criterio que genesysFocusMonths/genesysFocusPeriod: sin mes elegido = mes actual;
+    // si no hay exactamente un año elegido = año actual.
+    const meses = genesysFocusMonths();
+    const anio = genesysFocusPeriod().year;
+    if(meses.length===1) return `${MESES[meses[0]-1]} ${anio}`;
+    const lista = fbLista(meses.map(corto));
+    return lista ? `${lista} ${anio}` : `${meses.length} meses de ${anio}`;
+  }
+  const meses = Array.from(state.selMonths).sort((a,b)=>a-b);
+  const txtMeses = !meses.length ? "" : (meses.length===1 ? MESES[meses[0]-1] : (fbLista(meses.map(corto)) || `${meses.length} meses`));
+  if(state.tab==="fcr") return txtMeses || "Todos los meses";
+  const anios = Array.from(state.selYears).sort((a,b)=>a-b);
+  const txtAnios = !anios.length ? "" : (fbLista(anios.map(String)) || `${anios.length} años`);
+  if(txtMeses && txtAnios) return `${txtMeses} ${txtAnios}`;
+  if(txtMeses) return `${txtMeses} · todos los años`;
+  if(txtAnios) return `Todo ${txtAnios}`;
+  return "Todo el período";
+}
+// Chip de lo elegido a la derecha (skills o mercados). Vacío = todos, como en el resto del dashboard.
+function fbResumenSeleccion(mercados){
+  let nombres, todos, unidad;
+  if(state.tab==="genesys"){ nombres = GENESYS_CATEGORIAS.filter(c=>state.selColasGenesys.has(c)); todos = "Todos los skills"; unidad = "skills"; }
+  else if(state.tab==="incidencias"){ nombres = mercados.filter(m=>state.selMercados.has(m)); todos = "Todos los mercados"; unidad = "mercados"; }
+  else { nombres = SKILLS.filter((s,i)=> state.selSkills.has(i) && !(state.tab==="fcr" && i===2)); todos = "Todos los skills"; unidad = "skills"; }
+  if(!nombres.length) return todos;
+  return fbLista(nombres) || `${nombres.length} ${unidad}`;
+}
+
 function renderSidebar(){
   const el = document.getElementById("filterbar");
+  const tab = state.tab;
   const years = uniqueYears();
-  const yearPills = years.map(y=>{
-    const on = state.selYears.has(y);
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="year" data-val="${y}">${y}</div>`;
-  }).join("");
+  // v22.18: diseño "Opción F". Cada botón sigue siendo .filter-pill con data-kind/data-val,
+  // así que el manejo de clics de más abajo es el mismo de antes.
+  const boton = (kind, val, texto, on, extra)=>
+    `<button type="button" class="filter-pill ${on?"checked":""}" data-kind="${kind}" data-val="${justifEsc(val)}" aria-pressed="${on?"true":"false"}"${extra||""}>${justifEsc(texto)}</button>`;
+  const ficha = (kind, val, texto, on, icono)=>
+    `<button type="button" class="filter-pill fb-tile ${on?"checked":""}" data-kind="${kind}" data-val="${justifEsc(val)}" aria-pressed="${on?"true":"false"}">`
+    + `<span class="fb-check" aria-hidden="true">${fbSvg("_check", 11, 3.5)}</span>`
+    + `<span class="fb-ico" aria-hidden="true">${fbSvg(icono, 18)}</span>`
+    + `<span>${justifEsc(texto)}</span></button>`;
 
-  const availMonths = state.tab === "fcr" ? monthsAvailableFcr()
-    : state.tab === "incidencias" ? monthsAvailableForYearsFrom(incidentes, state.selYears)
-    : state.tab === "genesys" ? new Set([1,2,3,4,5,6,7,8,9,10,11,12])
+  const yearPills = years.map(y=> boton("year", y, y, state.selYears.has(y))).join("");
+
+  const availMonths = tab === "fcr" ? monthsAvailableFcr()
+    : tab === "incidencias" ? monthsAvailableForYearsFrom(incidentes, state.selYears)
+    : tab === "genesys" ? new Set([1,2,3,4,5,6,7,8,9,10,11,12])
     : monthsAvailableForYears(state.selYears);
+  // Los 12 meses siempre a la vista (calendario de 4×3). Un mes sin datos queda apagado y no se
+  // puede elegir (antes simplemente no aparecía); si ya estaba elegido se deja activo para poder quitarlo.
   const monthPills = MESES.map((m,i)=>{
-    const monthNum = i+1;
-    if(!availMonths.has(monthNum)) return "";
-    const on = state.selMonths.has(monthNum);
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="month" data-val="${monthNum}">${m}</div>`;
-  }).join("");
-
-  const skillPills = SKILLS.map((s,i)=>{
-    const on = state.selSkills.has(i);
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="skill" data-val="${i}">${s}</div>`;
-  }).join("");
-  // FCR no tiene datos de Despacho (ver SKILL_ORDER en renderFcr) — se omite
-  // ese pill aquí para no dejar seleccionar un skill que dejaría la gráfica
-  // anual vacía sin explicación.
-  const fcrSkillPills = SKILLS.map((s,i)=>{
-    if(i===2) return "";
-    const on = state.selSkills.has(i);
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="skill" data-val="${i}">${s}</div>`;
+    const n = i+1;
+    const on = state.selMonths.has(n);
+    const extra = (!availMonths.has(n) && !on) ? ` disabled title="${m}: sin datos"` : ` title="${m}"`;
+    return boton("month", n, m.slice(0,3), on, extra);
   }).join("");
 
   const mercados = Array.from(new Set(incidentes.map(r=>r[4]).filter(Boolean))).sort();
-  const mercadoPills = mercados.map(mc=>{
-    const on = state.selMercados.has(mc);
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="mercado" data-val="${mc}">${mc}</div>`;
-  }).join("");
-
-  const colaGenesysPills = GENESYS_CATEGORIAS.map(cat=>{
-    const on = state.selColasGenesys.has(cat);
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="colagenesys" data-val="${cat}">${cat}</div>`;
-  }).join("");
 
   // Período rápido (solo Genesys): "Hoy"/"Ayer" activan un día puntual en vivo
   // (ver genesysQuickPeriodDate); "Este mes" es un atajo que simplemente
-  // selecciona el año/mes actuales en los filtros normales de arriba.
+  // selecciona el año/mes actuales en los filtros normales de Año y Mes.
   const QUICK_PERIOD_LABELS = { hoy:"Hoy", ayer:"Ayer", estemes:"Este mes" };
   const quickPeriodPills = Object.keys(QUICK_PERIOD_LABELS).map(k=>{
     let on;
@@ -8000,35 +8095,49 @@ function renderSidebar(){
     } else {
       on = state.genesysQuickPeriod === k;
     }
-    return `<div class="filter-pill ${on?"checked":""}" data-kind="genesysquick" data-val="${k}">${QUICK_PERIOD_LABELS[k]}</div>`;
+    return boton("genesysquick", k, QUICK_PERIOD_LABELS[k], on);
   }).join("");
 
-  const headerRow = `<div class="filterbar-header"><span class="filterbar-title">🔍 Filtros</span><button class="btn-outline" id="btn-clear-filters-inline" style="padding:5px 12px;font-size:11px;">🧹 Limpiar filtros</button></div>`;
-  const fgLabel = (icon,text)=>`<span class="filter-group-label"><span class="fg-icon">${icon}</span>${text}</span>`;
+  // Fichas de la derecha: skills de Genesys, mercados (Incidencias) o skills del Sheet (FCR).
+  let fichas, tituloDer, iconoDer, nSel, nTot;
+  if(tab === "genesys"){
+    fichas = GENESYS_CATEGORIAS.map(cat=> ficha("colagenesys", cat, cat, state.selColasGenesys.has(cat), cat)).join("");
+    nTot = GENESYS_CATEGORIAS.length; nSel = GENESYS_CATEGORIAS.filter(c=>state.selColasGenesys.has(c)).length;
+    tituloDer = "Skill"; iconoDer = "_skill";
+  } else if(tab === "incidencias"){
+    fichas = mercados.map(mc=> ficha("mercado", mc, mc, state.selMercados.has(mc), "_mercado")).join("");
+    nTot = mercados.length; nSel = mercados.filter(mc=>state.selMercados.has(mc)).length;
+    tituloDer = "Mercado"; iconoDer = "_mercado";
+  } else {
+    // FCR no tiene datos de Despacho (ver SKILL_ORDER en renderFcr) — se omite
+    // esa ficha para no dejar seleccionar un skill que dejaría la gráfica
+    // anual vacía sin explicación.
+    const idx = SKILLS.map((s,i)=>i).filter(i=> !(tab==="fcr" && i===2));
+    fichas = idx.map(i=> ficha("skill", i, SKILLS[i], state.selSkills.has(i), SKILLS[i])).join("");
+    nTot = idx.length; nSel = idx.filter(i=>state.selSkills.has(i)).length;
+    tituloDer = "Skill"; iconoDer = "_skill";
+  }
 
-  el.innerHTML = headerRow + (state.tab === "fcr"
-    ? `
-    <div class="filter-group">${fgLabel("🗓️","Mes")}<div class="filter-group-pills">${monthPills}</div></div>
-    <div class="filter-group">${fgLabel("🎧","Skill")}<div class="filter-group-pills">${fcrSkillPills}</div></div>
-  `
-    : state.tab === "incidencias"
-    ? `
-    <div class="filter-group">${fgLabel("📅","Año")}<div class="filter-group-pills">${yearPills}</div></div>
-    <div class="filter-group">${fgLabel("🗓️","Mes")}<div class="filter-group-pills">${monthPills}</div></div>
-    <div class="filter-group">${fgLabel("🌎","Mercado")}<div class="filter-group-pills">${mercadoPills}</div></div>
-  `
-    : state.tab === "genesys"
-    ? `
-    <div class="filter-group">${fgLabel("⚡","Período rápido")}<div class="filter-group-pills">${quickPeriodPills}</div></div>
-    <div class="filter-group">${fgLabel("📅","Año")}<div class="filter-group-pills">${yearPills}</div></div>
-    <div class="filter-group">${fgLabel("🗓️","Mes")}<div class="filter-group-pills">${monthPills}</div></div>
-    <div class="filter-group">${fgLabel("🎧","Skill")}<div class="filter-group-pills">${colaGenesysPills}</div></div>
-  `
-    : `
-    <div class="filter-group">${fgLabel("📅","Año")}<div class="filter-group-pills">${yearPills}</div></div>
-    <div class="filter-group">${fgLabel("🗓️","Mes")}<div class="filter-group-pills">${monthPills}</div></div>
-    <div class="filter-group">${fgLabel("🎧","Skill")}<div class="filter-group-pills">${skillPills}</div></div>
-  `);
+  const resumenPeriodo = fbResumenPeriodo();
+  const resumenSel = fbResumenSeleccion(mercados);
+  const cabecera = `<div class="fb-head"><span class="fb-title">Filtros</span>`
+    + `<span class="fb-chip" title="${justifEsc(resumenPeriodo)}">${justifEsc(resumenPeriodo)}</span>`
+    + `<span class="fb-chip" title="${justifEsc(resumenSel)}">${justifEsc(resumenSel)}</span>`
+    + `<span class="fb-spacer"></span>`
+    + `<button type="button" class="fb-clear" id="btn-clear-filters-inline">${fbSvg("_limpiar", 14)}<span>Limpiar filtros</span></button></div>`;
+
+  const columnasAnio = Math.min(Math.max(years.length, 1), 3);
+  const calendario = `<div class="fb-cal">`
+    + `<div class="fb-sec-title">${fbSvg("_calendario", 16)}<span>${tab==="fcr" ? "Mes" : "Período"}</span></div>`
+    + (tab==="genesys" ? `<div class="fb-seg" role="group" aria-label="Período rápido">${quickPeriodPills}</div>` : "")
+    + (tab!=="fcr" ? `<div class="fb-years" role="group" aria-label="Año" style="grid-template-columns:repeat(${columnasAnio},minmax(0,1fr));">${yearPills}</div>` : "")
+    + `<div class="fb-months" role="group" aria-label="Mes">${monthPills}</div></div>`;
+
+  const derecha = `<div class="fb-tiles-wrap">`
+    + `<div class="fb-sec-title">${fbSvg(iconoDer, 16)}<span>${tituloDer}</span><span class="fb-count">${nSel ? `${nSel} de ${nTot} seleccionados` : "Todos"}</span></div>`
+    + `<div class="fb-tiles" role="group" aria-label="${tituloDer}">${fichas}</div></div>`;
+
+  el.innerHTML = cabecera + `<div class="fb-body">${calendario}${derecha}</div>`;
   el.querySelectorAll(".filter-pill").forEach(row=>{
     row.addEventListener("click", ()=>{
       const kind = row.dataset.kind;
