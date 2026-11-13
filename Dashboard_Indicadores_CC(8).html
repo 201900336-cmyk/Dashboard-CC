@@ -105,11 +105,31 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .period-dot{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;flex-shrink:0;}
 
   /* ---------- TOOLBAR (tabs + actions) ---------- */
-  #toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-  .tabs-row{display:flex;gap:6px;flex-wrap:wrap;}
-  .tab-pill{background:#fff;border:1px solid var(--border);color:var(--gray);padding:8px 16px;border-radius:22px;font-size:12.5px;font-weight:700;cursor:pointer;}
-  .tab-pill.active{background:var(--black);color:#fff;border-color:var(--black);}
-  #header-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  /* v22.19 (Oscar, 2026-11-13): pestañas "Opción 3" — fichas con ícono (mismo lenguaje que la barra
+     de filtros de v22.18) y, a la derecha, una ficha de estado con la fuente de los datos, la fecha
+     y los botones. Los ids y las clases que usa el código (.tab-pill, data-tab, .active,
+     #btn-refresh-online, #btn-upload-top, #btn-print, #btn-reset-top, #last-updated-bar) no cambiaron. */
+  #toolbar{display:flex;align-items:stretch;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px;}
+  .tabs-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .tab-pill{display:flex;align-items:center;gap:10px;height:58px;padding:0 16px 0 11px;background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--black);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s;}
+  .tab-pill:hover{border-color:#BDBDBD;}
+  .tab-pill .tp-ico{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#F3F3F4;color:#4A4A4A;flex-shrink:0;}
+  .tab-pill.active{background:#FFF6F7;border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red);color:var(--black);font-weight:700;}
+  .tab-pill.active .tp-ico{background:var(--red);color:#fff;}
+  .tab-pill:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .tb-status{display:flex;align-items:center;gap:10px;min-height:58px;margin-left:auto;padding:0 8px 0 14px;background:#fff;border:1px solid var(--border);border-radius:12px;}
+  .tb-sep{width:1px;height:32px;background:#EFEFEF;flex-shrink:0;}
+  #header-actions{display:flex;align-items:center;gap:2px;}
+  .tb-update{display:flex;align-items:center;gap:7px;height:40px;padding:0 14px;margin-right:4px;background:var(--red);border:0;border-radius:10px;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(228,3,46,.35);}
+  .tb-update:hover{background:var(--red-dark);}
+  .tb-icon{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:transparent;border:0;border-radius:10px;color:#4A4A4A;cursor:pointer;}
+  .tb-icon:hover{background:#F3F3F4;color:var(--black);}
+  .tb-update:focus-visible,.tb-icon:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  @media (max-width:700px){
+    .tabs-row .tab-pill{flex:1 1 calc(50% - 4px);height:50px;}
+    .tb-status{flex-wrap:wrap;width:100%;margin-left:0;padding:8px 10px 8px 14px;}
+    .tb-sep{display:none;}
+  }
   .btn-outline{background:#fff;border:1px solid var(--border);color:var(--black);padding:8px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;}
   .btn-outline:hover{border-color:var(--red);color:var(--red);}
   .btn-update{background:var(--red);border:1px solid var(--red);color:#fff;padding:8px 16px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(228,3,46,.35);}
@@ -162,8 +182,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .filter-pill.checked{background:linear-gradient(160deg,var(--red) 0%,var(--red-dark) 100%);color:#fff;font-weight:700;box-shadow:0 3px 8px rgba(228,3,46,.30);}
 
   #upload-box{display:none;}
-  #last-updated-bar{font-size:11px;color:var(--gray);margin:-10px 0 14px;padding-left:2px;display:flex;align-items:center;gap:6px;}
-  #last-updated-bar .dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  #last-updated-bar{display:flex;align-items:center;gap:10px;min-width:0;}
+  #last-updated-bar .dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(30,158,75,.18);flex-shrink:0;}
+  #last-updated-bar.sin-fuente .dot{background:#C9C9C9;box-shadow:none;}
+  #last-updated-bar .lu-txt{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  #last-updated-bar .lu-txt b{font-size:12.5px;font-weight:700;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;}
+  #last-updated-bar .lu-txt span{font-size:11.5px;color:var(--gray);white-space:nowrap;}
   #upload-banner{margin:-8px 0 16px;padding:9px 14px;border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px;}
   #upload-banner.ok{background:#E6F6EB;color:#166534;border:1px solid #BEE8C9;}
   #upload-banner.error{background:#FDEBEC;color:#B4021F;border:1px solid #F5C2C7;}
@@ -923,7 +947,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     .grid-3{grid-template-columns:1fr;}
   }
   @media print{
-    #header-actions, #filterbar, .tabs-row{display:none !important;}
+    #header-actions, #filterbar, .tabs-row, .tb-sep{display:none !important;}
+    .tb-status{min-height:0;margin-left:0;padding:0;border:0;}
     #main{padding:0;}
     body{background:#fff;}
     .chart-card{break-inside:avoid;}
@@ -1403,25 +1428,29 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   </div>
 
   <div id="toolbar">
+    <!-- v22.19 (Oscar, 2026-11-13): pestañas como fichas con ícono ("Opción 3"). -->
     <div class="tabs-row" id="tabs">
-      <button class="tab-pill" data-tab="fcr">FCR</button>
-      <button class="tab-pill" data-tab="incidencias">Incidencias</button>
-      <button class="tab-pill active" data-tab="genesys">📞 Genesys</button>
-      <button class="tab-pill" data-tab="qa">🎧 QA</button>
-      <button class="tab-pill" data-tab="tnps">⭐ Qualtrics</button>
-      <!-- v22.13 (Oscar, 2026-11-11): mientras se termina, el botón de Códigos de conclusión se llama "En Desarrollo". Al terminarlo, volver a "🏷️ Códigos de conclusión". -->
-      <button class="tab-pill" data-tab="codigos">🚧 En Desarrollo</button>
+      <button class="tab-pill" data-tab="fcr"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 5-5"/></svg></span><span>FCR</span></button>
+      <button class="tab-pill" data-tab="incidencias"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span><span>Incidencias</span></button>
+      <button class="tab-pill active" data-tab="genesys"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span><span>Genesys</span></button>
+      <button class="tab-pill" data-tab="qa"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span><span>QA</span></button>
+      <button class="tab-pill" data-tab="tnps"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>Qualtrics</span></button>
+      <!-- v22.13 (Oscar, 2026-11-11): mientras se termina, el botón de Códigos de conclusión se llama "En Desarrollo". Al terminarlo, volver a "Códigos de conclusión" (y cambiar la llave por un ícono de etiqueta). -->
+      <button class="tab-pill" data-tab="codigos"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span>En Desarrollo</span></button>
     </div>
-    <div id="header-actions">
-      <button class="btn-update" id="btn-refresh-online">🔄 Actualizar ahora</button>
-      <button class="btn-outline" id="btn-upload-top" title="Actualizar desde un Excel local">📂 Excel local</button>
-      <button class="btn-outline" id="btn-print">🖨️ Imprimir</button>
-      <button class="btn-outline" id="btn-reset-top" title="Restaurar datos originales">↺</button>
-      <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" />
+    <!-- Ficha de estado: fuente y hora de la última actualización (renderLastUpdated) + botones. -->
+    <div class="tb-status">
+      <div id="last-updated-bar"></div>
+      <div class="tb-sep" aria-hidden="true"></div>
+      <div id="header-actions">
+        <button class="tb-update" id="btn-refresh-online" title="Actualizar ahora"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></svg><span>Actualizar</span></button>
+        <button class="tb-icon" id="btn-upload-top" title="Actualizar desde un Excel local" aria-label="Actualizar desde un Excel local"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></button>
+        <button class="tb-icon" id="btn-print" title="Imprimir" aria-label="Imprimir"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></button>
+        <button class="tb-icon" id="btn-reset-top" title="Restaurar datos originales" aria-label="Restaurar datos originales"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+        <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" />
+      </div>
     </div>
   </div>
-
-  <div id="last-updated-bar"></div>
 
   <div id="filterbar"></div>
   <div id="upload-banner" style="display:none;"></div>
@@ -8206,13 +8235,26 @@ function renderHeader(){
   renderLastUpdated();
 }
 
+// v22.19: "13/11/2026, 8:51:41 a. m." (toLocaleString es-HN) → "13/11/2026 · 8:51 a. m.".
+function luFormatoFecha(txt){
+  const s = String(txt || "");
+  const sinSegundos = t=> t.replace(/(\d{1,2}:\d{2}):\d{2}/, "$1");
+  const partes = s.split(", ");
+  return partes.length===2 ? `${partes[0]} · ${sinSegundos(partes[1])}` : sinSegundos(s);
+}
 function renderLastUpdated(){
   const el = document.getElementById("last-updated-bar");
   if(!el) return;
+  // v22.19: va dentro de la ficha de estado de la derecha — fuente en negrita y fecha/hora debajo.
   if(uploadInfo){
-    el.innerHTML = `<span class="dot"></span> Última actualización: <b>${uploadInfo.name}</b> — ${uploadInfo.date}`;
+    const nombre = justifEsc(uploadInfo.name);
+    el.className = "";
+    el.title = `Última actualización: ${uploadInfo.name} — ${uploadInfo.date}`;
+    el.innerHTML = `<span class="dot"></span><span class="lu-txt"><b>${nombre}</b><span>Actualizado el ${justifEsc(luFormatoFecha(uploadInfo.date))}</span></span>`;
   } else {
-    el.innerHTML = `<span class="dot" style="background:#C9C9C9;"></span> Mostrando datos base del archivo (aún no se ha conectado ninguna fuente en vivo).`;
+    el.className = "sin-fuente";
+    el.title = "Mostrando datos base del archivo (aún no se ha conectado ninguna fuente en vivo).";
+    el.innerHTML = `<span class="dot"></span><span class="lu-txt"><b>Datos base del archivo</b><span>Sin fuente en vivo conectada</span></span>`;
   }
 }
 
