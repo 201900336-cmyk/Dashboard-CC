@@ -117,6 +117,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tab-pill.active{background:#FFF6F7;border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red);color:var(--black);font-weight:700;}
   .tab-pill.active .tp-ico{background:var(--red);color:#fff;}
   .tab-pill:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .tab-pill .tp-2l{line-height:1.15;text-align:left;}   /* v22.21: nombre largo en 2 líneas ("Códigos de / conclusión") */
   .tb-status{display:flex;align-items:center;gap:10px;min-height:58px;margin-left:auto;padding:0 8px 0 14px;background:#fff;border:1px solid var(--border);border-radius:12px;}
   .tb-sep{width:1px;height:32px;background:#EFEFEF;flex-shrink:0;}
   #header-actions{display:flex;align-items:center;gap:2px;}
@@ -1435,8 +1436,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <button class="tab-pill active" data-tab="genesys"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span><span>Genesys</span></button>
       <button class="tab-pill" data-tab="qa"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span><span>QA</span></button>
       <button class="tab-pill" data-tab="tnps"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>Qualtrics</span></button>
-      <!-- v22.13 (Oscar, 2026-11-11): mientras se termina, el botón de Códigos de conclusión se llama "En Desarrollo". Al terminarlo, volver a "Códigos de conclusión" (y cambiar la llave por un ícono de etiqueta). -->
-      <button class="tab-pill" data-tab="codigos"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span>En Desarrollo</span></button>
+      <!-- v22.21 (Oscar, 2026-11-16): el botón vuelve a llamarse "Códigos de conclusión", con ícono de etiqueta (de v22.13 a v22.20 se llamó "En Desarrollo", con una llave).
+           El nombre va en 2 líneas (.tp-2l): en una sola línea la fila de pestañas ya no cabe junto a la ficha de estado y esta bajaría a una segunda línea en todas las pantallas. -->
+      <button class="tab-pill" data-tab="codigos" aria-label="Códigos de conclusión"><span class="tp-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><span class="tp-2l">Códigos de<br>conclusión</span></button>
     </div>
     <!-- Ficha de estado: fuente y hora de la última actualización (renderLastUpdated) + botones. -->
     <div class="tb-status">
