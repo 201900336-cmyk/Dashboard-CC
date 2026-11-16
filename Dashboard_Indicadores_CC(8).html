@@ -9333,7 +9333,7 @@ const TNPS_QX_MAP = {
   "Mail Corporativo":     [{ enc:"empresas rrss", servicio:"correo clientes vip" }],
   "WhatsApp Corporativo": [{ enc:"empresas rrss", servicio:"whatsapp corporativo" }],
 };
-const TNPS_QX = { meses:null, estado:"", intentoEn:0 };   // meses: [[yyyy-MM, encuesta, unidad, servicio, D, P, PR], ...]
+const TNPS_QX = { meses:null, estado:"", intentoEn:0, recargando:false };   // meses: [[yyyy-MM, encuesta, unidad, servicio, D, P, PR], ...]
 function tnpsQxNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }
 // v22.15: skill de llamadas ("Fijo" | "Móvil" | "") según la unidad de la encuesta: el texto mismo
 // ("Fijo", "Call Center Móvil") o el nombre de una cola de Genesys que el dashboard ya tiene clasificada.
@@ -9391,22 +9391,31 @@ function tnpsValorPeriodos(periods, sel){
   if(vPost===null) return vPre;
   return (vPre*pre.length + vPost*post.length)/(pre.length+post.length);   // período que cruza septiembre/octubre
 }
-function tnpsQxCargar(){
-  if(TNPS_QX.estado==="cargando" || TNPS_QX.estado==="ok") return;
+// v22.22: forzar = volver a pedirlo aunque ya esté cargado (después de traer lo último de Qualtrics);
+// mientras llega se sigue mostrando el que ya estaba.
+function tnpsQxCargar(forzar){
+  if(TNPS_QX.estado==="cargando" || TNPS_QX.recargando) return;
+  if(TNPS_QX.estado==="ok" && !forzar) return;
   if(TNPS_QX.estado==="error" && Date.now()-TNPS_QX.intentoEn < 5*60*1000) return;
   if(!genesysGetStoredToken()) return;
   const cfg = loadLiveConfig();
   const base = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
   if(!base) return;
-  TNPS_QX.estado = "cargando"; TNPS_QX.intentoEn = Date.now();
+  const recarga = TNPS_QX.estado==="ok";
+  if(recarga) TNPS_QX.recargando = true;
+  else { TNPS_QX.estado = "cargando"; TNPS_QX.intentoEn = Date.now(); }
   fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"tnps_mensual", token: scriptSesionToken() }) }, 45000)
     .then(r=> r.text()).then(t=> parseJsonUrlPayload(t))
     .then(d=>{
       if(!d || !d.ok || !Array.isArray(d.meses)) throw new Error((d && d.error) || "sin datos");
-      TNPS_QX.meses = d.meses; TNPS_QX.estado = "ok";
+      TNPS_QX.meses = d.meses; TNPS_QX.estado = "ok"; TNPS_QX.recargando = false;
       if(state.tab==="genesys") renderGenesys();
     })
-    .catch(e=>{ console.error("Detalle técnico (TNPS mensual de Qualtrics):", e); TNPS_QX.estado = "error"; });
+    .catch(e=>{
+      console.error("Detalle técnico (TNPS mensual de Qualtrics):", e);
+      if(recarga) TNPS_QX.recargando = false;   // se queda con el que ya tenía
+      else TNPS_QX.estado = "error";
+    });
 }
 // Serie de 12 meses de TNPS, año actual y año anterior a la vez (para la
 // gráfica "TNPS MENSUAL" de la pestaña Genesys, mismo look & feel año-actual-
@@ -15117,6 +15126,8 @@ const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"res
   detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
   sel:"",                    // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
   repTipo:"", repMin:3 };    // v22.08: contactos repetidos ("" = correos si hay; mínimo de encuestas por contacto)
+// v22.22: "traer lo último de Qualtrics" (ver tnTraerLoUltimo). estado: "" | "trayendo" | "listo" | "error"
+const TN_SINC = { estado:"", avisos:[], detalle:"", pedidoEn:0, promesa:null };
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
 const TN_VISTOS = new Set((()=>{ try{ return JSON.parse(localStorage.getItem("tn_vistos")||"[]"); }catch(e){ return []; } })());
 function tnMarcarVisto(rid){
@@ -15225,6 +15236,75 @@ async function tnCargar(forzar){
   TN.cargando = false; tnRender();
 }
 
+/* v22.22 (Oscar, 2026-11-16): "que cuadre con Qualtrics". Comparó Fijo de este mes: aquí 1,032
+   encuestas (TNPS 57.7) y en Qualtrics 1,038 (57.6). Eran las que entraron después de la última
+   bajada del Apps Script, que baja Qualtrics cada 4 horas. Ahora, al entrar a esta pestaña o tocar
+   Actualizar (aquí o en Genesys), se le pide al Apps Script (POST "tnps_sincronizar", v22.22) que baje
+   ayer y hoy si su última bajada tiene 10 minutos o más. Mientras baja (más o menos un minuto) se
+   sigue viendo lo que hay; si llegó algo nuevo se vuelven a pedir los datos de esta pestaña y el TNPS
+   mensual de la pestaña Genesys. Con un Apps Script anterior a v22.22 todo queda como antes. */
+function tnTextoSub(){
+  const d = TN.datos;
+  let t = "Encuestas de satisfacción (TNPS) · Honduras";
+  if(d && d.ultimaSinc && d.ultimaSinc.en) t += ` · actualizado ${tnFecha(d.ultimaSinc.en.slice(0,10))} ${d.ultimaSinc.en.slice(11,16)}`;
+  if(TN_SINC.estado==="trayendo") t += " · trayendo lo último de Qualtrics…";
+  else if(TN_SINC.estado==="error") t += " · no se pudo traer lo último de Qualtrics";
+  else if(TN_SINC.estado==="listo" && TN_SINC.avisos.length) t += ` · no se pudo traer: ${TN_SINC.avisos.join(", ")}`;
+  return t.endsWith("…") ? t : t + ".";
+}
+function tnPintarSub(){
+  const sub = document.getElementById("tn-sub");
+  if(!sub) return;
+  sub.textContent = tnTextoSub();
+  sub.title = TN_SINC.estado==="error" ? TN_SINC.detalle : "";
+}
+function tnTraerLoUltimo(){
+  if(TN_SINC.promesa) return TN_SINC.promesa;
+  if(!genesysGetStoredToken()) return Promise.resolve(false);
+  if(Date.now() - TN_SINC.pedidoEn < 60*1000) return Promise.resolve(false);   // a lo sumo una vez por minuto desde este navegador
+  const cfg = loadLiveConfig();
+  const base = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
+  if(!base) return Promise.resolve(false);
+  TN_SINC.pedidoEn = Date.now();
+  const enAntes = (TN.datos && TN.datos.ultimaSinc && TN.datos.ultimaSinc.en) || "";
+  TN_SINC.promesa = (async ()=>{
+    TN_SINC.estado = "trayendo"; TN_SINC.avisos = []; TN_SINC.detalle = ""; tnPintarSub();
+    let nuevo = false;
+    try{
+      for(let intento = 0; intento < 8; intento++){
+        const res = await fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"tnps_sincronizar", token: scriptSesionToken() }) }, 330000);
+        const d = await parseJsonUrlPayload(await res.text());
+        if(d && d.error==="codigo_invalido"){ TN_SINC.estado = ""; break; }   // Apps Script sin v22.22: queda como antes
+        if(d && d.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
+        if(!d || !d.ok) throw new Error((d && (d.detalle || d.error)) || "Respuesta inesperada del servidor.");
+        if(d.motivo==="en_curso"){ await new Promise(r=> setTimeout(r, 15000)); continue; }   // otra bajada corriendo: se espera
+        const enAhora = (d.ultimaSinc && d.ultimaSinc.en) || "";
+        nuevo = !!d.hecho || (!!enAhora && enAhora !== enAntes);
+        TN_SINC.avisos = Array.isArray(d.encuestasConError) ? d.encuestasConError : [];
+        TN_SINC.estado = "listo";
+        break;
+      }
+      if(TN_SINC.estado==="trayendo") TN_SINC.estado = "";   // siguió ocupado: queda para la próxima
+    }catch(err){
+      console.error("Detalle técnico (traer lo último de Qualtrics):", err);
+      TN_SINC.estado = "error"; TN_SINC.detalle = (err && err.message) || "";
+    }
+    if(nuevo){
+      TN.clave = "";                                    // esta pestaña vuelve a pedir sus datos
+      if(state.tab==="tnps") await tnCargar(true);
+      if(TNPS_QX.estado==="ok") tnpsQxCargar(true);    // TNPS mensual de la pestaña Genesys
+    }
+    tnPintarSub();
+    return nuevo;
+  })();
+  TN_SINC.promesa.finally(()=>{ TN_SINC.promesa = null; });
+  return TN_SINC.promesa;
+}
+// v22.22: Actualizar también pide lo último de Qualtrics en las pestañas que lo muestran
+document.getElementById("btn-refresh-online").addEventListener("click", ()=>{
+  if(state.tab==="tnps" || state.tab==="genesys") tnTraerLoUltimo();
+});
+
 // v22.10 (Oscar, 2026-11-11): en el filtro de Encuesta las dos encuestas de llamadas van como
 // una sola opción. Al elegirla salen "Genesys Call Center" (la actual, desde el 10/11/2026) y
 // "Masivo Call Center" (la anterior), para ver el historial de Fijo y Móvil seguido. En la tabla
@@ -15285,7 +15365,7 @@ function renderTnps(){
     });
   }
   tnRender();
-  tnCargar();
+  tnCargar().then(()=> tnTraerLoUltimo());   // v22.22: y pide lo último de Qualtrics si la última bajada tiene 10 min o más
 }
 
 function tnRender(){
@@ -15297,7 +15377,7 @@ function tnRender(){
   if((TN.vista==="detalle" || TN.vista==="repetidos") && d && !d.puedeVerDetalle) TN.vista = "resumen";
   document.getElementById("tn-nav").innerHTML = nav.map(([k,l])=>`<button type="button" role="tab" data-vista="${k}" class="${TN.vista===k?"active":""}" aria-selected="${TN.vista===k}">${l}</button>`).join("");
   const sub = document.getElementById("tn-sub");
-  if(sub) sub.textContent = "Encuestas de satisfacción (TNPS) · Honduras" + (d && d.ultimaSinc && d.ultimaSinc.en ? ` · actualizado ${tnFecha(d.ultimaSinc.en.slice(0,10))} ${d.ultimaSinc.en.slice(11,16)}` : "") + ".";
+  if(sub) tnPintarSub();   // v22.22: + estado de "trayendo lo último de Qualtrics"
 
   const [desde, hasta] = tnRangoFechas();
   const rangos = [["hoy","Hoy"],["ayer","Ayer"],["7","Últimos 7 días"],["mes","Este mes"],["mesant","Mes anterior"],["90","Últimos 90 días"],["rango","Rango"]];
