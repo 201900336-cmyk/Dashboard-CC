@@ -1073,6 +1073,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-estado.cargando{background:var(--qa-soft);color:var(--qa-mut);}
   .qa-estado.error{background:#FDEBEC;color:#B4021F;border:1px solid #F5C2C7;}
   .qa-estado.aviso{background:#FFF7E0;color:#7A5200;border:1px solid #F2DFA6;}
+  .qa-estado.cc-xl{background:#F3F5F8;color:#3B4350;border:1px solid #E1E4E8;}   /* v22.28: avance del Excel de códigos */
   .qa-spin{width:14px;height:14px;border-radius:50%;border:2px solid #D9DCE1;border-top-color:var(--red);display:inline-block;flex:0 0 auto;animation:qaGira .8s linear infinite;}
   @keyframes qaGira{to{transform:rotate(360deg);}}
   @media (prefers-reduced-motion: reduce){.qa-spin{animation-duration:2.4s;}}
@@ -8191,6 +8192,11 @@ function xlsDescargarConEstilo(wb, hojas, nombre){
       const p = h.panel;
       const pane = p ? `<pane${p.x?` xSplit="${p.x}"`:""}${p.y?` ySplit="${p.y}"`:""} topLeftCell="${XLSX.utils.encode_cell({ r:p.y||0, c:p.x||0 })}" activePane="${p.x&&p.y?"bottomRight":p.y?"bottomLeft":"topRight"}" state="frozen"/>` : "";
       xml = xml.replace(/<sheetView workbookViewId="0"\s*\/>/, `<sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView>`);
+      if(h.esquema){   // v22.28: filas agrupadas (con los botones 1 y 2 de Excel se ven solo los totales o todo)
+        xml = /<sheetFormatPr\b[^>]*\/>/.test(xml)
+          ? xml.replace(/<sheetFormatPr\b([^>]*?)\s*\/>/, (m, a)=> `<sheetFormatPr${a.replace(/\s+outlineLevelRow="\d+"/, "")} outlineLevelRow="${h.esquema}"/>`)
+          : xml.replace(/(<cols>|<sheetData)/, `<sheetFormatPr defaultRowHeight="15" outlineLevelRow="${h.esquema}"/>$1`);
+      }
       // Para imprimir o pasar a PDF: horizontal y a lo ancho de una página
       if(!xml.includes("<sheetPr")) xml = xml.replace(/(<worksheet[^>]*>)/, '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>');
       if(!xml.includes("<pageSetup")){
@@ -17198,6 +17204,7 @@ const CC = {
   sel:[], modoAsesor:"vigilar", asesorSel:null, buscar:"", soloRevisar:false, verSinRuta:false,
   nodo:null,
   ll:{ nodo:null, uid:"", filas:null, cargando:false, error:null, capado:false, progreso:"" },
+  xl:{ estado:"", progreso:"", cancelar:false, error:"" },   // v22.28: Excel con cada llamada ("" | "trayendo" | "armando" | "error")
 };
 const CC_GRUPOS = [
   { k:"rellamada",   nom:"Rellamada",                 que:"el cliente volvió a llamar por lo mismo",           f:c=> ccNorm(c.niv[3])==="rellamada" || ccNorm(c.hoja)==="rellamada" },
@@ -17546,7 +17553,7 @@ function ccHtmlFiltros(){
     ${CC.rango==="rango" ? `<label>Desde <input type="date" id="cc-desde" value="${a}" max="${qaHoyIso()}"/></label><label>Hasta <input type="date" id="cc-hasta" value="${z}" max="${qaHoyIso()}"/></label>` : `<span class="mut" style="font-size:12.5px;font-weight:700;">${qaFmtRango(a,z)}</span>`}
     <label>Skill <select id="cc-cat">${CC_SKILLS.map(c=>`<option value="${qaEsc(c)}" ${c===CC.cat?"selected":""}>${qaEsc(c)}</option>`).join("")}</select></label>
     <button type="button" class="btn-update" data-ccaccion="consultar" ${CC.cargando?"disabled":""}>Consultar</button>
-    <button type="button" class="btn-outline" data-ccaccion="excel" style="margin-left:auto;" ${CC.datos && !CC.cargando ? "" : "disabled"}>⬇️ Excel</button>
+    <button type="button" class="btn-outline" data-ccaccion="excel" style="margin-left:auto;" ${CC.datos && !CC.cargando && !ccXlOcupado() ? "" : "disabled"} title="Con cada llamada: ID, número del cliente y usuario de Genesys del asesor">${ccXlOcupado() ? "⏳ Preparando el Excel…" : "⬇️ Excel"}</button>
   </div>`;
 }
 function ccEstadoHtml(){
@@ -17567,7 +17574,7 @@ function ccRender(){
   if(!d){ body.innerHTML = ccEstadoHtml() + (CC.cargando || CC.error ? "" : `<div class="qa-vacio"><b>Elegí el período y el skill.</b><span>Después tocá "Consultar".</span></div>`); return; }
   if(!d.n){ body.innerHTML = ccEstadoHtml() + `<div class="qa-vacio"><b>Genesys no registró llamadas atendidas en ese período.</b><span>${qaEsc(d.cat)} · ${qaFmtRango(d.desde, d.hasta)}</span></div>`; return; }
   const vista = CC.vista==="rutas" ? ccHtmlRutas() : CC.vista==="asesor" ? ccHtmlAsesor() : CC.vista==="codigo" ? ccHtmlCodigo() : CC.vista==="llamadas" ? ccHtmlLlamadas() : ccHtmlResumen();
-  body.innerHTML = ccEstadoHtml() + ccHtmlAvisoRutas() + vista + `<p class="qa-nota">Fuente: Genesys, llamadas atendidas por asesor con su código de conclusión. ${qaEsc(d.cat)} · ${qaFmtRango(d.desde, d.hasta)}. "WF" al final del código cuenta como escalado a otra área; lo demás, como cerrado en línea.</p>`;
+  body.innerHTML = ccEstadoHtml() + ccEstadoXl() + ccHtmlAvisoRutas() + vista + `<p class="qa-nota">Fuente: Genesys, llamadas atendidas por asesor con su código de conclusión. ${qaEsc(d.cat)} · ${qaFmtRango(d.desde, d.hasta)}. "WF" al final del código cuenta como escalado a otra área; lo demás, como cerrado en línea.</p>`;
 }
 // avisos: códigos de los que Genesys no entregó el nombre, y códigos que no se pudieron ubicar en una ruta
 function ccHtmlAvisoRutas(){
@@ -17946,30 +17953,281 @@ async function ccBuscarLlamadas(){
 }
 
 /* ---------- Excel ---------- */
-function ccExcel(){
-  const d = CC.datos; if(!d) return;
-  const wb = XLSX.utils.book_new();
-  const h1 = ["Tipo","Tema","Producto","Motivo","Detalle","Ruta","Código en Genesys","Llamadas","% del total","TMO (s)","Cierre","Llamadas período anterior"];
-  const f1 = d.cods.map(c=> [c.estado==="ok"?c.niv[0]:"", c.estado==="ok"?c.niv[1]:"", c.estado==="ok"?c.niv[2]:"", c.niv[3]||"", c.niv[4]||"", c.clave, c.nombre, c.n, d.n ? Math.round(c.n/d.n*10000)/100 : 0, c.n ? Math.round(c.t/c.n/1000) : "", c.sinCodigo ? "Sin código" : c.wf ? "Escalado a otra área" : "Cerrado en línea", c.nPrev]);
-  f1.push(["Total","","","","","","", d.n, 100, d.n ? Math.round(d.t/d.n/1000) : "", "", d.nPrev]);
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([h1].concat(f1)), "Códigos");
-  const cols = CC_GRUPOS.map(g=>({ k:g.k, nom:g.nom, f:g.f })), tipos = ccHijos(d.cods, []).map(h=> h.k);
-  const h2 = ["Asesor","Llamadas","TMO (s)"].concat(cols.map(c=> c.nom), cols.map(c=> "% "+c.nom), tipos.map(t=> "Tipo: "+t));
-  const f2 = Array.from(d.usr.entries()).sort((a,b)=> b[1].n - a[1].n).map(([uid, tu])=>{
-    const nc = cols.map(col=> d.cods.filter(col.f).reduce((s,c)=> s + ((c.usr[uid]||{}).n || 0), 0));
-    const nt = tipos.map(t=> d.cods.filter(c=> c.path[0]===t).reduce((s,c)=> s + ((c.usr[uid]||{}).n || 0), 0));
-    return [ccNombre(uid), tu.n, tu.n ? Math.round(tu.t/tu.n/1000) : ""].concat(nc, nc.map(x=> tu.n ? Math.round(x/tu.n*1000)/10 : 0), nt);
+/* ============================================================
+   v22.28 (Oscar, 2026-11-17): Excel de "Códigos de conclusión" con cada llamada
+   ============================================================
+   "En la hoja Por asesor quiero los ID de esas llamadas, el número del que
+   llamó el cliente y el usuario de Genesys de los asesores." Los conteos de la
+   pestaña salen de agregados de Genesys, que no traen las llamadas. Por eso, al
+   tocar "⬇️ Excel" se traen TODAS las llamadas atendidas del período y del
+   skill con la consulta de detalle (la misma de "Llamadas", pero sin el tope de
+   2,500): día por día, 3 días a la vez, 100 por página, y de cada una se guarda
+   solo lo necesario. Con un período largo tarda unos minutos: se ve el avance y
+   se puede cancelar. Si se vuelve a bajar el mismo período no se piden de nuevo
+   (salvo que incluya hoy y hayan pasado 10 minutos). Si Genesys no las entrega,
+   se puede bajar el Excel sin ellas.
+   Cada fila es un asesor en una llamada, con las mismas reglas de los conteos:
+   que la haya atendido en una cola del skill (con el canal del skill) y que ya
+   haya terminado. Una llamada transferida sale con cada asesor que la atendió,
+   con el código que marcó cada uno.
+   Hojas (todas con fila de total, como prefiere Oscar):
+   · Códigos
+   · Resumen por asesor: lo que antes era "Por asesor" + el usuario de Genesys.
+   · Por asesor: una fila por llamada (fecha, hora, ID de la llamada, número del
+     cliente, código, cierre y TMO), agrupadas por asesor con su total. Con los
+     botones 1 y 2 de Excel se ve solo el total de cada asesor o todas sus llamadas.
+   · Asesor por código (+ usuario de Genesys) · Por día
+   ============================================================ */
+function ccXlOcupado(){ return CC.xl.estado==="trayendo" || CC.xl.estado==="armando"; }
+function ccXlProg(t){ CC.xl.progreso = t; const el = document.getElementById("cc-xl-txt"); if(el) el.textContent = t; }
+function ccUsuarioDe(uid){ return (genesysState.usersEmailById && genesysState.usersEmailById[uid]) || ""; }
+function ccEstadoXl(){
+  const x = CC.xl;
+  if(ccXlOcupado()) return `<div class="qa-estado cc-xl" role="status"><span class="qa-spin"></span><span id="cc-xl-txt">${qaEsc(x.progreso)}</span>${x.estado==="trayendo" ? `<button type="button" class="qa-chip" data-ccaccion="cancelarxl" style="margin-left:auto;">Cancelar</button>` : ""}</div>`;
+  if(x.estado==="error") return `<div class="qa-estado error">⚠️ No se pudieron traer las llamadas para el Excel: ${qaEsc(x.error)} <button type="button" class="qa-chip" data-ccaccion="excel" style="margin-left:auto;">Reintentar</button><button type="button" class="qa-chip" data-ccaccion="excelsinll">Bajar el Excel sin las llamadas</button></div>`;
+  return "";
+}
+// De una conversación: cada asesor que la atendió en una cola del skill (con el canal del skill) y ya terminó
+function ccFilasDeConv(c, idSet, qById){
+  const parts = c.participants || [];
+  const cust = parts.find(p=> p.purpose==="customer" || p.purpose==="external");
+  const cs = cust && cust.sessions && cust.sessions[0];
+  const dir = (cs && cs.direction) || c.originatingDirection || "";
+  const ani = cs ? ((dir==="outbound" ? cs.dnis : cs.ani) || "") : "";
+  const out = [];
+  parts.forEach(p=>{
+    if((p.purpose!=="agent" && p.purpose!=="user") || !p.userId) return;
+    let habla = false, cerrada = !!c.conversationEnd, t = 0, wrap = "", cola = "", media = "", ini = "";
+    (p.sessions||[]).forEach(se=>{
+      if(!media && se.mediaType) media = se.mediaType;
+      (se.segments||[]).forEach(sg=>{
+        const dur = qaSegDur(sg);
+        if(sg.segmentType==="interact"){ habla = true; t += dur; if(!ini || sg.segmentStart < ini) ini = sg.segmentStart; }
+        else if(sg.segmentType==="hold") t += dur;
+        else if(sg.segmentType==="wrapup"){ t += dur; if(sg.segmentEnd) cerrada = true; }
+        if(sg.wrapUpCode) wrap = sg.wrapUpCode;
+        if(sg.queueId && !cola) cola = sg.queueId;
+      });
+    });
+    if(!habla || !cerrada || !idSet.has(cola) || !genesysMediaAllowedForQueue(cola, media || undefined, qById)) return;
+    out.push({ cid: c.conversationId, ini: ini || c.conversationStart, ani, uid: p.userId, wrap, t, cola });
   });
-  const tc = cols.map(col=> d.cods.filter(col.f).reduce((s,c)=> s+c.n, 0));
-  f2.push(["Total", d.n, d.n ? Math.round(d.t/d.n/1000) : ""].concat(tc, tc.map(x=> d.n ? Math.round(x/d.n*1000)/10 : 0), tipos.map(t=> d.cods.filter(c=> c.path[0]===t).reduce((s,c)=> s+c.n, 0))));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([h2].concat(f2)), "Por asesor");
-  const serie = ccSerieDias(d.cods);
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Fecha","Llamadas","Sin código"]].concat(serie.map(x=> [x.d.split("-").reverse().join("/"), x.n, x.sin]), [["Total", serie.reduce((s,x)=> s+x.n, 0), serie.reduce((s,x)=> s+x.sin, 0)]])), "Por día");
-  const h4 = ["Asesor","Ruta","Código en Genesys","Llamadas","TMO (s)"];
-  const f4 = []; d.cods.forEach(c=> Object.keys(c.usr).forEach(uid=>{ const x = c.usr[uid]; if(x.n) f4.push([ccNombre(uid), c.clave, c.nombre, x.n, Math.round(x.t/x.n/1000)]); }));
-  f4.push(["Total","","", f4.reduce((s,x)=> s+x[3], 0), d.n ? Math.round(d.t/d.n/1000) : ""]);
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([h4].concat(f4)), "Asesor por código");
-  XLSX.writeFile(wb, `codigos_conclusion_${d.cat}_${d.desde}_${d.hasta}.xlsx`);
+  return out;
+}
+async function ccTraerLlamadasExcel(d, onProg, cancelado){
+  await genesysEnsureQueuesLoaded();
+  const ids = qaQueueIdsDeCategoria(d.cat);
+  if(!ids.length) throw new Error(`No encontré colas de Genesys para el skill ${d.cat}.`);
+  const idSet = new Set(ids), qById = genesysState.queuesById || {};
+  const filtro = [qaFiltroOr("queueId", ids)];
+  const filas = [], dias = d.dias.slice().reverse();   // de lo más reciente a lo más viejo
+  let traidas = 0, i = 0;
+  const unDia = async dia=>{
+    const startISO = new Date(`${dia}T00:00:00.000-06:00`).toISOString(), endISO = new Date(`${dia}T23:59:59.999-06:00`).toISOString();
+    for(let page=1; page<=2000; page++){
+      if(cancelado()) return;
+      const r = await qaFetch("/api/v2/analytics/conversations/details/query", { method:"POST", body: JSON.stringify({ interval:`${startISO}/${endISO}`, order:"asc", orderBy:"conversationStart", paging:{ pageSize:100, pageNumber:page }, segmentFilters: filtro }) });
+      const convs = (r && r.conversations) || [];
+      convs.forEach(c=>{ for(const x of ccFilasDeConv(c, idSet, qById)) filas.push(x); });
+      traidas += convs.length; onProg(traidas);
+      if(convs.length < 100) break;
+    }
+  };
+  const trabajar = async ()=>{ while(i < dias.length && !cancelado()) await unDia(dias[i++]); };
+  await Promise.all([trabajar(), trabajar(), trabajar()]);
+  return filas;
+}
+// Nombre y usuario de Genesys de cada asesor, y el nombre de los códigos que no salieron en los conteos
+async function ccCompletarExcel(d, filas){
+  const uids = Array.from(new Set(filas.map(f=> f.uid).concat(Array.from(d.usr.keys()))));
+  await genesysEnsureUsersLoaded(uids);
+  const correos = genesysState.usersEmailById = genesysState.usersEmailById || {};
+  const faltan = uids.filter(id=> !(id in correos));   // los que se cargaron por otro lado (solo con el nombre)
+  for(let i=0; i<faltan.length; i+=100){
+    const chunk = faltan.slice(i, i+100);
+    try{
+      const res = await genesysFetch(`/api/v2/users?${chunk.map(id=> `id=${encodeURIComponent(id)}`).join("&")}&pageSize=100`);
+      (res.entities||[]).forEach(u=>{ correos[u.id] = String(u.email || u.username || "").toLowerCase(); if(u.name) genesysState.usersById[u.id] = u.name; });
+    }catch(e){ if(e.message!=="NOT_SIGNED_IN") console.error(e); }
+    chunk.forEach(id=>{ if(!(id in correos)) correos[id] = ""; });   // borrado de Genesys: sin usuario (y no se vuelve a pedir)
+  }
+  const wrap = await qaWrapupsMap();
+  const sinNombre = Array.from(new Set(filas.map(f=> f.wrap).filter(w=> w && !d.idAClave.has(w) && CC_RE_UUID.test(w) && !(w in wrap)))).slice(0, 60);
+  await Promise.all(sinNombre.map(async id=>{ try{ const w = await qaFetch(`/api/v2/routing/wrapupcodes/${encodeURIComponent(id)}`); wrap[id] = (w && w.name) || null; }catch(e){ wrap[id] = null; } }));
+}
+async function ccExcel(sinLlamadas){
+  const d = CC.datos;
+  if(!d || ccXlOcupado()) return;
+  if(sinLlamadas){ CC.xl = { estado:"", progreso:"", cancelar:false, error:"" }; ccRender(); ccArmarExcel(d, null, "se bajó sin las llamadas"); return; }
+  if(d.llamadas && (d.hasta < qaHoyIso() || Date.now() - d.llamadasEn < 10*60*1000)){ ccArmarExcel(d, d.llamadas); return; }
+  CC.xl = { estado:"trayendo", progreso:"Trayendo cada llamada de Genesys para el Excel…", cancelar:false, error:"" };
+  ccRender();
+  const antes = asisOnEspera;
+  asisOnEspera = seg=> ccXlProg(`Genesys pidió una pausa por su límite de consultas: sigo en ${seg} s…`);
+  try{
+    const t0 = Date.now();
+    const filas = await ccTraerLlamadasExcel(d, n=>{
+      const s = (Date.now() - t0)/1000, total = Math.max(n, d.n);
+      const falta = n >= 300 && s > 4 ? Math.max(0, (total - n) * s / n) : null;
+      ccXlProg(`Trayendo cada llamada de Genesys para el Excel: ${fmtNum(n)} de unas ${fmtNum(total)}${falta===null ? "" : falta < 90 ? ` · faltan unos ${Math.max(5, Math.round(falta/5)*5)} s` : ` · faltan unos ${Math.round(falta/60)} min`}…`);
+    }, ()=> CC.xl.cancelar);
+    if(CC.xl.cancelar){ CC.xl = { estado:"", progreso:"", cancelar:false, error:"" }; ccRender(); return; }
+    CC.xl.estado = "armando"; ccRender(); ccXlProg("Armando el Excel…");
+    await ccCompletarExcel(d, filas);
+    d.llamadas = filas; d.llamadasEn = Date.now();
+    await new Promise(r=> setTimeout(r, 30));   // que se vea el mensaje antes de armar
+    ccArmarExcel(d, filas);
+    CC.xl = { estado:"", progreso:"", cancelar:false, error:"" };
+  }catch(e){
+    console.error("Detalle técnico (Excel de códigos con llamadas):", e);
+    CC.xl = { estado:"error", progreso:"", cancelar:false, error: qaMensajeError(e) };
+  }finally{ asisOnEspera = antes; }
+  ccRender();
+}
+function ccArmarExcel(d, llamadas, motivoSin){
+  if(typeof XLSX==="undefined") return;
+  const wb = XLSX.utils.book_new(), hojas = {};
+  const agregar = (h, nombre)=>{ XLSX.utils.book_append_sheet(wb, h.hoja(), nombre); hojas[nombre] = h; };
+  const p2 = n=> String(n).padStart(2, "0");
+  const serial = iso=> (Date.UTC(Number(iso.slice(0,4)), Number(iso.slice(5,7))-1, Number(iso.slice(8,10))) - Date.UTC(1899, 11, 30)) / 86400000;
+  const seg = s=> s===null || s===undefined || isNaN(s) ? "" : Math.round(s)/86400;   // segundos → tiempo de Excel
+  const tmoDe = (tMs, n)=> n ? seg(tMs/n/1000) : "";                                   // los agregados vienen en milisegundos
+  const generado = (()=>{ const t = new Date(); return `Generado el ${p2(t.getDate())}/${p2(t.getMonth()+1)}/${t.getFullYear()} ${p2(t.getHours())}:${p2(t.getMinutes())}`; })();
+  const periodo = qaFmtRango(d.desde, d.hasta);
+  const linea2 = `Skill ${d.cat}  ·  ${periodo}  ·  ${fmtNum(d.n)} llamadas atendidas`;
+  const cabecera = (h, titulo, l2, l3)=>{ h.set(0, 0, titulo, "titulo"); h.filas[0] = { hpt: 26 }; h.set(1, 0, l2 || linea2, "sub"); h.set(2, 0, l3 || generado, "sub"); };
+  const cierre = c=> c.sinCodigo ? "Sin código" : c.wf ? "Escalado a otra área" : "Cerrado en línea";
+  const col = n=> XLSX.utils.encode_col(n);
+
+  // ---- Códigos ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Códigos de conclusión");
+    const enc = ["Tipo", "Tema", "Producto", "Motivo", "Detalle", "Ruta", "Código en Genesys", "Llamadas", "% del total", "TMO", "Cierre", "Llamadas período anterior"];
+    h.fila(4, 0, enc, enc.map((x, i)=> i<7 || i===10 ? "encIzq" : "enc")); h.filas[4] = { hpt: 30 };
+    d.cods.forEach((c, i)=> h.fila(5+i, 0, [c.estado==="ok"?c.niv[0]:"", c.estado==="ok"?c.niv[1]:"", c.estado==="ok"?c.niv[2]:"", c.niv[3]||"", c.niv[4]||"", c.clave, c.nombre, c.n, d.n ? c.n/d.n : 0, tmoDe(c.t, c.n), cierre(c), c.nPrev],
+      ["txt", "txt", "txt", "txt", "txt", "txt", "txt", "num", "pct", "tmo", c.sinCodigo ? "warn" : "txt", "num"]));
+    const rt = 5 + d.cods.length;
+    h.fila(rt, 0, ["Total", "", "", "", "", "", "", d.n, d.n ? 1 : 0, tmoDe(d.t, d.n), "", d.nPrev], ["totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totNum", "totPct", "totTmo", "totTxt", "totNum"]);
+    h.cols = [16, 22, 18, 22, 22, 48, 42, 10, 10, 9, 20, 12];
+    h.panel = { y: 5 }; h.filtro = `A5:${col(enc.length-1)}${rt}`;
+    agregar(h, "Códigos");
+  }
+  // ---- Resumen por asesor (lo que antes era "Por asesor") ----
+  {
+    const h = new XlsHoja();
+    const grupos = CC_GRUPOS.map(g=>({ nom:g.nom, f:g.f })), tipos = ccHijos(d.cods, []).map(x=> x.k);
+    cabecera(h, "Códigos de conclusión · Resumen por asesor", linea2, `${generado}  ·  Cuántas llamadas cerró cada asesor con cada grupo de códigos. Llamada por llamada, en la hoja "Por asesor".`);
+    const enc = ["Asesor", "Usuario de Genesys", "Llamadas", "TMO"].concat(grupos.map(g=> g.nom), grupos.map(g=> "% " + g.nom), tipos.map(t=> "Tipo: " + t));
+    h.fila(4, 0, enc, enc.map((x, i)=> i<2 ? "encIzq" : "enc")); h.filas[4] = { hpt: 46 };
+    const lista = Array.from(d.usr.entries()).sort((a, b)=> b[1].n - a[1].n || ccNombre(a[0]).localeCompare(ccNombre(b[0]), "es"));
+    lista.forEach(([uid, tu], i)=>{
+      const nc = grupos.map(g=> d.cods.filter(g.f).reduce((s, c)=> s + ((c.usr[uid]||{}).n || 0), 0));
+      const nt = tipos.map(t=> d.cods.filter(c=> c.path[0]===t).reduce((s, c)=> s + ((c.usr[uid]||{}).n || 0), 0));
+      h.fila(5+i, 0, [ccNombre(uid), ccUsuarioDe(uid), tu.n, tmoDe(tu.t, tu.n)].concat(nc, nc.map(x=> tu.n ? x/tu.n : 0), nt),
+        ["txt", "txt", "num", "tmo"].concat(nc.map(()=> "num"), nc.map(()=> "pct"), nt.map(()=> "num")));
+    });
+    const rt = 5 + lista.length;
+    const tc = grupos.map(g=> d.cods.filter(g.f).reduce((s, c)=> s + c.n, 0));
+    const tt = tipos.map(t=> d.cods.filter(c=> c.path[0]===t).reduce((s, c)=> s + c.n, 0));
+    h.fila(rt, 0, [`Total (${fmtNum(lista.length)} asesor${lista.length===1?"":"es"})`, "", d.n, tmoDe(d.t, d.n)].concat(tc, tc.map(x=> d.n ? x/d.n : 0), tt),
+      ["totTxt", "totTxt", "totNum", "totTmo"].concat(tc.map(()=> "totNum"), tc.map(()=> "totPct"), tt.map(()=> "totNum")));
+    h.cols = [30, 34, 10, 9].concat(grupos.map(()=> 12), grupos.map(()=> 12), tipos.map(()=> 13));
+    h.panel = { x: 1, y: 5 }; h.filtro = `A5:${col(enc.length-1)}${rt}`;
+    agregar(h, "Resumen por asesor");
+  }
+  // ---- Por asesor: llamada por llamada, agrupadas por asesor con su total ----
+  {
+    const h = new XlsHoja();
+    const enc = ["Asesor", "Usuario de Genesys", "Fecha", "Hora", "ID de la llamada", "Número del cliente", "Código de conclusión (ruta)", "Código en Genesys", "Grupo (para vigilar)", "Cierre", "TMO", "Cola"];
+    if(!llamadas){
+      cabecera(h, "Códigos de conclusión · Por asesor (cada llamada)");
+      h.set(4, 0, `Este Excel no trae las llamadas (${motivoSin || "Genesys no las entregó"}). Para tenerlas, volvé a tocar "⬇️ Excel".`, "seccion");
+      agregar(h, "Por asesor");
+    } else {
+      const porClave = new Map(d.cods.map(c=> [c.clave, c])), extra = new Map(), wrapMap = QA.wrapups || {};
+      const entrada = id=>{
+        id = id || "";
+        const k = d.idAClave.get(id);
+        if(k && porClave.get(k)) return porClave.get(k);
+        if(!extra.has(id)) extra.set(id, ccEntrada(id, (id && wrapMap[id]) || "", d.cat));
+        return extra.get(id);
+      };
+      const porU = new Map();
+      llamadas.forEach(f=>{ if(!porU.has(f.uid)) porU.set(f.uid, []); porU.get(f.uid).push(f); });
+      const asesores = Array.from(porU.entries()).map(([uid, l])=> ({ uid, nombre: ccNombre(uid), l: l.slice().sort((a, b)=> a.ini < b.ini ? -1 : a.ini > b.ini ? 1 : 0) }))
+        .sort((a, b)=> a.nombre.localeCompare(b.nombre, "es"));
+      cabecera(h, "Códigos de conclusión · Por asesor (cada llamada)", `Skill ${d.cat}  ·  ${periodo}  ·  ${fmtNum(llamadas.length)} llamadas de ${fmtNum(asesores.length)} asesores`,
+        `${generado}  ·  Con los botones 1 y 2 de la izquierda se ve solo el total de cada asesor o todas sus llamadas. El ID de la llamada se puede buscar en Genesys.`);
+      const r0 = 4;
+      h.fila(r0, 0, enc, enc.map((x, i)=> [2,3,9,10].includes(i) ? "enc" : "encIzq")); h.filas[r0] = { hpt: 30 };
+      const tipoFila = [];   // "d" llamada · "ds" llamada sin código · "s" total del asesor · "t" total general
+      const resumenGrupos = lista=>{ const m = new Map(); lista.forEach(f=> f._g.forEach(g=> m.set(g, (m.get(g) || 0) + 1))); return Array.from(m.entries()).sort((a, b)=> b[1] - a[1]).map(([g, n])=> `${g}: ${fmtNum(n)}`).join(" · "); };
+      let r = r0 + 1, tTot = 0;
+      asesores.forEach(a=>{
+        let tA = 0;
+        const usuario = ccUsuarioDe(a.uid);
+        a.l.forEach(f=>{
+          const c = entrada(f.wrap), hn = qaHn(f.ini);
+          f._g = CC_GRUPOS.filter(g=> g.f(c)).map(g=> g.nom);
+          h.fila(r, 0, [a.nombre, usuario, hn ? serial(qaIsoDia(hn.y, hn.mo, hn.d)) : "", hn ? (hn.h*60 + hn.mi)/1440 : "", f.cid, f.ani ? qaLimpiarTel(f.ani) : "",
+            c.clave, c.nombre || (c.sinCodigo ? "Sin código" : ""), f._g.join(", "), cierre(c), seg(f.t), qaQueueName(f.cola)]);
+          h.filas[r] = { level: 1 }; tipoFila[r] = c.sinCodigo ? "ds" : "d";
+          tA += f.t; r++;
+        });
+        h.fila(r, 0, [`Total de ${a.nombre}`, usuario, "", "", `${fmtNum(a.l.length)} llamada${a.l.length===1?"":"s"}`, "", "", "", resumenGrupos(a.l), "", seg(tA/a.l.length), ""]);
+        tipoFila[r] = "s"; tTot += tA; r++;
+      });
+      h.fila(r, 0, [`Total general (${fmtNum(asesores.length)} asesor${asesores.length===1?"":"es"})`, "", "", "", `${fmtNum(llamadas.length)} llamadas`, "", "", "", resumenGrupos(llamadas), "", llamadas.length ? seg(tTot/llamadas.length) : "", ""]);
+      tipoFila[r] = "t";
+      const ED = ["txt", "txt", "fechaC", "dHora", "txt", "txtC", "txt", "txt", "txt", "txtC", "tmo", "txt"];
+      const ES = ["subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subTmo", "subTxt"];
+      const ET = ["totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totTmo", "totTxt"];
+      h.estiloDe = ({ r: fila, c })=>{
+        const t = tipoFila[fila];
+        if(!t) return null;
+        if(t==="s") return ES[c];
+        if(t==="t") return ET[c];
+        return c===9 && t==="ds" ? "warn" : ED[c];
+      };
+      h.colFmt = { 2:"fecha", 3:"hora", 10:"tmo" }; h.colFmtDesde = r0 + 1;
+      h.cols = [28, 32, 11, 7, 38, 14, 52, 44, 28, 19, 8, 30];
+      h.panel = { x: 1, y: r0 + 1 };
+      h.filtro = `A${r0+1}:${col(enc.length-1)}${r}`;
+      h.esquema = 1;   // filas agrupadas por asesor (botones 1 y 2 de Excel)
+      agregar(h, "Por asesor");
+    }
+  }
+  // ---- Asesor por código ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Códigos de conclusión · Asesor por código");
+    const enc = ["Asesor", "Usuario de Genesys", "Código de conclusión (ruta)", "Código en Genesys", "Llamadas", "TMO"];
+    h.fila(4, 0, enc, enc.map((x, i)=> i<4 ? "encIzq" : "enc")); h.filas[4] = { hpt: 22 };
+    const filas = [];
+    d.cods.forEach(c=> Object.keys(c.usr).forEach(uid=>{ const x = c.usr[uid]; if(x.n) filas.push([ccNombre(uid), ccUsuarioDe(uid), c.clave, c.nombre, x.n, tmoDe(x.t, x.n)]); }));
+    filas.sort((a, b)=> a[0].localeCompare(b[0], "es") || b[4] - a[4]);
+    filas.forEach((f, i)=> h.fila(5+i, 0, f, ["txt", "txt", "txt", "txt", "num", "tmo"]));
+    const rt = 5 + filas.length;
+    h.fila(rt, 0, ["Total", "", "", "", filas.reduce((s, x)=> s + x[4], 0), tmoDe(d.t, d.n)], ["totTxt", "totTxt", "totTxt", "totTxt", "totNum", "totTmo"]);
+    h.cols = [30, 34, 52, 44, 10, 9];
+    h.panel = { x: 1, y: 5 }; h.filtro = `A5:F${rt}`;
+    agregar(h, "Asesor por código");
+  }
+  // ---- Por día ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Códigos de conclusión · Por día");
+    h.fila(4, 0, ["Fecha", "Llamadas", "Sin código", "% sin código"], "enc"); h.filas[4] = { hpt: 22 };
+    const serie = d.dias.map(dia=>({ d: dia, n: d.cods.reduce((s, c)=> s + (c.dia[dia] || 0), 0), sin: d.cods.reduce((s, c)=> s + (c.sinCodigo ? (c.dia[dia] || 0) : 0), 0) }));
+    serie.forEach((x, i)=> h.fila(5+i, 0, [serial(x.d), x.n, x.sin, x.n ? x.sin/x.n : 0], ["fechaC", "num", "num", "pct"]));
+    const rt = 5 + serie.length, sn = serie.reduce((s, x)=> s + x.n, 0), ss = serie.reduce((s, x)=> s + x.sin, 0);
+    h.fila(rt, 0, ["Total", sn, ss, sn ? ss/sn : 0], ["totTxt", "totNum", "totNum", "totPct"]);
+    h.cols = [13, 11, 11, 12];
+    h.panel = { y: 5 };
+    agregar(h, "Por día");
+  }
+  xlsDescargarConEstilo(wb, hojas, `codigos_conclusion_${d.cat}_${d.desde}_${d.hasta}.xlsx`);
 }
 
 /* ---------- eventos ---------- */
@@ -18000,6 +18258,8 @@ function ccClick(e){
     const a = b.dataset.ccaccion;
     if(a==="consultar") ccConsultar();
     else if(a==="excel") ccExcel();
+    else if(a==="excelsinll") ccExcel(true);                                        // v22.28
+    else if(a==="cancelarxl"){ CC.xl.cancelar = true; ccXlProg("Cancelando…"); }   // v22.28
     else if(a==="solorevisar"){ CC.soloRevisar = !CC.soloRevisar; ccRender(); }
     else if(a==="versinruta"){ CC.verSinRuta = !CC.verSinRuta; ccRender(); }
     else if(a==="buscarll") ccBuscarLlamadas();
