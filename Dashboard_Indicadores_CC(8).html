@@ -526,6 +526,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .pa-metas-btn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 4px;border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--red-dark);cursor:pointer;}
   .pa-metas-btn:hover{text-decoration:underline;}
   .pa-metas{margin:-4px 0 16px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#FBFBFC;}
+  /* v22.23: Excel mes a mes y cruce con la malla (TMO por Asesor) */
+  .pa-excel-btn{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 18px;border-radius:21px;border:1px solid #C9CDD3;background:#fff;font:inherit;font-size:13px;font-weight:700;color:var(--black);cursor:pointer;}
+  .pa-excel-btn:hover:not(:disabled){border-color:var(--black);}
+  .pa-excel-btn:disabled{opacity:.45;cursor:default;}
+  .tmo-cruce{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:0 0 16px;padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:#FBFBFC;font-size:13px;color:#3B4350;}
+  .tmo-cruce.aviso{background:#FFF8E6;border-color:#F3D27A;}
+  .tmo-cruce .sw{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--black);cursor:pointer;white-space:nowrap;}
+  .tmo-cruce .sw input{width:16px;height:16px;margin:0;accent-color:var(--black);}
+  .tmo-cruce .txt{flex:1 1 360px;min-width:0;}
+  .tmo-cruce .cambiar{border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:700;color:var(--red-dark);cursor:pointer;white-space:nowrap;}
+  .tmo-cruce .cambiar:hover{text-decoration:underline;}
+  .tmo-cruce .skills{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px 18px;padding-top:9px;border-top:1px dashed #D5D9DE;}
+  .tmo-cruce .skills label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .tmo-cruce details{flex:1 1 100%;}
+  .tmo-cruce summary{cursor:pointer;font-weight:700;color:#3B4350;}
+  .tmo-cruce .fuera{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px;font-size:12.5px;color:#5B6472;}
   .pa-nota{margin-left:auto;align-self:center;font-size:12px;color:#5B6472;}
   #tmoasesor-modal .pa-hint{margin:-8px 0 12px;}
   .pa-vacio{font-size:13px;color:#5B6472;margin:10px 0 0;}
@@ -1880,12 +1896,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <div class="pa-seg" role="radiogroup" aria-labelledby="tmoasesor-label-periodo">
           <label><input type="radio" name="tmoasesor-periodo" value="estemes" checked/><span>Este mes</span></label>
           <label><input type="radio" name="tmoasesor-periodo" value="mesanterior"/><span>Mes anterior</span></label>
+          <label><input type="radio" name="tmoasesor-periodo" value="3meses"/><span>Últimos 3 meses</span></label>
           <label><input type="radio" name="tmoasesor-periodo" value="personalizado"/><span>Rango de fechas</span></label>
         </div>
       </div>
       <div class="pa-campo pa-campo-fecha"><label id="tmoasesor-label-desde" for="tmoasesor-input-desde">Desde</label><input type="date" id="tmoasesor-input-desde" readonly/></div>
       <div class="pa-campo pa-campo-fecha"><label id="tmoasesor-label-hasta" for="tmoasesor-input-hasta">Hasta</label><input type="date" id="tmoasesor-input-hasta" readonly/></div>
       <button class="btn-update pa-calcular" type="button" id="tmoasesor-calcular">Calcular</button>
+      <button class="pa-excel-btn" type="button" id="tmoasesor-excel" disabled title="Primero calculá un período">⬇️ Excel mes a mes</button>
       <button class="pa-metas-btn" type="button" id="tmoasesor-metas-toggle" aria-expanded="false" aria-controls="tmoasesor-metas-panel">🎯 Metas de TMO por skill</button>
     </div>
     <p class="erlang-hint pa-hint" id="tmoasesor-hint-rango" style="display:none;">El rango máximo de una sola vez es de 92 días (~3 meses) — para períodos más largos, consultá por partes.</p>
@@ -7535,6 +7553,12 @@ function tmoAsesorActualizarPeriodo(){
     const lastDay = new Date(prevYear, prevMonth, 0).getDate();
     desdeInput.value = `${prevYear}-${pad(prevMonth)}-01`;
     hastaInput.value = `${prevYear}-${pad(prevMonth)}-${pad(lastDay)}`;
+  } else if(modo === "3meses"){
+    // v22.23: este mes y los dos anteriores (para el Excel mes a mes); 3 meses nunca pasan de 92 días
+    let m = t.month - 2, y = t.year;
+    if(m < 1){ m += 12; y -= 1; }
+    desdeInput.value = `${y}-${pad(m)}-01`;
+    hastaInput.value = `${t.year}-${pad(t.month)}-${pad(t.day)}`;
   }
 }
 document.querySelectorAll('input[name="tmoasesor-periodo"]').forEach(r=> r.addEventListener("change", tmoAsesorActualizarPeriodo));
@@ -7620,6 +7644,7 @@ function openTmoAsesorModal(){
   tmoAsesorMetasMostrar(false);   // v22.07: el panel de metas arranca cerrado
   document.getElementById("tmoasesor-resultado").innerHTML = "";
   tmoAsesorUltimoCalculo = null;
+  tmoAsesorExcelHabilitar(false); tmoMallaPanelAbierto = false;   // v22.23
   document.getElementById("tmoasesor-modal-overlay").style.display = "flex";
   tmoAsesorCargarMetasServidor();   // v22.20: metas guardadas para el equipo (de fondo; repinta al llegar)
 }
@@ -7877,18 +7902,437 @@ function paHtmlCuartiles(o){
 
 let tmoAsesorAntig = "";   // v22.05: filtro de antigüedad ("" = todas)
 let tmoAsesorCuartilesVis = new Set([1,2,3,4]);   // v22.07: cuartiles a la vista (casilla en el encabezado de cada columna)
+/* ============================================================
+   v22.23 (Oscar, 2026-11-17): CRUCE CON LA MALLA en WhatsApp y Redes Sociales
+   ============================================================
+   "Que la información de los cuartiles y toda la información haga el cruce con
+   la malla de turno, así solo trae la información de los asesores puntuales."
+   En esos dos skills solo cuentan los asesores que la malla tiene en ese skill
+   en alguna fecha del período consultado (así no entran supervisores, apoyos de
+   otros skills, etc.). El cruce es por asesor (correo, login o nombre, igual que
+   la antigüedad). Los skills de la malla se eligen solos por su nombre
+   (TMO_MALLA_CATS) y se pueden cambiar en la ventana; lo elegido queda guardado
+   en este navegador. Si la malla no trae fechas del período, se usa toda la
+   malla guardada y se avisa. La casilla "Solo asesores de la malla" permite ver
+   a todos sin volver a consultar Genesys. */
+const TMO_MALLA_CATS = {
+  "WhatsApp":       { si: /whats|wsp|canal(es)? digital/, no: /corporat|empresa|pyme|no contact/ },
+  "Redes Sociales": { si: /redes|rrss|social|facebook|instagram|messenger|canal(es)? digital/, no: /corporat|empresa|pyme/ },
+};
+let tmoMallaActivo = true;         // casilla "Solo asesores de la malla"
+let tmoMallaPanelAbierto = false;  // lista de skills de la malla a la vista
+function tmoMallaAplica(cat){ return Object.prototype.hasOwnProperty.call(TMO_MALLA_CATS, cat); }
+function tmoMallaSkillsDisponibles(){
+  const malla = asistenciaMallaData || asistenciaMallaGuardada;
+  const set = new Set();
+  if(malla && malla.filasPorFecha) Object.keys(malla.filasPorFecha).forEach(iso=> (malla.filasPorFecha[iso]||[]).forEach(f=>{ if(f.skill) set.add(String(f.skill)); }));
+  return Array.from(set).sort((a,b)=> a.localeCompare(b, "es"));
+}
+function tmoMallaSkillsElegidos(cat){
+  const disp = tmoMallaSkillsDisponibles();
+  let guardados = null;
+  try{ guardados = JSON.parse(localStorage.getItem("cc_tmo_malla_skills_"+cat) || "null"); }catch(e){}
+  if(Array.isArray(guardados)){
+    if(!guardados.length) return [];
+    const ok = guardados.filter(s=> disp.includes(s));
+    if(ok.length) return ok;   // si ya no existen en la malla (cambió el nombre), se vuelve a elegir solo
+  }
+  const r = TMO_MALLA_CATS[cat]; if(!r) return [];
+  return disp.filter(s=>{ const n = antigNombreNorm(s); return r.si.test(n) && !r.no.test(n); });
+}
+function tmoMallaGuardarSkills(cat){
+  const elegidos = Array.from(document.querySelectorAll("#tmoasesor-resultado [data-tmo-malla-skill]:checked")).map(x=> x.value);
+  try{ localStorage.setItem("cc_tmo_malla_skills_"+cat, JSON.stringify(elegidos)); }catch(e){}
+}
+// Asesores que la malla tiene en esos skills entre desde y hasta → índice correo / login / nombre
+function tmoMallaIndice(skills, desde, hasta){
+  const malla = asistenciaMallaData || asistenciaMallaGuardada;
+  const res = { correo:new Set(), login:new Set(), nombre:new Set(), n:0, deTodaLaMalla:false };
+  if(!malla || !malla.filasPorFecha || !skills.length) return res;
+  const set = new Set(skills);
+  const fechas = Object.keys(malla.filasPorFecha).sort();
+  const enRango = fechas.filter(iso=> iso>=desde && iso<=hasta && (malla.filasPorFecha[iso]||[]).some(f=> set.has(f.skill)));
+  const usar = enRango.length ? enRango : fechas;
+  res.deTodaLaMalla = !enRango.length;
+  const personas = new Set();
+  usar.forEach(iso=> (malla.filasPorFecha[iso]||[]).forEach(f=>{
+    if(!set.has(f.skill)) return;
+    const correo = String(f.correo||"").toLowerCase();
+    if(correo){ res.correo.add(correo); const l = antigLogin(correo); if(l) res.login.add(l); }
+    const nn = antigNombreNorm(f.nombre); if(nn) res.nombre.add(nn);
+    personas.add(correo || nn);
+  }));
+  res.n = personas.size;
+  return res;
+}
+function tmoMallaEsta(ix, a){
+  const correo = String(a.correo||"").toLowerCase();
+  if(correo && ix.correo.has(correo)) return true;
+  const l = antigLogin(correo); if(l && ix.login.has(l)) return true;
+  const n = antigNombreNorm(a.nombre); return !!(n && ix.nombre.has(n));
+}
+// Lo que muestran la ventana y el Excel: asesores con antigüedad y semáforo y, en WhatsApp / Redes
+// Sociales, cruzados con la malla. (El filtro de antigüedad se aplica después, en cada lugar.)
+function tmoAsesorVista(){
+  const c = tmoAsesorUltimoCalculo;
+  const cat = c.cat || (document.getElementById("tmoasesor-input-categoria")||{}).value || "";
+  const desde = c.desde || (document.getElementById("tmoasesor-input-desde")||{}).value || "";
+  const hasta = c.hasta || (document.getElementById("tmoasesor-input-hasta")||{}).value || "";
+  const meta = c.meta;
+  const correos = genesysState.usersEmailById || {};
+  let todos = c.agentes.map(a=>{
+    const correo = correos[a.userId] || "";
+    const ingreso = antigIngreso({ correo, nombre: a.nombre });   // v22.05: antigüedad a la fecha "Hasta"
+    const meses = antigMeses(ingreso, hasta);
+    return { ...a, correo, ingreso, meses, antig: antigGrupo(meses), clase: tmoAsesorSemaforoClase(a.tmoProm, meta) };
+  });
+  const cruce = { aplica: tmoMallaAplica(cat), activo:false, sinMalla:false, disponibles:[], skills:[], indice:null, fuera:[] };
+  if(cruce.aplica){
+    cruce.disponibles = tmoMallaSkillsDisponibles();
+    cruce.sinMalla = !cruce.disponibles.length;
+    cruce.skills = cruce.sinMalla ? [] : tmoMallaSkillsElegidos(cat);
+    if(cruce.skills.length){
+      cruce.indice = tmoMallaIndice(cruce.skills, desde, hasta);
+      todos.forEach(a=>{ a.enMalla = tmoMallaEsta(cruce.indice, a); });
+      cruce.fuera = todos.filter(a=> !a.enMalla).sort((x,y)=> y.contestadas - x.contestadas);
+      cruce.activo = tmoMallaActivo && cruce.indice.n > 0;
+      if(cruce.activo) todos = todos.filter(a=> a.enMalla);
+    }
+  }
+  return { cat, desde, hasta, meta, todos, cruce };
+}
+function tmoMallaHtml(v){
+  const cr = v.cruce;
+  if(!cr.aplica) return "";
+  if(cr.sinMalla) return `<div class="tmo-cruce aviso"><span class="txt">No se pudo leer la malla de turnos: se muestran todos los asesores que atendieron ${qaEsc(v.cat)}.</span></div>`;
+  const nombreDe = a=> a.nombre===a.userId ? a.nombre : tnNombrePropio(a.nombre);
+  const abierta = tmoMallaPanelAbierto || !cr.skills.length;
+  let txt;
+  if(!cr.skills.length) txt = `No encontré en la malla un skill de <b>${qaEsc(v.cat)}</b>. Marcá abajo cuál o cuáles son; mientras tanto se muestran todos.`;
+  else if(!cr.indice.n) txt = `La malla no tiene asesores en <b>${qaEsc(cr.skills.join(" + "))}</b>: se muestran todos.`;
+  else {
+    txt = `Malla: <b>${qaEsc(cr.skills.join(" + "))}</b> · ${fmtNum(cr.indice.n)} asesor${cr.indice.n===1?"":"es"} en la malla`;
+    if(cr.indice.deTodaLaMalla) txt += ` <span title="La malla guardada no trae fechas de este período">(la malla no cubre estas fechas: se usó toda la malla guardada)</span>`;
+    txt += cr.fuera.length
+      ? ` · <b>${fmtNum(cr.fuera.length)}</b> ${cr.activo ? "quedaron fuera" : "no están en la malla"} (atendieron ${fmtNum(cr.fuera.reduce((s,a)=>s+a.contestadas,0))})`
+      : " · todos los que atendieron están en la malla";
+  }
+  const sw = cr.skills.length && cr.indice && cr.indice.n
+    ? `<label class="sw"><input type="checkbox" data-tmo-malla-activo ${tmoMallaActivo?"checked":""}/> Solo asesores de la malla</label>` : "";
+  const cambiar = cr.skills.length ? `<button type="button" class="cambiar" data-tmo-malla-cambiar aria-expanded="${abierta?"true":"false"}">${abierta?"Listo":"Cambiar skills de la malla"}</button>` : "";
+  const skills = abierta ? `<div class="skills" role="group" aria-label="Skills de la malla para ${qaEsc(v.cat)}">${cr.disponibles.map(s=>
+      `<label><input type="checkbox" data-tmo-malla-skill value="${qaEsc(s)}" ${cr.skills.includes(s)?"checked":""}/> ${qaEsc(s)}</label>`).join("")}</div>` : "";
+  const fuera = cr.fuera.length && cr.indice && cr.indice.n ? `<details><summary>${cr.activo?"Ver quiénes quedaron fuera":"Ver quiénes no están en la malla"}</summary><div class="fuera">${cr.fuera.map(a=>
+      `<span>${qaEsc(nombreDe(a))} · ${fmtNum(a.contestadas)}</span>`).join("")}</div></details>` : "";
+  return `<div class="tmo-cruce">${sw}<span class="txt">${txt}</span>${cambiar}${skills}${fuera}</div>`;
+}
+function tmoAsesorExcelHabilitar(si){
+  const b = document.getElementById("tmoasesor-excel");
+  if(!b) return;
+  b.disabled = !si;
+  b.title = si ? "Descargar los cuartiles mes a mes: total de cada mes y por día" : "Primero calculá un período";
+}
+
+/* ============================================================
+   v22.23: EXCEL "mes a mes" de TMO por Asesor
+   ============================================================
+   "Los cuartiles quieren descargarlos en Excel súper ordenado, mes con mes,
+   tanto total del mes como por día." Mismos asesores que la ventana (cruce
+   con la malla y filtro de antigüedad incluidos). Hojas:
+   · "Mes con mes": cada asesor con su cuartil, contestadas y TMO de cada mes y
+     del período completo (+ estado frente a la meta), y el total del equipo.
+   · Por cada mes: "<Mes año>" (total del mes por cuartil, con subtotales) y
+     "<Mes año> por día" (TMO y contestadas de cada día, con totales).
+   Los cuartiles de cada mes se calculan dentro de ese mes. El TMO va como
+   tiempo de Excel ([m]:ss) para que se pueda ordenar y calcular. */
+function XlsHoja(){ this.aoa = []; this.est = {}; this.merges = []; this.filas = []; this.cols = []; this.panel = null; this.filtro = null; }
+XlsHoja.prototype.set = function(r, c, v, est){
+  (this.aoa[r] = this.aoa[r] || [])[c] = v;
+  if(est) this.est[XLSX.utils.encode_cell({ r, c })] = est;
+};
+XlsHoja.prototype.fila = function(r, c0, valores, est){ valores.forEach((v, i)=> this.set(r, c0+i, v, Array.isArray(est) ? est[i] : est)); };
+XlsHoja.prototype.unir = function(r1, c1, r2, c2){ this.merges.push({ s:{ r:r1, c:c1 }, e:{ r:r2, c:c2 } }); };
+XlsHoja.prototype.hoja = function(){
+  for(let r=0; r<this.aoa.length; r++) if(!this.aoa[r]) this.aoa[r] = [];
+  const ws = XLSX.utils.aoa_to_sheet(this.aoa);
+  Object.keys(this.est).forEach(ad=>{   // formato de número también sin estilos (por si el Excel sale sin colores)
+    const e = this.est[ad], cel = ws[ad];
+    if(cel && cel.t==="n") cel.z = /tmo/i.test(e) ? "[m]:ss" : /num/i.test(e) ? "#,##0" : cel.z;
+  });
+  if(this.merges.length) ws["!merges"] = this.merges;
+  if(this.cols.length) ws["!cols"] = this.cols.map(w=> ({ wch:w }));
+  if(this.filas.length) ws["!rows"] = this.filas;
+  if(this.filtro) ws["!autofilter"] = { ref: this.filtro };
+  return ws;
+};
+// Estilos (fuente, relleno, borde, formato de número y alineación) que usa el Excel
+const XLS_FUENTES = {
+  normal: '<sz val="11"/><color rgb="FF1F2937"/><name val="Calibri"/><family val="2"/>',
+  negrita: '<b/><sz val="11"/><color rgb="FF161616"/><name val="Calibri"/><family val="2"/>',
+  blanca: '<b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/>',
+  titulo: '<b/><sz val="16"/><color rgb="FF161616"/><name val="Calibri"/><family val="2"/>',
+  sub: '<sz val="10"/><color rgb="FF5B6472"/><name val="Calibri"/><family val="2"/>',
+  seccion: '<b/><sz val="12"/><color rgb="FFB4021F"/><name val="Calibri"/><family val="2"/>',
+  verde: '<b/><sz val="11"/><color rgb="FF166534"/><name val="Calibri"/><family val="2"/>',
+  ambar: '<b/><sz val="11"/><color rgb="FF7A5600"/><name val="Calibri"/><family val="2"/>',
+  roja: '<b/><sz val="11"/><color rgb="FFB4021F"/><name val="Calibri"/><family val="2"/>',
+  gris: '<sz val="11"/><color rgb="FF8D95A0"/><name val="Calibri"/><family val="2"/>',
+};
+const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2" };
+const XLS_ESTILOS = (()=>{
+  const e = {
+    titulo:{ f:"titulo" }, sub:{ f:"sub" }, seccion:{ f:"seccion" },
+    enc:{ f:"blanca", r:"oscuro", b:1, a:"cw" }, encIzq:{ f:"blanca", r:"oscuro", b:1, a:"iw" }, encMes:{ f:"blanca", r:"rojo", b:1, a:"cw" },
+    txt:{ b:1 }, txtC:{ b:1, a:"c" }, num:{ b:1, n:"num", a:"c" }, tmo:{ b:1, n:"tmo", a:"c" }, vacio:{ f:"gris", b:1, a:"c" },
+    totTxt:{ f:"negrita", r:"total", b:1 }, totC:{ f:"negrita", r:"total", b:1, a:"c" }, totNum:{ f:"negrita", r:"total", b:1, n:"num", a:"c" }, totTmo:{ f:"negrita", r:"total", b:1, n:"tmo", a:"c" },
+    subTxt:{ f:"negrita", r:"sub", b:1 }, subC:{ f:"negrita", r:"sub", b:1, a:"c" }, subNum:{ f:"negrita", r:"sub", b:1, n:"num", a:"c" }, subTmo:{ f:"negrita", r:"sub", b:1, n:"tmo", a:"c" },
+    ok:{ f:"verde", b:1, a:"c" }, warn:{ f:"ambar", b:1, a:"c" }, crit:{ f:"roja", b:1, a:"c" }, neutro:{ f:"gris", b:1, a:"c" },
+    totok:{ f:"verde", r:"total", b:1, a:"c" }, totwarn:{ f:"ambar", r:"total", b:1, a:"c" }, totcrit:{ f:"roja", r:"total", b:1, a:"c" }, totneutro:{ f:"gris", r:"total", b:1, a:"c" },
+  };
+  [1,2,3,4].forEach(q=>{ e["q"+q] = { f:"negrita", r:"q"+q, b:1, a:"c" }; });
+  return e;
+})();
+function xlsEstilosXml(){
+  const fuentes = Object.keys(XLS_FUENTES), rellenos = Object.keys(XLS_RELLENOS), claves = Object.keys(XLS_ESTILOS);
+  const FMT = { tmo:164, num:165 };
+  const xf = k=>{
+    const s = XLS_ESTILOS[k];
+    const fontId = fuentes.indexOf(s.f || "normal"), fillId = s.r ? 2 + rellenos.indexOf(s.r) : 0, numFmtId = s.n ? FMT[s.n] : 0, borderId = s.b ? 1 : 0;
+    const al = s.a ? `<alignment horizontal="${s.a[0]==="c"?"center":"left"}" vertical="center"${s.a.includes("w")?' wrapText="1"':""}/>` : "";
+    return `<xf numFmtId="${numFmtId}" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0"${numFmtId?' applyNumberFormat="1"':""} applyFont="1"${fillId?' applyFill="1"':""}${borderId?' applyBorder="1"':""}${al?' applyAlignment="1"':""}>${al}</xf>`;
+  };
+  const lado = n=> `<${n} style="thin"><color rgb="FFD1D5DB"/></${n}>`;
+  const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+    + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    + '<numFmts count="2"><numFmt numFmtId="164" formatCode="[m]:ss"/><numFmt numFmtId="165" formatCode="#,##0"/></numFmts>'
+    + `<fonts count="${fuentes.length}">${fuentes.map(k=> `<font>${XLS_FUENTES[k]}</font>`).join("")}</fonts>`
+    + `<fills count="${rellenos.length+2}"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${rellenos.map(k=> `<fill><patternFill patternType="solid"><fgColor rgb="${XLS_RELLENOS[k]}"/><bgColor indexed="64"/></patternFill></fill>`).join("")}</fills>`
+    + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border>${lado("left")}${lado("right")}${lado("top")}${lado("bottom")}<diagonal/></border></borders>`
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    + `<cellXfs count="${claves.length+1}"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>${claves.map(xf).join("")}</cellXfs>`
+    + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+    + '<dxfs count="0"/><tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleMedium4"/></styleSheet>';
+  const indice = {}; claves.forEach((k, i)=> indice[k] = i+1);
+  return { xml, indice };
+}
+// Escribe el libro con los colores, bordes y paneles fijos de cada hoja (SheetJS gratuito no escribe
+// estilos: se arma el .xlsx y se le cambian styles.xml y las celdas). Si algo falla, baja sin colores.
+function xlsDescargarConEstilo(wb, hojas, nombre){
+  try{
+    const zip = XLSX.CFB.read(new Uint8Array(XLSX.write(wb, { type:"array", bookType:"xlsx", bookSST:true })), { type:"array" });   // textos compartidos: los saltos de línea se ven en Excel y LibreOffice
+    const entrada = p=>{ const i = zip.FullPaths.findIndex(x=> x.endsWith("/"+p)); return i>=0 ? zip.FileIndex[i] : null; };
+    const leer = e=> new TextDecoder("utf-8").decode(e.content), escribir = (e, t)=>{ e.content = new TextEncoder().encode(t); e.size = e.content.length; };
+    const est = xlsEstilosXml();
+    const st = entrada("xl/styles.xml"); if(!st) throw new Error("sin styles.xml");
+    escribir(st, est.xml);
+    wb.SheetNames.forEach((nom, i)=>{
+      const h = hojas[nom], e = entrada(`xl/worksheets/sheet${i+1}.xml`);
+      if(!h || !e) return;
+      let xml = leer(e).replace(/<c r="([A-Z]+[0-9]+)"([^>]*)>/g, (m, ad, resto)=>{
+        const k = h.est[ad], s = k && est.indice[k] ? ` s="${est.indice[k]}"` : "";
+        return `<c r="${ad}"${s}${resto.replace(/\s+s="\d+"/, "")}>`;
+      });
+      const p = h.panel;
+      const pane = p ? `<pane${p.x?` xSplit="${p.x}"`:""}${p.y?` ySplit="${p.y}"`:""} topLeftCell="${XLSX.utils.encode_cell({ r:p.y||0, c:p.x||0 })}" activePane="${p.x&&p.y?"bottomRight":p.y?"bottomLeft":"topRight"}" state="frozen"/>` : "";
+      xml = xml.replace(/<sheetView workbookViewId="0"\s*\/>/, `<sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView>`);
+      // Para imprimir o pasar a PDF: horizontal y a lo ancho de una página
+      if(!xml.includes("<sheetPr")) xml = xml.replace(/(<worksheet[^>]*>)/, '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>');
+      if(!xml.includes("<pageSetup")){
+        const pagina = (xml.includes("<pageMargins") ? "" : '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>') + '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>';
+        xml = xml.includes("<pageMargins") ? xml.replace(/(<pageMargins[^>]*\/>)/, "$1" + pagina)
+          : xml.includes("<ignoredErrors") ? xml.replace("<ignoredErrors", pagina + "<ignoredErrors") : xml.replace("</worksheet>", pagina + "</worksheet>");
+      }
+      escribir(e, xml);
+    });
+    const datos = XLSX.CFB.write(zip, { fileType:"zip", type:"array" });
+    const url = URL.createObjectURL(new Blob([datos], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 5000);
+  }catch(err){
+    console.error("Detalle técnico (Excel con formato; se descarga sin colores):", err);
+    XLSX.writeFile(wb, nombre);
+  }
+}
+function tmoAsesorExcel(){
+  const c = tmoAsesorUltimoCalculo;
+  const statusEl = document.getElementById("tmoasesor-modal-status");
+  const aviso = t=>{ statusEl.className = "justif-status error"; statusEl.textContent = t; };
+  if(!c || !c.agentes || !c.agentes.length) return;
+  if(!c.agentes[0].dias) return aviso("Volvé a tocar Calcular para poder descargar el Excel.");
+  const v = tmoAsesorVista();
+  const lista = v.todos.filter(a=> !tmoAsesorAntig || a.antig===tmoAsesorAntig);
+  if(!lista.length) return aviso("No hay asesores para descargar con estos filtros.");
+  const meta = v.meta;
+  const p2 = n=> String(n).padStart(2, "0");
+  const fFecha = iso=> `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.slice(0,4)}`;
+  const DIAS_SEM = ["dom","lun","mar","mié","jue","vie","sáb"];
+  const CHIP = { ok:"Objetivo", warn:"Alerta", crit:"Sobre meta", neutro:"Sin meta" };
+  const nombreDe = a=> a.nombre===a.userId ? a.nombre : tnNombrePropio(a.nombre);
+  const tiempo = seg=> seg==null ? null : Math.round(seg)/86400;
+  const ponderar = arr=>{ let n=0, t=0; arr.forEach(x=>{ n += x.n; t += x.tms; }); return { n, tmo: n ? t/n/1000 : null }; };
+  const cuartilizar = arr=>{ const ord = arr.filter(x=> x.n>0).sort((p,q)=> p.tmo - q.tmo); ord.forEach((x, i)=> x.cuartil = Math.min(4, Math.floor(i/ord.length*4)+1)); return ord; };
+  // Meses del rango (el primero y el último pueden ir incompletos)
+  const meses = [];
+  for(let y = Number(v.desde.slice(0,4)), m = Number(v.desde.slice(5,7)); `${y}-${p2(m)}` <= v.hasta.slice(0,7); m===12 ? (m=1, y++) : m++){
+    const k = `${y}-${p2(m)}`, ultimo = new Date(Date.UTC(y, m, 0)).getUTCDate(), nombre = `${MESES[m-1]} ${y}`;
+    const ini = k===v.desde.slice(0,7) ? v.desde : `${k}-01`, fin = k===v.hasta.slice(0,7) ? v.hasta : `${k}-${p2(ultimo)}`;
+    const completo = ini===`${k}-01` && fin===`${k}-${p2(ultimo)}`;
+    meses.push({ k, nombre, ini, fin, etiqueta: completo ? nombre : `${nombre} (${ini.slice(8)} al ${fin.slice(8)})` });
+  }
+  // Por asesor: total del período y de cada mes
+  const filas = lista.map(a=>{
+    const porMes = {};
+    meses.forEach(me=>{
+      let n=0, tms=0, diasCon=0;
+      Object.keys(a.dias||{}).forEach(iso=>{ if(iso>=me.ini && iso<=me.fin){ const d = a.dias[iso]; n += d.n; tms += d.t; if(d.n) diasCon++; } });
+      porMes[me.k] = { n, tms, tmo: n ? tms/n/1000 : null, diasCon, cuartil:null };
+    });
+    return { a, nombre: nombreDe(a), antig: antigTexto(a.meses), per: { n: a.contestadas, tms: a.tmoProm*a.contestadas*1000, tmo: a.tmoProm, cuartil:null }, porMes };
+  });
+  cuartilizar(filas.map(f=> f.per));
+  meses.forEach(me=> cuartilizar(filas.map(f=> f.porMes[me.k])));
+  const cruceTxt = !v.cruce.aplica ? "" : v.cruce.activo ? `Solo asesores de la malla (${v.cruce.skills.join(" + ")})` : "Sin cruce con la malla (todos los que atendieron)";
+  const filtroTxt = tmoAsesorAntig ? `Antigüedad: ${antigLabel(tmoAsesorAntig)}` : "";
+  // Título y dos líneas de contexto (sin unir celdas: el texto se ve completo hacia la derecha)
+  const encabezado = (h, titulo, sub2)=>{
+    h.set(0, 0, titulo, "titulo");
+    h.set(1, 0, [`Skill ${v.cat}`, `Período ${fFecha(v.desde)} al ${fFecha(v.hasta)}`, meta ? `Meta ${tmoFmtMMSS(meta)}` : "Sin meta configurada", cruceTxt, filtroTxt].filter(Boolean).join("  ·  "), "sub");
+    h.set(2, 0, sub2, "sub");
+    h.filas[0] = { hpt: 26 };
+  };
+  const wb = XLSX.utils.book_new(), hojas = {};
+  const agregar = (h, nombre)=>{ const nom = nombre.slice(0, 31); XLSX.utils.book_append_sheet(wb, h.hoja(), nom); hojas[nom] = h; };
+  const generado = (()=>{ const t = new Date(); return `Generado el ${p2(t.getDate())}/${p2(t.getMonth()+1)}/${t.getFullYear()} ${p2(t.getHours())}:${p2(t.getMinutes())}`; })();
+
+  // ---- Hoja 1: Mes con mes ----
+  {
+    const h = new XlsHoja();
+    const ancho = 2 + meses.length*3 + 4;
+    encabezado(h, `TMO por asesor · ${v.cat} · mes con mes`, `${generado}  ·  Cuartiles de 1 (25% más rápidos) a 4 (25% más lentos), calculados dentro de cada mes y del período completo.`, ancho);
+    const r0 = 4;
+    h.set(r0, 0, "Asesor", "encIzq"); h.set(r0+1, 0, "", "encIzq"); h.unir(r0, 0, r0+1, 0);
+    h.set(r0, 1, "Antigüedad", "enc"); h.set(r0+1, 1, "", "enc"); h.unir(r0, 1, r0+1, 1);
+    meses.forEach((me, i)=>{
+      const c0 = 2 + i*3;
+      h.fila(r0, c0, [me.etiqueta, "", ""], "encMes");
+      h.unir(r0, c0, r0, c0+2);
+      h.fila(r0+1, c0, ["Cuartil", "Contestadas", "TMO"], "enc");
+    });
+    const cp = 2 + meses.length*3;
+    h.fila(r0, cp, ["Todo el período", "", "", ""], "encMes"); h.unir(r0, cp, r0, cp+3);
+    h.fila(r0+1, cp, ["Cuartil", "Contestadas", "TMO", "Estado"], "enc");
+    h.filas[r0+1] = { hpt: 20 };
+    const orden = filas.slice().sort((x, y)=> (x.per.cuartil - y.per.cuartil) || (x.per.tmo - y.per.tmo));
+    orden.forEach((f, i)=>{
+      const r = r0 + 2 + i;
+      h.set(r, 0, f.nombre, "txt"); h.set(r, 1, f.antig, "txtC");
+      meses.forEach((me, j)=>{
+        const x = f.porMes[me.k], c0 = 2 + j*3;
+        if(x.n) h.fila(r, c0, [x.cuartil, x.n, tiempo(x.tmo)], ["q"+x.cuartil, "num", "tmo"]);
+        else h.fila(r, c0, ["—", "—", "—"], "vacio");
+      });
+      const clase = tmoAsesorSemaforoClase(f.per.tmo, meta);
+      h.fila(r, cp, [f.per.cuartil, f.per.n, tiempo(f.per.tmo), CHIP[clase] || ""], ["q"+f.per.cuartil, "num", "tmo", clase]);
+    });
+    const rt = r0 + 2 + orden.length;
+    h.set(rt, 0, `Total equipo (${orden.length} asesor${orden.length===1?"":"es"})`, "totTxt"); h.set(rt, 1, "", "totC");
+    meses.forEach((me, j)=>{
+      const tt = ponderar(filas.map(f=> f.porMes[me.k]));
+      h.fila(rt, 2 + j*3, ["", tt.n, tt.n ? tiempo(tt.tmo) : "—"], ["totC", "totNum", tt.n ? "totTmo" : "totC"]);
+    });
+    const tp = ponderar(filas.map(f=> f.per)), claseEq = tmoAsesorSemaforoClase(tp.tmo, meta);
+    h.fila(rt, cp, ["", tp.n, tiempo(tp.tmo), CHIP[claseEq] || ""], ["totC", "totNum", "totTmo", "tot"+claseEq]);
+    h.cols = [34, 16].concat(...meses.map(()=> [9, 12, 9]), [9, 12, 9, 12]);
+    h.panel = { x:1, y:r0+2 };
+    h.filtro = `A${r0+2}:${XLSX.utils.encode_col(ancho-1)}${rt}`;
+    agregar(h, "Mes con mes");
+  }
+
+  // ---- Por cada mes: total del mes y por día ----
+  meses.forEach(me=>{
+    const delMes = filas.filter(f=> f.porMes[me.k].n > 0).sort((x, y)=> (x.porMes[me.k].cuartil - y.porMes[me.k].cuartil) || (x.porMes[me.k].tmo - y.porMes[me.k].tmo));
+    const rango = `${fFecha(me.ini)} al ${fFecha(me.fin)}`;
+    // Total del mes
+    {
+      const h = new XlsHoja();
+      encabezado(h, `TMO por asesor · ${v.cat} · ${me.nombre}`, `Total del mes (${rango})  ·  ${generado}  ·  Cuartiles calculados dentro del mes.`, 8);
+      const r0 = 4;
+      h.fila(r0, 0, ["Cuartil", "Asesor", "Antigüedad", "Contestadas", "TMO", "Meta", "Estado", "Días con atención"], ["enc", "encIzq", "enc", "enc", "enc", "enc", "enc", "enc"]);
+      h.filas[r0] = { hpt: 30 };
+      let r = r0 + 1;
+      if(!delMes.length){ h.set(r, 0, "Sin atenciones en este mes.", "sub"); h.unir(r, 0, r, 7); r++; }
+      [1,2,3,4].forEach(q=>{
+        const delQ = delMes.filter(f=> f.porMes[me.k].cuartil===q);
+        if(!delQ.length) return;
+        delQ.forEach(f=>{
+          const x = f.porMes[me.k], clase = tmoAsesorSemaforoClase(x.tmo, meta);
+          h.fila(r, 0, [q, f.nombre, f.antig, x.n, tiempo(x.tmo), meta ? tiempo(meta) : "Sin meta", CHIP[clase] || "", x.diasCon], ["q"+q, "txt", "txtC", "num", "tmo", meta ? "tmo" : "vacio", clase, "num"]);
+          r++;
+        });
+        const tq = ponderar(delQ.map(f=> f.porMes[me.k])), cq = tmoAsesorSemaforoClase(tq.tmo, meta);
+        h.fila(r, 0, ["", `Total cuartil ${q} (${delQ.length} asesor${delQ.length===1?"":"es"})`, "", tq.n, tiempo(tq.tmo), meta ? tiempo(meta) : "", CHIP[cq] || "", ""], ["subC", "subTxt", "subC", "subNum", "subTmo", meta ? "subTmo" : "subC", "subC", "subC"]);
+        r++;
+      });
+      const tm = ponderar(delMes.map(f=> f.porMes[me.k])), cm = tmoAsesorSemaforoClase(tm.tmo, meta);
+      h.fila(r, 0, ["", `Total del mes (${delMes.length} asesor${delMes.length===1?"":"es"})`, "", tm.n, tm.n ? tiempo(tm.tmo) : "—", meta ? tiempo(meta) : "", tm.n ? (CHIP[cm] || "") : "", ""], ["totC", "totTxt", "totC", "totNum", tm.n ? "totTmo" : "totC", meta ? "totTmo" : "totC", "tot"+cm, "totC"]);
+      h.cols = [9, 34, 16, 13, 10, 10, 13, 12];
+      h.panel = { y: r0+1 };
+      agregar(h, me.nombre);
+    }
+    // Por día
+    {
+      const dias = [];
+      for(let d = new Date(me.ini+"T12:00:00Z"); d.toISOString().slice(0,10) <= me.fin; d.setUTCDate(d.getUTCDate()+1)) dias.push(d.toISOString().slice(0,10));
+      const ancho = 2 + dias.length + 1;
+      const h = new XlsHoja();
+      encabezado(h, `TMO por asesor · ${v.cat} · ${me.nombre} por día`, `${rango}  ·  ${generado}  ·  Asesores en el orden de su cuartil del mes; la última columna es el total del mes.`, ancho);
+      const bloque = (r0, titulo, valorDia, valorMes, totalDia, totalMes, estilo, estiloTot)=>{
+        h.set(r0, 0, titulo, "seccion"); h.unir(r0, 0, r0, ancho-1);
+        h.fila(r0+1, 0, ["Cuartil", "Asesor"], ["enc", "encIzq"]);
+        dias.forEach((iso, i)=> h.set(r0+1, 2+i, `${iso.slice(8)}/${iso.slice(5,7)}\n${DIAS_SEM[new Date(iso+"T12:00:00Z").getUTCDay()]}`, "enc"));
+        h.set(r0+1, 2+dias.length, "Mes", "enc");
+        h.filas[r0+1] = { hpt: 30 };
+        delMes.forEach((f, i)=>{
+          const r = r0 + 2 + i, x = f.porMes[me.k];
+          h.set(r, 0, x.cuartil, "q"+x.cuartil); h.set(r, 1, f.nombre, "txt");
+          dias.forEach((iso, j)=>{ const d = (f.a.dias||{})[iso]; const val = d && d.n ? valorDia(d) : ""; h.set(r, 2+j, val, val==="" ? "txtC" : estilo); });
+          h.set(r, 2+dias.length, valorMes(x), estiloTot.replace("tot", "sub"));
+        });
+        const rt = r0 + 2 + delMes.length;
+        h.set(rt, 0, "", "totC"); h.set(rt, 1, "Total equipo", "totTxt");
+        dias.forEach((iso, j)=>{
+          const arr = delMes.map(f=> (f.a.dias||{})[iso]).filter(d=> d && d.n);
+          const val = arr.length ? totalDia(arr) : "";
+          h.set(rt, 2+j, val, val==="" ? "totC" : estiloTot);
+        });
+        h.set(rt, 2+dias.length, totalMes(), estiloTot);
+        return rt;
+      };
+      const r1 = 4;
+      const fin1 = bloque(r1, "TMO por día (minutos:segundos)",
+        d=> tiempo(d.t/d.n/1000), x=> tiempo(x.tmo),
+        arr=>{ const n = arr.reduce((s,d)=>s+d.n,0), t = arr.reduce((s,d)=>s+d.t,0); return tiempo(t/n/1000); },
+        ()=>{ const tm = ponderar(delMes.map(f=> f.porMes[me.k])); return tm.n ? tiempo(tm.tmo) : ""; }, "tmo", "totTmo");
+      bloque(fin1 + 2, "Contestadas por día",
+        d=> d.n, x=> x.n,
+        arr=> arr.reduce((s,d)=>s+d.n,0),
+        ()=> delMes.reduce((s,f)=> s + f.porMes[me.k].n, 0), "num", "totNum");
+      h.cols = [9, 34].concat(dias.map(()=> 7), [9]);
+      h.panel = { x:2, y:r1+2 };
+      agregar(h, `${me.nombre} por día`);
+    }
+  });
+  const limpio = t=> String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "_");
+  xlsDescargarConEstilo(wb, hojas, `TMO_por_asesor_${limpio(v.cat)}_${v.desde}_a_${v.hasta}${tmoAsesorAntig ? "_antig_"+limpio(tmoAsesorAntig) : ""}.xlsx`);
+}
+document.getElementById("tmoasesor-excel").addEventListener("click", tmoAsesorExcel);
+
 function tmoAsesorRenderResultado(){
   if(!tmoAsesorUltimoCalculo) return;
-  const { meta } = tmoAsesorUltimoCalculo;
-  const cat = tmoAsesorUltimoCalculo.cat || (document.getElementById("tmoasesor-input-categoria")||{}).value || "";
-  const desde = tmoAsesorUltimoCalculo.desde || (document.getElementById("tmoasesor-input-desde")||{}).value || "";
-  // v22.05: antigüedad de cada asesor a la fecha "Hasta" del rango consultado
-  const refIso = tmoAsesorUltimoCalculo.hasta || (document.getElementById("tmoasesor-input-hasta")||{}).value || "";
-  const todos = tmoAsesorUltimoCalculo.agentes.map(a=>{
-    const ingreso = antigIngreso({ correo: (genesysState.usersEmailById||{})[a.userId], nombre: a.nombre });
-    const meses = antigMeses(ingreso, refIso);
-    return { ...a, ingreso, meses, antig: antigGrupo(meses), clase: tmoAsesorSemaforoClase(a.tmoProm, meta) };
-  });
+  // v22.23: asesores con antigüedad y, en WhatsApp / Redes Sociales, ya cruzados con la malla
+  const vista = tmoAsesorVista();
+  const { meta, cat, desde, todos } = vista;
+  const refIso = vista.hasta;
   const ponderado = (lista)=>{ const c = lista.reduce((s,a)=>s+a.contestadas,0); return c ? lista.reduce((s,a)=>s+a.tmoProm*a.contestadas,0)/c : null; };
   const resultadoEl = document.getElementById("tmoasesor-resultado");
   const TMO_CHIP_TEXTO = { ok:"Objetivo", warn:"Alerta", crit:"Sobre meta", neutro:"Sin meta" };
@@ -7969,10 +8413,11 @@ function tmoAsesorRenderResultado(){
     visibles: tmoAsesorCuartilesVis, bloques,
     vacio: nA ? "" : "Ningún asesor en ese grupo de antigüedad.",
   });
-  resultadoEl.innerHTML = `<div class="pa-top">${panelEquipo}${grafica}</div>${cuartiles}`;
+  resultadoEl.innerHTML = `${tmoMallaHtml(vista)}<div class="pa-top">${panelEquipo}${grafica}</div>${cuartiles}`;
 }
 // v22.07: clics dentro del resultado (se conecta una sola vez; el contenido se vuelve a dibujar)
 document.getElementById("tmoasesor-resultado").addEventListener("click", (e)=>{
+  if(e.target.closest("[data-tmo-malla-cambiar]")){ tmoMallaPanelAbierto = !tmoMallaPanelAbierto; tmoAsesorRenderResultado(); return; }   // v22.23
   const fila = e.target.closest("[data-antig]");
   if(fila && !fila.disabled){
     tmoAsesorAntig = fila.dataset.antig;
@@ -7984,6 +8429,10 @@ document.getElementById("tmoasesor-resultado").addEventListener("click", (e)=>{
   if(mostrar){ tmoAsesorCuartilesVis.add(Number(mostrar.dataset.paMostrar)); tmoAsesorRenderResultado(); }
 });
 document.getElementById("tmoasesor-resultado").addEventListener("change", (e)=>{
+  // v22.23: cruce con la malla (casilla y skills de la malla)
+  const act = e.target.closest("[data-tmo-malla-activo]");
+  if(act){ tmoMallaActivo = act.checked; tmoAsesorRenderResultado(); return; }
+  if(e.target.closest("[data-tmo-malla-skill]")){ if(tmoAsesorUltimoCalculo) tmoMallaGuardarSkills(tmoAsesorUltimoCalculo.cat); tmoMallaPanelAbierto = true; tmoAsesorRenderResultado(); return; }
   const chk = e.target.closest("[data-pa-cuartil]");
   if(!chk) return;
   const q = Number(chk.dataset.paCuartil);
@@ -8014,6 +8463,7 @@ async function tmoAsesorCalcular(){
   }
   const btn = document.getElementById("tmoasesor-calcular");
   btn.disabled = true;
+  tmoAsesorExcelHabilitar(false);   // v22.23
   statusEl.className = "justif-status loading"; statusEl.textContent = "Consultando Genesys...";
   try{
     await genesysEnsureQueuesLoaded();
@@ -8026,7 +8476,7 @@ async function tmoAsesorCalcular(){
       return;
     }
     const apiResult = await genesysQueryAgentTmo(desde, hasta, mappedQueueIds);
-    const byUser = genesysAgentStatsFromResult(apiResult, genesysState.queuesById, catsFiltro);
+    const byUser = genesysAgentStatsPorDia(apiResult, genesysState.queuesById, catsFiltro);   // v22.23: con el detalle por día (Excel mes a mes)
     const userIds = Object.keys(byUser);
     if(!userIds.length){
       statusEl.className = "justif-status error";
@@ -8041,7 +8491,7 @@ async function tmoAsesorCalcular(){
       // tHandle.sum viene en MILISEGUNDOS (igual que en genesysDeriveMetrics) — hay que
       // dividir entre 1000 para tener el TMO en segundos.
       const tmoProm = st.nHandle ? (st.tHandleSum/st.nHandle)/1000 : null;
-      return { userId: uid, nombre: genesysState.usersById[uid] || uid, contestadas: st.nHandle, tmoProm };
+      return { userId: uid, nombre: genesysState.usersById[uid] || uid, contestadas: st.nHandle, tmoProm, dias: st.dias || {} };
     }).filter(a=> a.tmoProm !== null);
     if(!agentes.length){
       statusEl.className = "justif-status error";
@@ -8063,10 +8513,11 @@ async function tmoAsesorCalcular(){
     // por antigüedad u ocultar cuartiles sin volver a consultar Genesys.
     tmoAsesorUltimoCalculo = { agentes, meta, cat, desde, hasta };
     tmoAsesorCuartilesVis = new Set([1,2,3,4]);
-    statusEl.textContent = "Cruzando con la fecha de ingreso de la malla...";
+    statusEl.textContent = "Cruzando con la malla (fecha de ingreso" + (tmoMallaAplica(cat) ? " y asesores del skill)..." : ")...");
     try{ await antigAsegurar(); }catch(e){ /* sin antigüedad: los asesores quedan como "Sin dato" */ }
     tmoAsesorRenderResultado();
     statusEl.className = "justif-status"; statusEl.textContent = "";
+    tmoAsesorExcelHabilitar(true);   // v22.23
   }catch(e){
     statusEl.className = "justif-status error";
     statusEl.textContent = e && e.message==="NOT_SIGNED_IN"
@@ -10021,6 +10472,35 @@ function genesysAgentStatsFromResult(apiResult, queuesById, categoriasFiltro){
     (entry.data||[]).forEach(bucket=>{
       byUser[userId].nHandle    += genesysBucketStat(bucket,"tHandle","count") || 0;
       byUser[userId].tHandleSum += genesysBucketStat(bucket,"tHandle","sum") || 0;
+    });
+  });
+  return byUser;
+}
+// v22.23: igual que genesysAgentStatsFromResult, pero guarda también cada día
+// (dias: { "yyyy-MM-dd": { n, t } }, t en milisegundos) para el Excel mes a mes
+// de TMO por Asesor. Los cubos vienen de a un día (P1D) desde la medianoche de
+// Honduras, así que los 10 primeros caracteres del intervalo son la fecha.
+function genesysAgentStatsPorDia(apiResult, queuesById, categoriasFiltro){
+  const results = (apiResult && apiResult.results) || [];
+  const byUser = {};
+  results.forEach(entry=>{
+    const queueId = (entry.group && entry.group.queueId) || "—";
+    const mediaType = entry.group && entry.group.mediaType;
+    const userId = entry.group && entry.group.userId;
+    if(!userId) return;
+    const qName = (queuesById[queueId] && queuesById[queueId].name) || "";
+    const cat = genesysCategoriaDeCola(queueId, qName);
+    if(!cat) return;
+    if(categoriasFiltro && categoriasFiltro.size && !categoriasFiltro.has(cat)) return;
+    if(!genesysMediaAllowedForQueue(queueId, mediaType, queuesById)) return;
+    const u = byUser[userId] || (byUser[userId] = { nHandle:0, tHandleSum:0, dias:{} });
+    (entry.data||[]).forEach(bucket=>{
+      const n = genesysBucketStat(bucket,"tHandle","count") || 0, t = genesysBucketStat(bucket,"tHandle","sum") || 0;
+      u.nHandle += n; u.tHandleSum += t;
+      const iso = String(bucket.interval||"").slice(0,10);
+      if(!n || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+      const d = u.dias[iso] || (u.dias[iso] = { n:0, t:0 });
+      d.n += n; d.t += t;
     });
   });
   return byUser;
