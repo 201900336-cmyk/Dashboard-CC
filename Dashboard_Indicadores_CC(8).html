@@ -8045,7 +8045,7 @@ function tmoAsesorExcelHabilitar(si){
      "<Mes año> por día" (TMO y contestadas de cada día, con totales).
    Los cuartiles de cada mes se calculan dentro de ese mes. El TMO va como
    tiempo de Excel ([m]:ss) para que se pueda ordenar y calcular. */
-function XlsHoja(){ this.aoa = []; this.est = {}; this.merges = []; this.filas = []; this.cols = []; this.panel = null; this.filtro = null; }
+function XlsHoja(){ this.aoa = []; this.est = {}; this.merges = []; this.filas = []; this.cols = []; this.panel = null; this.filtro = null; this.estiloDe = null; this.colFmt = null; this.colFmtDesde = 0; }
 XlsHoja.prototype.set = function(r, c, v, est){
   (this.aoa[r] = this.aoa[r] || [])[c] = v;
   if(est) this.est[XLSX.utils.encode_cell({ r, c })] = est;
@@ -8056,8 +8056,12 @@ XlsHoja.prototype.hoja = function(){
   for(let r=0; r<this.aoa.length; r++) if(!this.aoa[r]) this.aoa[r] = [];
   const ws = XLSX.utils.aoa_to_sheet(this.aoa);
   Object.keys(this.est).forEach(ad=>{   // formato de número también sin estilos (por si el Excel sale sin colores)
-    const e = this.est[ad], cel = ws[ad];
-    if(cel && cel.t==="n") cel.z = /tmo/i.test(e) ? "[m]:ss" : /num/i.test(e) ? "#,##0" : cel.z;
+    const n = (XLS_ESTILOS[this.est[ad]] || {}).n, cel = ws[ad];
+    if(cel && cel.t==="n" && n) cel.z = XLS_FORMATOS[n];
+  });
+  if(this.colFmt) for(let r=this.colFmtDesde; r<this.aoa.length; r++) Object.keys(this.colFmt).forEach(c=>{   // v22.24: formato por columna (hojas largas)
+    const cel = ws[XLSX.utils.encode_cell({ r, c:Number(c) })];
+    if(cel && cel.t==="n") cel.z = XLS_FORMATOS[this.colFmt[c]];
   });
   if(this.merges.length) ws["!merges"] = this.merges;
   if(this.cols.length) ws["!cols"] = this.cols.map(w=> ({ wch:w }));
@@ -8077,7 +8081,13 @@ const XLS_FUENTES = {
   ambar: '<b/><sz val="11"/><color rgb="FF7A5600"/><name val="Calibri"/><family val="2"/>',
   roja: '<b/><sz val="11"/><color rgb="FFB4021F"/><name val="Calibri"/><family val="2"/>',
   gris: '<sz val="11"/><color rgb="FF8D95A0"/><name val="Calibri"/><family val="2"/>',
+  kpi: '<b/><sz val="18"/><color rgb="FF161616"/><name val="Calibri"/><family val="2"/>',        // v22.24: indicadores del Resumen de Qualtrics
+  kpiVerde: '<b/><sz val="18"/><color rgb="FF166534"/><name val="Calibri"/><family val="2"/>',
+  kpiAmbar: '<b/><sz val="18"/><color rgb="FF7A5600"/><name val="Calibri"/><family val="2"/>',
+  kpiRoja: '<b/><sz val="18"/><color rgb="FFB4021F"/><name val="Calibri"/><family val="2"/>',
 };
+// Formatos de número (v22.24: se agregaron decimal, porcentaje, fecha y hora para Qualtrics)
+const XLS_FORMATOS = { tmo:"[m]:ss", num:"#,##0", dec:"0.0", pct:"0.0%", fecha:"dd/mm/yyyy", hora:"hh:mm" };
 const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2" };
 const XLS_ESTILOS = (()=>{
   const e = {
@@ -8090,21 +8100,33 @@ const XLS_ESTILOS = (()=>{
     totok:{ f:"verde", r:"total", b:1, a:"c" }, totwarn:{ f:"ambar", r:"total", b:1, a:"c" }, totcrit:{ f:"roja", r:"total", b:1, a:"c" }, totneutro:{ f:"gris", r:"total", b:1, a:"c" },
   };
   [1,2,3,4].forEach(q=>{ e["q"+q] = { f:"negrita", r:"q"+q, b:1, a:"c" }; });
+  // v22.24: Qualtrics (indicadores, porcentajes, fechas y filas de detalle alineadas arriba)
+  Object.assign(e, {
+    kpi:{ f:"kpi", b:1, a:"c", n:"num" }, kpiPct:{ f:"kpi", b:1, a:"c", n:"pct" }, kpiDec:{ f:"kpi", b:1, a:"c", n:"dec" },
+    kpiPro:{ f:"kpiVerde", b:1, a:"c", n:"num" }, kpiPas:{ f:"kpiAmbar", b:1, a:"c", n:"num" }, kpiDet:{ f:"kpiRoja", b:1, a:"c", n:"num" },
+    kpiSub:{ f:"sub", b:1, a:"c" }, kpiSubPct:{ f:"sub", b:1, a:"c", n:"pct" },
+    pct:{ b:1, a:"c", n:"pct" }, totPct:{ f:"negrita", r:"total", b:1, a:"c", n:"pct" },
+    pctPro:{ f:"verde", b:1, a:"c", n:"pct" }, pctPas:{ f:"ambar", b:1, a:"c", n:"pct" }, pctDet:{ f:"roja", b:1, a:"c", n:"pct" },
+    fechaC:{ b:1, a:"c", n:"fecha" },
+    dTxt:{ b:1, a:"t" }, dTxtC:{ b:1, a:"ct" }, dFecha:{ b:1, a:"ct", n:"fecha" }, dHora:{ b:1, a:"ct", n:"hora" }, dComent:{ b:1, a:"tw" },
+    dpro:{ f:"verde", r:"q1", b:1, a:"ct" }, dpas:{ f:"ambar", r:"q3", b:1, a:"ct" }, ddet:{ f:"roja", r:"q4", b:1, a:"ct" },
+  });
   return e;
 })();
 function xlsEstilosXml(){
   const fuentes = Object.keys(XLS_FUENTES), rellenos = Object.keys(XLS_RELLENOS), claves = Object.keys(XLS_ESTILOS);
-  const FMT = { tmo:164, num:165 };
+  const claveFmt = Object.keys(XLS_FORMATOS), FMT = {}; claveFmt.forEach((k, i)=> FMT[k] = 164 + i);
   const xf = k=>{
     const s = XLS_ESTILOS[k];
     const fontId = fuentes.indexOf(s.f || "normal"), fillId = s.r ? 2 + rellenos.indexOf(s.r) : 0, numFmtId = s.n ? FMT[s.n] : 0, borderId = s.b ? 1 : 0;
-    const al = s.a ? `<alignment horizontal="${s.a[0]==="c"?"center":"left"}" vertical="center"${s.a.includes("w")?' wrapText="1"':""}/>` : "";
+    // alineación: "c" centrada (si no, a la izquierda), "t" arriba (si no, al medio), "w" ajustar texto
+    const al = s.a ? `<alignment horizontal="${s.a.includes("c")?"center":"left"}" vertical="${s.a.includes("t")?"top":"center"}"${s.a.includes("w")?' wrapText="1"':""}/>` : "";
     return `<xf numFmtId="${numFmtId}" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0"${numFmtId?' applyNumberFormat="1"':""} applyFont="1"${fillId?' applyFill="1"':""}${borderId?' applyBorder="1"':""}${al?' applyAlignment="1"':""}>${al}</xf>`;
   };
   const lado = n=> `<${n} style="thin"><color rgb="FFD1D5DB"/></${n}>`;
   const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
     + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-    + '<numFmts count="2"><numFmt numFmtId="164" formatCode="[m]:ss"/><numFmt numFmtId="165" formatCode="#,##0"/></numFmts>'
+    + `<numFmts count="${claveFmt.length}">${claveFmt.map(k=> `<numFmt numFmtId="${FMT[k]}" formatCode="${XLS_FORMATOS[k].replace(/"/g, "&quot;")}"/>`).join("")}</numFmts>`
     + `<fonts count="${fuentes.length}">${fuentes.map(k=> `<font>${XLS_FUENTES[k]}</font>`).join("")}</fonts>`
     + `<fills count="${rellenos.length+2}"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${rellenos.map(k=> `<fill><patternFill patternType="solid"><fgColor rgb="${XLS_RELLENOS[k]}"/><bgColor indexed="64"/></patternFill></fill>`).join("")}</fills>`
     + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border>${lado("left")}${lado("right")}${lado("top")}${lado("bottom")}<diagonal/></border></borders>`
@@ -8129,7 +8151,7 @@ function xlsDescargarConEstilo(wb, hojas, nombre){
       const h = hojas[nom], e = entrada(`xl/worksheets/sheet${i+1}.xml`);
       if(!h || !e) return;
       let xml = leer(e).replace(/<c r="([A-Z]+[0-9]+)"([^>]*)>/g, (m, ad, resto)=>{
-        const k = h.est[ad], s = k && est.indice[k] ? ` s="${est.indice[k]}"` : "";
+        const k = h.est[ad] || (h.estiloDe ? h.estiloDe(XLSX.utils.decode_cell(ad)) : null), s = k && est.indice[k] ? ` s="${est.indice[k]}"` : "";
         return `<c r="${ad}"${s}${resto.replace(/\s+s="\d+"/, "")}>`;
       });
       const p = h.panel;
@@ -8144,7 +8166,7 @@ function xlsDescargarConEstilo(wb, hojas, nombre){
       }
       escribir(e, xml);
     });
-    const datos = XLSX.CFB.write(zip, { fileType:"zip", type:"array" });
+    const datos = XLSX.CFB.write(zip, { fileType:"zip", type:"array", compression:true });   // comprimido, como un .xlsx normal
     const url = URL.createObjectURL(new Blob([datos], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
     const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(url), 5000);
@@ -15869,7 +15891,8 @@ function tnRender(){
     <label class="qa-skill">Encuesta <select id="tn-encuesta"><option value="">Todas</option>${tnEncHtmlOpciones(encuestas)}</select></label>
     <label class="qa-skill">Unidad <select id="tn-unidad"><option value="">Todas</option>${unidades.map(u=>`<option ${TN.unidad===u?"selected":""}>${qaEsc(u)}</option>`).join("")}</select></label>
     <span class="mut tn-periodo">${tnFecha(desde)}${desde!==hasta?" al "+tnFecha(hasta):""}</span>
-    ${TN.vista!=="detalle" && TN.vista!=="repetidos" && d ? `<button type="button" class="btn-outline tn-excel" id="tn-excel">⬇️ Excel</button>` : ""}
+    ${TN.vista!=="detalle" && TN.vista!=="repetidos" && d ? `<button type="button" class="btn-outline tn-excel" id="tn-excel">⬇️ Excel</button>`
+      : TN.vista==="detalle" && d && Array.isArray(d.detalle) ? `<button type="button" class="btn-outline tn-excel" id="tn-excel-det" title="Todo el detalle del período: resumen, todas las encuestas, detractores, pasivos, promotores, comentarios y por asesor">⬇️ Excel de clientes</button>` : ""}
   </div>`;
 
   if(TN.cargando && !d) html += `<div class="qa-card tn-aviso">⏳ Consultando las encuestas…</div>`;
@@ -16534,6 +16557,167 @@ function tnExcel(){
   XLSX.writeFile(wb, `TNPS_${desde}_${hasta}.xlsx`);
 }
 
+/* ============================================================
+   v22.24 (Oscar, 2026-11-17): Excel de "Detalle de clientes"
+   ============================================================
+   "Quiero un Excel súper bonito donde podamos descargar toda la información:
+   promotores, detractores y todo, comentarios, etc." Lleva todo el detalle del
+   período, encuesta y unidad elegidos (y el asesor o skill si se entró desde
+   "Por asesor"); los botones Detractores/Pasivos/Promotores y el buscador no
+   lo recortan, porque cada tipo ya va en su hoja. El detalle llega hasta 31
+   días (lo limita el servidor). Hojas: Resumen (indicadores, por skill, por
+   encuesta y por día), Todas las encuestas, Detractores, Pasivos, Promotores,
+   Comentarios (solo con comentario, primero detractores) y Por asesor. */
+function tnExcelClientes(){
+  const d = TN.datos;
+  if(typeof XLSX==="undefined" || !d || !Array.isArray(d.detalle)) return;
+  const [desde, hasta] = tnRangoFechas();
+  const dDesde = d.detalleDesde && d.detalleDesde > desde ? d.detalleDesde : desde;
+  const skillDe = f=> tnSkillDe([f[0], f[1], f[4], f[5]]);
+  const filas = tnDetalleBase()
+    .filter(f=> (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor) && (!TN.detSkill || skillDe(f)===TN.detSkill))
+    .sort((a, b)=> String(b[0]).localeCompare(String(a[0])));
+  const btn = document.getElementById("tn-excel-det");
+  if(!filas.length){ if(btn){ btn.textContent = "Sin encuestas para descargar"; setTimeout(()=>{ btn.textContent = "⬇️ Excel"; }, 2500); } return; }
+  const p2 = n=> String(n).padStart(2, "0");
+  const fFecha = iso=> `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.slice(0,4)}`;
+  const serial = iso=> (Date.UTC(Number(iso.slice(0,4)), Number(iso.slice(5,7))-1, Number(iso.slice(8,10))) - Date.UTC(1899, 11, 30)) / 86400000;
+  const hora = hm=>{ const m = /(\d{1,2}):(\d{2})/.exec(hm||""); return m ? (Number(m[1])*60 + Number(m[2]))/1440 : null; };
+  const TIPO = { "3":"Promotor", "2":"Pasivo", "1":"Detractor" }, EST = { "3":"pro", "2":"pas", "1":"det" };
+  const nombreAs = f=> f[9] ? tnNombrePropio(f[9]) : (f[8] || "(sin asesor)");
+  const conComentario = f=> String(f[14]||"").trim() !== "";
+  const conCorreo = filas.some(f=> f[18]);
+  // Totales de cualquier grupo de encuestas
+  const sumar = arr=>{
+    let pr=0, pa=0, de=0, com=0, sumaNota=0, nNota=0;
+    arr.forEach(f=>{ const g = String(f[2]); if(g==="3") pr++; else if(g==="2") pa++; else if(g==="1") de++; if(conComentario(f)) com++; const nota = Number(f[3]); if(f[3]!=="" && !isNaN(nota)){ sumaNota += nota; nNota++; } });
+    const n = pr+pa+de;
+    return { n, pr, pa, de, com, tnps: n ? (pr-de)/n : null, nota: nNota ? sumaNota/nNota : null };
+  };
+  const agrupar = (arr, clave)=>{ const m = new Map(); arr.forEach(f=>{ const k = clave(f) || "(sin dato)"; if(!m.has(k)) m.set(k, []); m.get(k).push(f); }); return m; };
+  const tot = sumar(filas);
+  const encTxt = TN.encuesta ? (TN.encuesta===TN_ENC_GRUPO.valor ? TN_ENC_GRUPO.etiqueta : TN.encuesta) : "Todas";
+  const filtrosTxt = [`Período ${fFecha(dDesde)} al ${fFecha(hasta)}`, `Encuesta: ${encTxt}`, `Unidad: ${TN.unidad || "Todas"}`,
+    TN.detSkill ? `Skill: ${TN.detSkill}` : "", TN.detAsesor ? `Asesor: ${TN.detAsesorNombre || TN.detAsesor}` : ""].filter(Boolean).join("  ·  ");
+  const generado = (()=>{ const t = new Date(); return `Generado el ${p2(t.getDate())}/${p2(t.getMonth()+1)}/${t.getFullYear()} ${p2(t.getHours())}:${p2(t.getMinutes())}`; })();
+  const pct = (a, n)=> n ? a/n : 0;
+  const resumenTxt = s=> `${s.n.toLocaleString("es-HN")} encuesta${s.n===1?"":"s"}  ·  ${s.pr.toLocaleString("es-HN")} promotores (${Math.round(pct(s.pr,s.n)*1000)/10}%)  ·  ${s.pa.toLocaleString("es-HN")} pasivos  ·  ${s.de.toLocaleString("es-HN")} detractores (${Math.round(pct(s.de,s.n)*1000)/10}%)  ·  TNPS ${s.tnps===null?"—":(Math.round(s.tnps*1000)/10)+"%"}`;
+  const wb = XLSX.utils.book_new(), hojas = {};
+  const agregar = (h, nombre)=>{ XLSX.utils.book_append_sheet(wb, h.hoja(), nombre); hojas[nombre] = h; };
+  const cabecera = (h, titulo, linea3)=>{
+    h.set(0, 0, titulo, "titulo"); h.filas[0] = { hpt: 26 };
+    h.set(1, 0, filtrosTxt, "sub");
+    h.set(2, 0, linea3, "sub");
+  };
+
+  // ---- Resumen ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · Detalle de clientes", `${generado}  ·  Datos de clientes: solo para el equipo autorizado.`);
+    h.fila(4, 0, ["Encuestas", "TNPS", "Promotores", "Pasivos", "Detractores", "Con comentario", "Nota promedio"], "enc");
+    h.fila(5, 0, [tot.n, tot.tnps, tot.pr, tot.pa, tot.de, tot.com, tot.nota===null ? "—" : Math.round(tot.nota*10)/10], ["kpi", "kpiPct", "kpiPro", "kpiPas", "kpiDet", "kpi", "kpiDec"]);
+    h.fila(6, 0, ["", "", pct(tot.pr, tot.n), pct(tot.pa, tot.n), pct(tot.de, tot.n), pct(tot.com, tot.n), ""], ["kpiSub", "kpiSub", "pctPro", "pctPas", "pctDet", "kpiSubPct", "kpiSub"]);
+    h.filas[4] = { hpt: 20 }; h.filas[5] = { hpt: 32 };
+    const cols = ["Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Pasivos", "% Detractores", "TNPS", "Con comentario"];
+    const tabla = (r0, titulo, primera, grupos, esFecha)=>{
+      h.set(r0, 0, titulo, "seccion");
+      h.fila(r0+1, 0, [primera].concat(cols), ["encIzq"].concat(cols.map(()=> "enc")));
+      h.filas[r0+1] = { hpt: 30 };
+      let r = r0 + 2;
+      grupos.forEach(([k, s])=>{
+        h.fila(r, 0, [esFecha ? serial(k) : k, s.n, s.pr, s.pa, s.de, pct(s.pr,s.n), pct(s.pa,s.n), pct(s.de,s.n), s.tnps, s.com],
+          [esFecha ? "fechaC" : "txt", "num", "num", "num", "num", "pct", "pct", "pct", "pct", "num"]);
+        r++;
+      });
+      h.fila(r, 0, ["Total", tot.n, tot.pr, tot.pa, tot.de, pct(tot.pr,tot.n), pct(tot.pa,tot.n), pct(tot.de,tot.n), tot.tnps, tot.com],
+        ["totTxt", "totNum", "totNum", "totNum", "totNum", "totPct", "totPct", "totPct", "totPct", "totNum"]);
+      return r + 2;
+    };
+    const ordenN = m=> Array.from(m.entries()).map(([k, arr])=> [k, sumar(arr)]).sort((a, b)=> b[1].n - a[1].n || String(a[0]).localeCompare(String(b[0])));
+    let r = tabla(8, "Por skill", "Skill", ordenN(agrupar(filas, skillDe)));
+    r = tabla(r, "Por encuesta", "Encuesta", ordenN(agrupar(filas, f=> f[1])));
+    tabla(r, "Por día", "Fecha", Array.from(agrupar(filas, f=> String(f[0]).slice(0,10)).entries()).sort((a, b)=> a[0].localeCompare(b[0])).map(([k, arr])=> [k, sumar(arr)]), true);
+    h.cols = [26, 13, 13, 13, 13, 13, 13, 13, 11, 14];
+    agregar(h, "Resumen");
+  }
+
+  // ---- Hojas de detalle (una fila por encuesta) ----
+  const COLS = [["Fecha",11],["Hora",7],["Tipo",11],["Nota",6],["Skill",15],["Encuesta",22],["Unidad",17],["Servicio",20],["Asesor",28],["Supervisor",20],["Comentario",70],["ID cliente",14],["Teléfono",13]]
+    .concat(conCorreo ? [["Correo",30]] : [], [["ID transacción",22],["Canal",12],["Medio",13],["Envío",11],["ResponseId",21]]);
+  const iCom = COLS.findIndex(c=> c[0]==="Comentario");
+  const detalle = (nombre, lista, titulo, nota)=>{
+    const h = new XlsHoja();
+    const s = sumar(lista);
+    cabecera(h, titulo, `${resumenTxt(s)}  ·  ${generado}${nota ? "  ·  "+nota : ""}`);
+    const r0 = 4;
+    h.fila(r0, 0, COLS.map(c=> c[0]), COLS.map((c, i)=> i===iCom || c[0]==="Asesor" || c[0]==="Encuesta" ? "encIzq" : "enc"));
+    h.filas[r0] = { hpt: 22 };
+    if(!lista.length){ h.set(r0+1, 0, "No hay encuestas de este tipo con estos filtros.", "sub"); }
+    lista.forEach((f, i)=>{
+      const r = r0 + 1 + i, fh = String(f[0]);
+      const nota = Number(f[3]);
+      const valores = [serial(fh.slice(0,10)), hora(fh.slice(11)), TIPO[String(f[2])] || "", f[3]==="" || isNaN(nota) ? "" : nota, skillDe(f), f[1], f[4], f[5], nombreAs(f), f[10], String(f[14]||"").trim(), f[12], f[13]]
+        .concat(conCorreo ? [f[18]] : [], [f[11], f[6], f[7], f[19], f[17]]);
+      h.fila(r, 0, valores.map(v=> v===null || v===undefined ? "" : v));
+      const com = String(f[14]||"");
+      if(com.length > 70){ const lineas = com.split(/\n/).reduce((s, p)=> s + Math.max(1, Math.ceil(p.length/72)), 0); h.filas[r] = { hpt: Math.min(lineas, 9) * 15 + 3 }; }
+    });
+    // Estilos por columna (se calculan al escribir: no hace falta guardar uno por celda)
+    const tipoDe = r=>{ const f = lista[r - r0 - 1]; return f ? EST[String(f[2])] : ""; };
+    h.estiloDe = ({ r, c })=>{
+      if(r <= r0 || r > r0 + lista.length) return null;
+      const col = COLS[c] && COLS[c][0];
+      if(col==="Fecha") return "dFecha";
+      if(col==="Hora") return "dHora";
+      if(col==="Tipo" || col==="Nota"){ const t = tipoDe(r); return t ? "d" + t : "dTxtC"; }
+      if(col==="Comentario") return "dComent";
+      if(col==="Skill" || col==="Canal" || col==="Medio" || col==="Envío") return "dTxtC";
+      return "dTxt";
+    };
+    h.colFmt = { 0:"fecha", 1:"hora" }; h.colFmtDesde = r0 + 1;
+    h.cols = COLS.map(c=> c[1]);
+    h.panel = { x: 4, y: r0 + 1 };
+    if(lista.length) h.filtro = `A${r0+1}:${XLSX.utils.encode_col(COLS.length-1)}${r0+1+lista.length}`;
+    agregar(h, nombre);
+  };
+  detalle("Todas las encuestas", filas, "Qualtrics · Todas las encuestas");
+  detalle("Detractores", filas.filter(f=> String(f[2])==="1"), "Qualtrics · Detractores (0 a 6)");
+  detalle("Pasivos", filas.filter(f=> String(f[2])==="2"), "Qualtrics · Pasivos (7 y 8)");
+  detalle("Promotores", filas.filter(f=> String(f[2])==="3"), "Qualtrics · Promotores (9 y 10)");
+  const ordenTipo = { "1":0, "2":1, "3":2 };
+  detalle("Comentarios", filas.filter(conComentario).sort((a, b)=> (ordenTipo[String(a[2])] - ordenTipo[String(b[2])]) || String(b[0]).localeCompare(String(a[0]))),
+    "Qualtrics · Encuestas con comentario", "Primero los detractores");
+
+  // ---- Por asesor ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · Por asesor", `${resumenTxt(tot)}  ·  ${generado}`);
+    const enc = ["Asesor", "Usuario", "Supervisor", "Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Detractores", "TNPS", "Con comentario", "Detractores con comentario"];
+    const r0 = 4;
+    h.fila(r0, 0, enc, enc.map((x, i)=> i<3 ? "encIzq" : "enc")); h.filas[r0] = { hpt: 30 };
+    const grupos = Array.from(agrupar(filas, f=> String(f[8]||"").toLowerCase()).entries()).map(([k, arr])=>{
+      const sup = Array.from(agrupar(arr, f=> f[10]).entries()).sort((a, b)=> b[1].length - a[1].length)[0];
+      return { k, nombre: nombreAs(arr[0]), sup: sup && sup[0] !== "(sin dato)" ? sup[0] : "", s: sumar(arr), detCom: arr.filter(f=> String(f[2])==="1" && conComentario(f)).length };
+    }).sort((a, b)=> b.s.n - a.s.n || a.nombre.localeCompare(b.nombre));
+    grupos.forEach((g, i)=>{
+      const s = g.s;
+      h.fila(r0+1+i, 0, [g.nombre, g.k === "(sin dato)" ? "" : g.k, g.sup, s.n, s.pr, s.pa, s.de, pct(s.pr,s.n), pct(s.de,s.n), s.tnps, s.com, g.detCom],
+        ["txt", "txt", "txt", "num", "num", "num", "num", "pct", "pct", "pct", "num", "num"]);
+    });
+    const rt = r0 + 1 + grupos.length;
+    h.fila(rt, 0, [`Total (${grupos.length} asesor${grupos.length===1?"":"es"})`, "", "", tot.n, tot.pr, tot.pa, tot.de, pct(tot.pr,tot.n), pct(tot.de,tot.n), tot.tnps, tot.com, filas.filter(f=> String(f[2])==="1" && conComentario(f)).length],
+      ["totTxt", "totTxt", "totTxt", "totNum", "totNum", "totNum", "totNum", "totPct", "totPct", "totPct", "totNum", "totNum"]);
+    h.cols = [30, 26, 22, 11, 11, 10, 11, 12, 12, 10, 13, 14];
+    h.panel = { x: 1, y: r0 + 1 };
+    h.filtro = `A${r0+1}:${XLSX.utils.encode_col(enc.length-1)}${rt}`;
+    agregar(h, "Por asesor");
+  }
+
+  const limpio = t=> String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
+  const extra = [TN.encuesta ? limpio(encTxt) : "", TN.unidad ? limpio(TN.unidad) : "", TN.detSkill ? limpio(TN.detSkill) : "", TN.detAsesor ? limpio(TN.detAsesor.split("@")[0]) : ""].filter(Boolean).join("_");
+  xlsDescargarConEstilo(wb, hojas, `Qualtrics_clientes_${dDesde}_a_${hasta}${extra ? "_"+extra : ""}.xlsx`);
+}
+
 function tnWire(){
   const body = document.getElementById("tn-body");
   if(!body) return;
@@ -16545,6 +16729,7 @@ function tnWire(){
   const su = document.getElementById("tn-unidad"); if(su) su.addEventListener("change", ()=>{ TN.unidad = su.value; tnRender(); });
   const re = document.getElementById("tn-reintentar"); if(re) re.addEventListener("click", ()=> tnCargar(true));
   const ex = document.getElementById("tn-excel"); if(ex) ex.addEventListener("click", tnExcel);
+  const exd = document.getElementById("tn-excel-det"); if(exd) exd.addEventListener("click", tnExcelClientes);   // v22.24
   const mi = document.getElementById("tn-min"); if(mi) mi.addEventListener("change", ()=>{ TN.minAsesor = Math.max(1, Number(mi.value)||1); tnRender(); });
   body.querySelectorAll("[data-orden]").forEach(b=> b.addEventListener("click", ()=>{ TN.ordenAsesor = b.dataset.orden; tnRender(); }));
   body.querySelectorAll("[data-grupo]").forEach(b=> b.addEventListener("click", ()=>{ TN.detGrupo = b.dataset.grupo; tnRender(); }));
