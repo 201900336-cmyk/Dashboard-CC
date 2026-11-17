@@ -1244,6 +1244,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-ind-ley{font-size:11.5px;color:#5B6472;}
   .tn-ind-card .chip{font-size:10.5px;padding:3px 8px;}
   .tn-ind-card .kpi-deltas{min-height:18px;}
+  .tn-ind-aviso{margin:0 0 14px;padding:10px 14px;border:1px dashed #C9CDD3;border-radius:10px;background:#F6F7F9;font-size:12.5px;line-height:1.45;color:#3B4350;}
+  .pa-ind-w .tn-ind-aviso{margin:0;}
+  .tn-ind-parcial{display:inline-block;font-size:11.5px;font-weight:700;color:#7A5600;background:#FFF4D6;border:1px solid #F2D27A;border-radius:999px;padding:2px 9px;}
   @media (max-width:900px){ .tn-ind{grid-template-columns:repeat(2,minmax(0,1fr));} .tn-ind-v{font-size:28px;} }
   .tn-th-ind{white-space:nowrap;}
   .tn-ichips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
@@ -15835,8 +15838,31 @@ function tnIndCelda(def, arr){
   const c = tnIndCalc(def, arr);
   return `<td class="num${c?"":" mut"}" title="${qaEsc(tnIndTitulo(def, c))}">${c ? tnFmt(c.v)+"%" : "—"}</td>`;
 }
+/* v22.27 (Oscar, 2026-11-17: "no lo veo"): si no hay satisfacción se dice por qué, en el mismo lugar.
+   - "servidor": el Apps Script todavía no es v22.26 (manda 12 datos por fila).
+   - "historia": el servidor ya la manda pero estos días todavía no se volvieron a bajar.
+   - "parcial": hay satisfacción solo desde un día (la historia se vuelve a bajar de hoy hacia
+     atrás); se avisa para que nadie compare medio mes contra Qualtrics. */
+function tnIndPrimerDia(){
+  let min = "";
+  ((TN.datos && TN.datos.resumen) || []).forEach(f=>{ if(f[12] && (!min || f[0] < min)) min = f[0]; });
+  return min;
+}
+function tnIndCobertura(filas){
+  const d = TN.datos;
+  if(!d || !filas.length) return { tipo:"" };
+  if(!d.conInd) return { tipo:"servidor" };
+  const primer = tnIndPrimerDia();
+  const faltan = !primer || filas.some(f=> f[0] < primer);
+  if(!filas.some(f=> f[12])) return { tipo: faltan ? "historia" : "" };
+  return { tipo: faltan ? "parcial" : "", desde: primer };
+}
+const TN_IND_MENU = "Dashboard › Qualtrics › Volver a cargar toda la historia";
 // Tarjetas de satisfacción (debajo de las del TNPS), con la comparación contra el período anterior
 function tnHtmlIndKpis(filas, previas){
+  const cob = tnIndCobertura(filas);
+  if(cob.tipo==="servidor") return `<div class="tn-ind-aviso" role="status">⭐ <b>Satisfacción</b> (Amabilidad, Conocimiento, Solución e Información suficiente): el servidor todavía no la manda. Falta pegar el <b>Apps Script v22.26</b> y publicar la <b>Nueva versión</b>.</div>`;
+  if(cob.tipo==="historia") return `<div class="tn-ind-aviso" role="status">⭐ <b>Satisfacción</b>: todavía no está bajada para este período. Se completa en el Sheet con <b>${TN_IND_MENU}</b> (sigue sola, unos 15 a 20 minutos).</div>`;
   const ind = tnIndDeFilas(filas), indP = tnIndDeFilas(previas || []);
   const defs = tnIndPresentes(ind);
   if(!defs.length) return "";
@@ -15861,14 +15887,16 @@ function tnHtmlIndKpis(filas, previas){
       </div>`;
   }).join("");
   return `<div class="tn-ind-sec">
-      <div class="tn-ind-h"><h3 class="tn-h3">Satisfacción con la atención</h3><span class="tn-h3-sub">Escala de 1 a 5: % que respondió 4 o 5 · Sí/No: % que dijo Sí</span></div>
+      <div class="tn-ind-h"><h3 class="tn-h3">Satisfacción con la atención</h3><span class="tn-h3-sub">Escala de 1 a 5: % que respondió 4 o 5 · Sí/No: % que dijo Sí</span>${cob.tipo==="parcial" ? `<span class="tn-ind-parcial" title="Los días anteriores se completan en el Sheet con ${TN_IND_MENU}.">⚠️ Solo desde el ${tnFecha(cob.desde)}: falta volver a cargar la historia de Qualtrics</span>` : ""}</div>
       <div class="tn-ind" style="--cols:${defs.length <= 5 ? defs.length : defs.length===6 ? 3 : 4}">${cards}</div>
     </div>`;
 }
 // Ventana "TNPS por Asesor": los indicadores de lo filtrado (panel) y de cada asesor (tarjeta)
-function tnHtmlPaInd(defs, ind){
+function tnHtmlPaInd(defs, ind, cob){
+  cob = cob || {};
+  if(cob.tipo==="servidor" || cob.tipo==="historia") return `<div class="pa-ind-w"><div class="pa-dist-t">Satisfacción con la atención</div><div class="tn-ind-aviso">${cob.tipo==="servidor" ? "El servidor todavía no la manda (falta el Apps Script v22.26)." : `Todavía no está bajada para este período (${TN_IND_MENU}).`}</div></div>`;
   if(!defs.length) return "";
-  return `<div class="pa-ind-w"><div class="pa-dist-t">Satisfacción con la atención</div><div class="pa-ind" style="--cols:${defs.length <= 4 ? defs.length : defs.length <= 6 ? 3 : 4}">${defs.map(def=>{
+  return `<div class="pa-ind-w"><div class="pa-dist-t">Satisfacción con la atención${cob.tipo==="parcial" ? ` <span class="tn-ind-parcial">⚠️ solo desde el ${tnFecha(cob.desde)}</span>` : ""}</div><div class="pa-ind" style="--cols:${defs.length <= 4 ? defs.length : defs.length <= 6 ? 3 : 4}">${defs.map(def=>{
     const c = tnIndCalc(def, ind && ind[def.k]);
     return `<div title="${qaEsc(tnIndTitulo(def, c))}"><div class="k">${qaEsc(def.corto||def.nombre)}</div><div class="v">${c ? tnFmt(c.v)+"%" : "—"}</div></div>`;
   }).join("")}</div></div>`;
@@ -15914,6 +15942,7 @@ async function tnCargar(forzar){
     if(data && data.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
     if(data && data.error==="codigo_invalido") throw new Error("El servidor todavía no tiene la versión con TNPS. Hay que pegar el Apps Script v21.87 y publicar la Nueva versión.");
     if(!data || !data.ok || !Array.isArray(data.resumen)) throw new Error((data && data.error) || "Respuesta inesperada del servidor.");
+    data.conInd = data.resumen.some(f=> f.length > 12);   // v22.27: Apps Script v22.26 o posterior
     data.resumen.forEach(f=>{ f[2] = tnUnidad(f[1], f[2]); f[12] = tnIndParse(f[12]); });   // v22.26: + indicadores
     if(Array.isArray(data.detalle)) data.detalle.forEach(f=>{ f[4] = tnUnidad(f[1], f[4]); f[20] = tnIndParse(f[20]); });
     tnOrdenarNombres(data);
@@ -16283,7 +16312,7 @@ function tnHtmlCuartiles(filas){
       <div class="pa-eq-k">TNPS · ${qaEsc(nombreSkill)}</div>
       <div class="pa-eq-fila"><span class="pa-eq-num ${tot.tnps===null?"":tot.tnps<0?"crit":tot.tnps>=50?"ok":""}" title="(Promotores − Detractores) ÷ Encuestas">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</span>${lado}</div>
       ${dist}
-      ${tnHtmlPaInd(defsQ, indQ)}
+      ${tnHtmlPaInd(defsQ, indQ, tnIndCobertura(filas))}
       <div class="pa-eq-pie">
         <div title="Asesores con al menos una encuesta en el período"><div class="k">Asesores</div><div class="v">${num(todos.length)}</div></div>
         <div><div class="k">Encuestas</div><div class="v">${num(tot.n)}</div></div>
@@ -16789,7 +16818,9 @@ function tnExcel(){
   // ---- Resumen ----
   {
     const h = new XlsHoja();
-    cabecera(h, "Qualtrics · TNPS y satisfacción", `${generado}  ·  TNPS = % promotores − % detractores. Escala de 1 a 5: % que respondió 4 o 5. Sí/No: % que dijo Sí.`);
+    const cob = tnIndCobertura(filas);   // v22.27
+    cabecera(h, "Qualtrics · TNPS y satisfacción", `${generado}  ·  TNPS = % promotores − % detractores. Escala de 1 a 5: % que respondió 4 o 5. Sí/No: % que dijo Sí.`
+      + (cob.tipo==="parcial" ? `  ·  ⚠️ Satisfacción solo desde el ${fFecha(cob.desde)} (falta volver a cargar la historia de Qualtrics).` : cob.tipo ? "  ·  ⚠️ Sin satisfacción para este período (falta actualizar el servidor o volver a cargar la historia)." : ""));
     const kCab = ["Encuestas", "TNPS", "Promotores", "Pasivos", "Detractores"].concat(defs.map(def=> def.nombre));
     const cInd = defs.map(def=> tnIndCalc(def, tot.ind && tot.ind[def.k]));
     h.fila(4, 0, kCab, "enc"); h.filas[4] = { hpt: 30 };
@@ -16956,7 +16987,10 @@ function tnExcelClientes(){
       h.fila(r+1, 0, defs.map(def=> def.nombre), "enc"); h.filas[r+1] = { hpt: 30 };
       h.fila(r+2, 0, cs.map(c=> c ? c.v/100 : ""), defs.map(()=> "kpiPct")); h.filas[r+2] = { hpt: 32 };
       h.fila(r+3, 0, cs.map(c=> c ? `${c.top.toLocaleString("es-HN")} de ${c.n.toLocaleString("es-HN")}` : "sin respuestas"), defs.map(()=> "kpiSub"));
-      h.set(r+4, 0, "Escala de 1 a 5: % que respondió 4 o 5. Sí/No: % que dijo Sí. Resuelto al primer contacto: % que dijo No a «¿fue necesario contactarnos más de una vez?».", "sub");
+      const primerDet = filas.filter(f=> f[20]).reduce((m, f)=>{ const x = String(f[0]).slice(0,10); return !m || x < m ? x : m; }, "");   // v22.27
+      const parcialDet = primerDet && filas.some(f=> String(f[0]).slice(0,10) < primerDet);
+      h.set(r+4, 0, "Escala de 1 a 5: % que respondió 4 o 5. Sí/No: % que dijo Sí. Resuelto al primer contacto: % que dijo No a «¿fue necesario contactarnos más de una vez?»."
+        + (parcialDet ? `  ⚠️ Solo desde el ${fFecha(primerDet)}: los días anteriores todavía no se volvieron a bajar de Qualtrics.` : ""), "sub");
       r += 6;
     }
     const cols = ["Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Pasivos", "% Detractores", "TNPS", "Con comentario"].concat(defs.map(def=> def.corto || def.nombre));
