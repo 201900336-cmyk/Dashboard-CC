@@ -1228,6 +1228,37 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .tn-aviso{font-size:13px;}
   .tn-error{border-color:#F3B4BE;background:#FFF6F7;}
   .tn-cargando{font-size:12px;color:var(--qa-mut);margin:0 0 8px;}
+  /* v22.26: indicadores de satisfacción (Amabilidad, Conocimiento, Solución, Información suficiente…) */
+  .tn-ind-sec{margin:0 0 14px;}
+  .tn-ind-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;margin:2px 0 8px;}
+  .tn-ind-h .tn-h3{margin:0;}
+  .tn-ind-h .tn-h3-sub{margin-left:0;}
+  .tn-ind{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:10px;}   /* filas parejas: 4 por fila (3 si son 6) */
+  .tn-ind-card{background:var(--card);border:1px solid var(--border);border-top:3px solid #0F766E;border-radius:10px;padding:14px 16px 12px;display:flex;flex-direction:column;gap:7px;min-width:0;}
+  .tn-ind-k{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#3B4350;}
+  .tn-ind-n{font-size:10.5px;font-weight:700;letter-spacing:0;color:#5B6472;background:#EEF0F3;border-radius:999px;padding:1px 7px;}
+  .tn-ind-v{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.05;color:var(--black);}
+  .tn-ind-bar{display:flex;gap:2px;height:10px;border-radius:6px;overflow:hidden;background:#EEF0F3;}
+  .tn-ind-bar i{display:block;height:100%;}
+  .tn-ind-bar i.ok{background:#1E9E4B;} .tn-ind-bar i.warn{background:#E0A100;} .tn-ind-bar i.crit{background:#E4032E;}
+  .tn-ind-ley{font-size:11.5px;color:#5B6472;}
+  .tn-ind-card .chip{font-size:10.5px;padding:3px 8px;}
+  .tn-ind-card .kpi-deltas{min-height:18px;}
+  @media (max-width:900px){ .tn-ind{grid-template-columns:repeat(2,minmax(0,1fr));} .tn-ind-v{font-size:28px;} }
+  .tn-th-ind{white-space:nowrap;}
+  .tn-ichips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .tn-ichip{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;background:#EEF0F3;color:#3B4350;white-space:nowrap;}
+  .tn-ichip.ok{background:#E3F4E9;color:#166534;} .tn-ichip.warn{background:#FBF0D0;color:#7A5600;} .tn-ichip.crit{background:#FDE3E8;color:#B4021F;}
+  .tn-coment2{margin-top:6px;font-size:11.5px;line-height:1.4;color:#3B4350;}
+  .tn-coment2 b{font-weight:800;}
+  .pa-ind-w{display:flex;flex-direction:column;gap:7px;}
+  .pa-ind{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:6px 14px;}
+  @media (max-width:640px){ .pa-ind{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .pa-ind .k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5B6472;}
+  .pa-ind .v{font-size:20px;font-weight:800;line-height:1.2;}
+  .pa-card-ind{display:grid;grid-template-columns:1fr 1fr;gap:1px 10px;margin-top:7px;padding-top:7px;border-top:1px dashed #E1E4E8;font-size:11.5px;color:#5B6472;}
+  .pa-card-ind span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pa-card-ind b{color:var(--black);}
   @media (max-width:900px){ .tn-kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .tn-grid{grid-template-columns:1fr;} .tn-excel{margin-left:0;} }
   .qa-nota{font-size:11.5px;color:var(--qa-mut);margin:8px 2px 0;line-height:1.5;}
   .qa-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;margin:1px 3px 1px 0;white-space:nowrap;}
@@ -15627,7 +15658,8 @@ const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"res
   cuSkill:"", cuartiles:[1,2,3,4], antig:"",   // v22.05: + filtro de antigüedad   // v22.00: cuartiles de TNPS por asesor (como el TMO por Asesor)
   detFilas:[], ver:null,     // ver: { rid, estado, cands, msg } (v21.88)
   sel:"",                    // v21.89: encuesta a la que se le dio "Ver" (queda remarcada)
-  repTipo:"", repMin:3 };    // v22.08: contactos repetidos ("" = correos si hay; mínimo de encuestas por contacto)
+  repTipo:"", repMin:3,      // v22.08
+  detSoluc:"" };             // v22.26: "no" = solo las encuestas en que la solución NO resolvió: contactos repetidos ("" = correos si hay; mínimo de encuestas por contacto)
 // v22.22: "traer lo último de Qualtrics" (ver tnTraerLoUltimo). estado: "" | "trayendo" | "listo" | "error"
 const TN_SINC = { estado:"", avisos:[], detalle:"", pedidoEn:0, promesa:null };
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
@@ -15710,6 +15742,162 @@ function tnFmt(v){ return v===null || v===undefined ? "—" : (Math.round(v*10)/
 function tnPct(a,n){ return n ? (Math.round(a/n*1000)/10).toLocaleString("es-HN")+"%" : "—"; }
 function tnFecha(iso){ return iso ? `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.slice(0,4)}` : ""; }
 
+/* ============================================================
+   v22.26 (Oscar, 2026-11-17): indicadores de satisfacción
+   ============================================================
+   "Lo de satisfacción y todo eso lo montamos en el dash?" — como la página
+   "KPIs Masivo" de Qualtrics: Amabilidad, Conocimiento, Solución e
+   Información suficiente, más los que traen las otras encuestas (WhatsApp y
+   Redes Sociales preguntan por el tiempo de la gestión en vez de la
+   amabilidad; Empresas, por la atención del asesor, qué tan fácil fue
+   resolver y si tuvo que contactar más de una vez).
+   El Apps Script v22.26 manda los conteos de cada opción en el resumen
+   (columna 12: "amab:15,2,2,12,258|soluc:184,64") y la respuesta de cada
+   encuesta en el detalle (20: "amab:5|soluc:2"; 21: por qué no se resolvió;
+   22: comentario adicional). Al llegar se pasan a { amab:[15,2,2,12,258] }.
+   Cálculo (como el "Top Box" de Qualtrics): escala de 1 a 5 → % que
+   respondió 4 o 5; Sí/No → % Sí. "Resuelto al primer contacto" = % que dijo
+   No a "¿fue necesario contactarnos más de una vez?". Cada indicador sale
+   solo si hay respuestas con los filtros elegidos; con un Apps Script
+   anterior no sale nada nuevo.
+   ============================================================ */
+const TN_IND = [
+  { k:"amab", nombre:"Amabilidad", tipo:"escala", ayuda:"¿Qué tan satisfecho estás con la amabilidad mostrada por nuestro asesor? (1 a 5)" },
+  { k:"conoc", nombre:"Conocimiento", tipo:"escala", ayuda:"¿Qué tan satisfecho estás con el conocimiento que demostró nuestro asesor durante tu atención? (1 a 5)" },
+  { k:"soluc", nombre:"Solución", tipo:"sino", ayuda:"¿La solución brindada resolvió tu requerimiento? (Sí / No)" },
+  { k:"info", nombre:"Información suficiente", corto:"Info. suficiente", tipo:"sino", ayuda:"¿Nuestro asesor te proporcionó información suficiente sobre el proceso de resolución de tu gestión? (Sí / No)" },
+  { k:"tiempo", nombre:"Tiempo de la gestión", corto:"Tiempo", tipo:"escala", ayuda:"¿Qué tan satisfecho estás con el tiempo total que te tomó realizar tu gestión? (1 a 5 · WhatsApp y Redes Sociales)" },
+  { k:"atencion", nombre:"Atención del asesor", corto:"Atención", tipo:"escala", ayuda:"¿Qué tan satisfecho estás con la atención que te brindó nuestro asesor? (1 a 5 · Empresas)" },
+  { k:"facil", nombre:"Facilidad para resolver", corto:"Facilidad", tipo:"escala", ayuda:"¿Qué tan difícil fue resolver tu gestión? (1 = nada fácil, 5 = muy fácil · Empresas)" },
+  { k:"recontacto", nombre:"Resuelto al primer contacto", corto:"1er contacto", tipo:"sino", inverso:true, ayuda:"Para resolver tu gestión, ¿fue necesario contactarnos más de una vez? (cuenta el No)", chip:"Más de una vez" },
+];
+const TN_IND_POR_K = Object.fromEntries(TN_IND.map(d=> [d.k, d]));
+const TN_IND_TOP = 4;   // escala de 1 a 5: satisfecho = 4 o 5
+// "amab:15,2,2,12,258|soluc:184,64" → { amab:[15,2,2,12,258], soluc:[184,64] } (o null si no trae)
+function tnIndParse(t){
+  if(t && typeof t==="object") return t;
+  const out = {};
+  String(t||"").split("|").forEach(p=>{
+    const i = p.indexOf(":"); if(i < 1) return;
+    const k = p.slice(0, i), def = TN_IND_POR_K[k]; if(!def) return;
+    const arr = p.slice(i+1).split(",").map(Number);
+    if(arr.length && arr.every(x=> isFinite(x) && x>=0)) out[k] = arr;
+  });
+  return Object.keys(out).length ? out : null;
+}
+function tnIndSumar(acc, ind){
+  if(!ind) return acc;
+  acc = acc || {};
+  Object.keys(ind).forEach(k=>{
+    const a = ind[k];
+    if(!acc[k]) acc[k] = a.slice();
+    else a.forEach((x, i)=>{ acc[k][i] = (acc[k][i]||0) + x; });
+  });
+  return acc;
+}
+function tnIndDeFilas(filas){ return (filas||[]).reduce((acc, f)=> tnIndSumar(acc, f[12]), null); }
+// Detalle: cada encuesta trae su respuesta ({ amab:[5], soluc:[2] }) → conteos por opción
+function tnIndDeDetalle(filas){
+  let acc = null;
+  (filas||[]).forEach(f=>{
+    const ind = f[20]; if(!ind) return;
+    Object.keys(ind).forEach(k=>{
+      const def = TN_IND_POR_K[k]; if(!def) return;
+      acc = acc || {};
+      const arr = acc[k] || (acc[k] = def.tipo==="escala" ? [0,0,0,0,0] : [0,0]);
+      const v = ind[k][0];
+      if(v>=1 && v<=arr.length) arr[v-1]++;
+    });
+  });
+  return acc;
+}
+function tnIndCalc(def, arr){
+  if(!def || !arr) return null;
+  const n = arr.reduce((a, b)=> a+b, 0);
+  if(!n) return null;
+  if(def.tipo==="escala"){
+    const top = arr.slice(TN_IND_TOP-1).reduce((a, b)=> a+b, 0), bajo = (arr[0]||0) + (arr[1]||0), medio = arr[2]||0;
+    return { n, v: top/n*100, top, medio, bajo, prom: arr.reduce((a, c, i)=> a + c*(i+1), 0)/n };
+  }
+  const si = arr[0]||0, no = arr[1]||0, top = def.inverso ? no : si;
+  return { n, v: top/n*100, top, medio: 0, bajo: n - top, si, no };
+}
+function tnIndPresentes(...objs){ return TN_IND.filter(def=> objs.some(o=> o && o[def.k] && o[def.k].some(x=> x>0))); }
+function tnIndTitulo(def, c){
+  if(!c) return `${def.nombre}: sin respuestas`;
+  const num = (v)=> v.toLocaleString("es-HN");
+  return def.tipo==="escala"
+    ? `${def.nombre}: ${num(c.top)} de ${num(c.n)} respondieron 4 o 5 · promedio ${(Math.round(c.prom*100)/100).toLocaleString("es-HN")} de 5`
+    : `${def.nombre}: ${num(c.top)} de ${num(c.n)} dijeron ${def.inverso ? "No (no tuvieron que volver a contactar)" : "Sí"}`;
+}
+// Celda de tabla con el indicador de un grupo (o "—")
+function tnIndCelda(def, arr){
+  const c = tnIndCalc(def, arr);
+  return `<td class="num${c?"":" mut"}" title="${qaEsc(tnIndTitulo(def, c))}">${c ? tnFmt(c.v)+"%" : "—"}</td>`;
+}
+// Tarjetas de satisfacción (debajo de las del TNPS), con la comparación contra el período anterior
+function tnHtmlIndKpis(filas, previas){
+  const ind = tnIndDeFilas(filas), indP = tnIndDeFilas(previas || []);
+  const defs = tnIndPresentes(ind);
+  if(!defs.length) return "";
+  const pr = tnRangoPrevio();
+  const etiqueta = pr ? `${tnNombrePrevio()} (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})` : "";
+  const num = (v)=> v.toLocaleString("es-HN");
+  const cards = defs.map(def=>{
+    const c = tnIndCalc(def, ind[def.k]), cp = indP ? tnIndCalc(def, indP[def.k]) : null;
+    const chip = cp ? tnChip(c.v, cp.v, "pts", 1, etiqueta) : "";
+    const partes = def.tipo==="escala"
+      ? [["ok", c.top, "4 o 5"], ["warn", c.medio, "3"], ["crit", c.bajo, "1 o 2"]]
+      : [["ok", c.top, def.inverso ? "No" : "Sí"], ["crit", c.bajo, def.inverso ? "Sí" : "No"]];
+    const ley = def.tipo==="escala"
+      ? `${num(c.top)} de ${num(c.n)} con 4 o 5 · prom. ${(Math.round(c.prom*100)/100).toLocaleString("es-HN")}`
+      : `${num(c.top)} de ${num(c.n)} ${def.inverso ? "no volvieron a contactar" : "dijeron Sí"}`;
+    return `<div class="tn-ind-card" title="${qaEsc(def.ayuda)}">
+        <div class="tn-ind-k">${qaEsc(def.nombre)} <span class="tn-ind-n" title="Respuestas">${num(c.n)}</span></div>
+        <div class="tn-ind-v">${tnFmt(c.v)}%</div>
+        <div class="tn-ind-bar" role="img" aria-label="${qaEsc(partes.map(([,v,l])=> `${l}: ${v}`).join(", "))}">${partes.filter(x=> x[1]).map(([cl, v, l])=> `<i class="${cl}" style="flex:${v}" title="${qaEsc(l)}: ${num(v)}"></i>`).join("")}</div>
+        <div class="tn-ind-ley">${ley}</div>
+        <div class="kpi-deltas">${chip}</div>
+      </div>`;
+  }).join("");
+  return `<div class="tn-ind-sec">
+      <div class="tn-ind-h"><h3 class="tn-h3">Satisfacción con la atención</h3><span class="tn-h3-sub">Escala de 1 a 5: % que respondió 4 o 5 · Sí/No: % que dijo Sí</span></div>
+      <div class="tn-ind" style="--cols:${defs.length <= 5 ? defs.length : defs.length===6 ? 3 : 4}">${cards}</div>
+    </div>`;
+}
+// Ventana "TNPS por Asesor": los indicadores de lo filtrado (panel) y de cada asesor (tarjeta)
+function tnHtmlPaInd(defs, ind){
+  if(!defs.length) return "";
+  return `<div class="pa-ind-w"><div class="pa-dist-t">Satisfacción con la atención</div><div class="pa-ind" style="--cols:${defs.length <= 4 ? defs.length : defs.length <= 6 ? 3 : 4}">${defs.map(def=>{
+    const c = tnIndCalc(def, ind && ind[def.k]);
+    return `<div title="${qaEsc(tnIndTitulo(def, c))}"><div class="k">${qaEsc(def.corto||def.nombre)}</div><div class="v">${c ? tnFmt(c.v)+"%" : "—"}</div></div>`;
+  }).join("")}</div></div>`;
+}
+function tnHtmlPaCardInd(defs, ind){
+  const items = defs.map(def=>{
+    const c = tnIndCalc(def, ind && ind[def.k]);
+    return c ? `<span title="${qaEsc(tnIndTitulo(def, c))}">${qaEsc(def.corto||def.nombre)} <b>${tnFmt(c.v)}%</b></span>` : "";
+  }).filter(Boolean);
+  return items.length ? `<div class="pa-card-ind">${items.join("")}</div>` : "";
+}
+// Detalle de clientes: respuestas de la encuesta a cada indicador + los dos textos nuevos
+function tnIndRespuesta(def, v){
+  if(def.tipo==="escala") return { txt: String(v), cls: v>=TN_IND_TOP ? "ok" : v===3 ? "warn" : "crit" };
+  const bueno = def.inverso ? v===2 : v===1;
+  return { txt: v===1 ? "Sí" : "No", cls: bueno ? "ok" : "crit" };
+}
+function tnHtmlIndFila(f){
+  const ind = f[20];
+  const chips = ind ? TN_IND.filter(def=> ind[def.k]).map(def=>{
+    const r = tnIndRespuesta(def, ind[def.k][0]);
+    return `<span class="tn-ichip ${r.cls}" title="${qaEsc(def.ayuda)}">${qaEsc(def.chip||def.corto||def.nombre)}: <b>${r.txt}</b></span>`;
+  }).join("") : "";
+  return (chips ? `<div class="tn-ichips">${chips}</div>` : "")
+    + (f[21] ? `<div class="tn-coment2"><b>¿Por qué no se resolvió?</b> ${qaEsc(f[21])}</div>` : "")
+    + (f[22] ? `<div class="tn-coment2"><b>Comentario adicional:</b> ${qaEsc(f[22])}</div>` : "");
+}
+function tnNoResuelta(f){ return !!(f[20] && f[20].soluc && f[20].soluc[0]===2); }
+
 async function tnCargar(forzar){
   const [desde, hasta] = tnRangoFechas();
   const conDetalle = TN.vista==="detalle" || TN.vista==="repetidos";   // v22.08
@@ -15726,8 +15914,8 @@ async function tnCargar(forzar){
     if(data && data.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
     if(data && data.error==="codigo_invalido") throw new Error("El servidor todavía no tiene la versión con TNPS. Hay que pegar el Apps Script v21.87 y publicar la Nueva versión.");
     if(!data || !data.ok || !Array.isArray(data.resumen)) throw new Error((data && data.error) || "Respuesta inesperada del servidor.");
-    data.resumen.forEach(f=>{ f[2] = tnUnidad(f[1], f[2]); });
-    if(Array.isArray(data.detalle)) data.detalle.forEach(f=>{ f[4] = tnUnidad(f[1], f[4]); });
+    data.resumen.forEach(f=>{ f[2] = tnUnidad(f[1], f[2]); f[12] = tnIndParse(f[12]); });   // v22.26: + indicadores
+    if(Array.isArray(data.detalle)) data.detalle.forEach(f=>{ f[4] = tnUnidad(f[1], f[4]); f[20] = tnIndParse(f[20]); });
     tnOrdenarNombres(data);
     TN.datos = data; TN.clave = clave;
   }catch(err){
@@ -15837,6 +16025,7 @@ function tnAgrupar(filas, claveFn, nombreFn){
     const g = m.get(k) || { k, nombre: nombreFn ? nombreFn(f) : k, d:0, p:0, pr:0 };
     if(nombreFn && !g.nombre) g.nombre = nombreFn(f);
     g.d += f[9]; g.p += f[10]; g.pr += f[11];
+    if(f[12]) g.ind = tnIndSumar(g.ind, f[12]);   // v22.26
     m.set(k, g);
   });
   return Array.from(m.values()).map(g=> Object.assign(g, tnCalc(g.d,g.p,g.pr)));
@@ -15904,7 +16093,7 @@ function tnRender(){
     else if(TN.vista==="repetidos") html += tnHtmlRepetidos();   // v22.08
     else html += tnHtmlDetalle();
   }
-  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada. Las llamadas de Fijo y Móvil suman dos encuestas: Masivo Call Center (la anterior) y Genesys Call Center (desde el 10/11/2026).${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
+  html += `<p class="qa-nota">Los datos se bajan de Qualtrics cada 4 horas. TNPS = % promotores − % detractores. Solo encuestas de Honduras con la pregunta de recomendación contestada. Satisfacción (Amabilidad, Conocimiento y las demás): en la escala de 1 a 5 cuenta el % que respondió 4 o 5; en las de Sí/No, el % que dijo Sí. Las llamadas de Fijo y Móvil suman dos encuestas: Masivo Call Center (la anterior) y Genesys Call Center (desde el 10/11/2026).${TN.vista==="resumen" && tnRangoPrevio() ? " Las comparaciones son contra el período anterior del mismo largo." : ""}</p>`;
   body.innerHTML = html;
   tnWire();
   if(TN.vista==="resumen" && d) tnGrafica();
@@ -15946,19 +16135,21 @@ function tnKpis(t, tp){
     ${card(pct(t.d,t.n), `Detractores (${t.d.toLocaleString("es-HN")})`, "detractor", "r", hayPrev ? tnChip(tnPctNum(t.d,t.n), tnPctNum(tp.d,tp.n), "pts", -1, etiqueta) : "", "tn-r")}
   </div>`;
 }
-// v21.93: fila de total (sumando las encuestas de la tabla, TNPS recalculado)
-function tnHtmlTotal(filas){
+// v21.93: fila de total (sumando las encuestas de la tabla, TNPS recalculado). v22.26: + satisfacción
+function tnHtmlTotal(filas, defs){
   if(filas.length < 2) return "";
   const t = tnCalc(filas.reduce((a,g)=>a+g.d,0), filas.reduce((a,g)=>a+g.p,0), filas.reduce((a,g)=>a+g.pr,0));
-  return `<tfoot><tr class="tn-total"><td>Total</td><td class="num">${t.n.toLocaleString("es-HN")}</td><td class="num">${t.pr.toLocaleString("es-HN")}</td><td class="num">${t.p.toLocaleString("es-HN")}</td><td class="num">${t.d.toLocaleString("es-HN")}</td><td class="num"><b class="${t.tnps<0?"r":t.tnps>=50?"g":""}">${t.tnps===null?"—":tnFmt(t.tnps)+"%"}</b></td></tr></tfoot>`;
+  const ind = filas.reduce((acc, g)=> tnIndSumar(acc, g.ind), null);
+  return `<tfoot><tr class="tn-total"><td>Total</td><td class="num">${t.n.toLocaleString("es-HN")}</td><td class="num">${t.pr.toLocaleString("es-HN")}</td><td class="num">${t.p.toLocaleString("es-HN")}</td><td class="num">${t.d.toLocaleString("es-HN")}</td><td class="num"><b class="${t.tnps<0?"r":t.tnps>=50?"g":""}">${t.tnps===null?"—":tnFmt(t.tnps)+"%"}</b></td>${(defs||[]).map(def=> tnIndCelda(def, ind && ind[def.k])).join("")}</tr></tfoot>`;
 }
 function tnTabla(titulo, grupos, opts){
   opts = opts || {};
+  const defs = opts.ind || [];   // v22.26: columnas de satisfacción (las que tienen respuestas)
   const filas = grupos.slice().sort(opts.orden || ((a,b)=> b.n-a.n));
   if(!filas.length) return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><p class="mut">Sin encuestas en este período.</p></div>`;
   return `<div class="qa-card"><h3 class="tn-h3">${titulo}</h3><div class="tn-tabla-wrap"><table class="qa-tabla mini tn-tabla">
-    <thead><tr><th>${opts.col||"Nombre"}</th><th class="num">Encuestas</th><th class="num">Promotores</th><th class="num">Pasivos</th><th class="num">Detractores</th><th class="num">TNPS</th></tr></thead>
-    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${opts.verDet ? tnLinkNotas(g.pr, g.k, g.nombre, "3", "", "") : g.pr}</td><td class="num">${g.p}</td><td class="num">${opts.verDet ? tnLinkNotas(g.d, g.k, g.nombre, "1", "", "") : g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td></tr>`).join("")}</tbody>${tnHtmlTotal(filas)}
+    <thead><tr><th>${opts.col||"Nombre"}</th><th class="num">Encuestas</th><th class="num">Promotores</th><th class="num">Pasivos</th><th class="num">Detractores</th><th class="num">TNPS</th>${defs.map(def=>`<th class="num tn-th-ind" title="${qaEsc(def.ayuda)}">${qaEsc(def.corto||def.nombre)}</th>`).join("")}</tr></thead>
+    <tbody>${filas.map(g=>`<tr><td class="el" title="${qaEsc(g.nombre)}">${qaEsc(g.nombre || "(sin dato)")}${g.extra?`<div class="mut tn-sub2">${qaEsc(g.extra)}</div>`:""}</td><td class="num">${g.n}</td><td class="num">${opts.verDet ? tnLinkNotas(g.pr, g.k, g.nombre, "3", "", "") : g.pr}</td><td class="num">${g.p}</td><td class="num">${opts.verDet ? tnLinkNotas(g.d, g.k, g.nombre, "1", "", "") : g.d}</td><td class="num"><b class="${g.tnps<0?"r":g.tnps>=50?"g":""}">${g.tnps===null?"—":tnFmt(g.tnps)+"%"}</b></td>${defs.map(def=> tnIndCelda(def, g.ind && g.ind[def.k])).join("")}</tr>`).join("")}</tbody>${tnHtmlTotal(filas, defs)}
   </table></div></div>`;
 }
 function tnHtmlResumen(){
@@ -15968,13 +16159,15 @@ function tnHtmlResumen(){
   const tp = tnCalc(...[9,10,11].map(i=> previas.reduce((a,f)=>a+f[i],0)));
   if(!t.n) return tnKpis(t, tp) + `<div class="qa-card tn-aviso">No hay encuestas en este período${TN.encuesta||TN.unidad?" con estos filtros":""}. ${TN.datos && !TN.datos.ultimaSinc ? "Todavía no se ha sincronizado Qualtrics." : ""}</div>`;
   const pr = tnRangoPrevio();
-  return tnKpis(t, tp)
+  const defs = tnIndPresentes(tnIndDeFilas(filas));   // v22.26: satisfacción (las que tienen respuestas)
+  const ancho = defs.length > 0;                       // con más columnas, las tablas van a lo ancho
+  return tnKpis(t, tp) + tnHtmlIndKpis(filas, previas)
     + `<div class="qa-card"><h3 class="tn-h3">TNPS por día${pr ? ` <span class="tn-h3-sub">vs. ${tnNombrePrevio()} (${tnFecha(pr[0])}${pr[0]!==pr[1]?" al "+tnFecha(pr[1]):""})</span>` : ""}</h3><div class="tn-graf"><canvas id="tn-chart-dia"></canvas></div></div>`
-    + `<div class="tn-grid">`
-    + tnTabla("Por encuesta", tnAgrupar(filas, f=>f[1]), { col:"Encuesta" })
-    + tnTabla("Por unidad", tnAgrupar(filas, f=>f[2]), { col:"Unidad" })
-    + `</div>`
-    + tnTabla("Por servicio (cola)", tnAgrupar(filas, f=>f[3]), { col:"Servicio" });   // v21.94: sin "Por supervisor" (Oscar)
+    + (ancho ? "" : `<div class="tn-grid">`)
+    + tnTabla("Por encuesta", tnAgrupar(filas, f=>f[1]), { col:"Encuesta", ind: defs })
+    + tnTabla("Por unidad", tnAgrupar(filas, f=>f[2]), { col:"Unidad", ind: defs })
+    + (ancho ? "" : `</div>`)
+    + tnTabla("Por servicio (cola)", tnAgrupar(filas, f=>f[3]), { col:"Servicio", ind: defs });   // v21.94: sin "Por supervisor" (Oscar)
 }
 
 /* ---------- v21.97: Top 10 de detractores y de promotores por skill ----------
@@ -16052,6 +16245,7 @@ function tnCuartilesDe(filas, skill, conAntig){
 function tnHtmlCuartiles(filas){
   if(!filas.length) return "";
   const { asesores, tot, todos } = tnCuartilesDe(filas, "__todos", true);
+  const indQ = tnIndDeFilas(filas), defsQ = tnIndPresentes(indQ);   // v22.26: satisfacción
   // v22.01: M2M de cada asesor (mismos filtros, período anterior: en "Este mes" son los mismos días del mes anterior)
   const pr = tnRangoPrevio();
   const filasPrev = tnFilasPrevias();
@@ -16089,6 +16283,7 @@ function tnHtmlCuartiles(filas){
       <div class="pa-eq-k">TNPS · ${qaEsc(nombreSkill)}</div>
       <div class="pa-eq-fila"><span class="pa-eq-num ${tot.tnps===null?"":tot.tnps<0?"crit":tot.tnps>=50?"ok":""}" title="(Promotores − Detractores) ÷ Encuestas">${tot.tnps===null?"—":tnFmt(tot.tnps)+"%"}</span>${lado}</div>
       ${dist}
+      ${tnHtmlPaInd(defsQ, indQ)}
       <div class="pa-eq-pie">
         <div title="Asesores con al menos una encuesta en el período"><div class="k">Asesores</div><div class="v">${num(todos.length)}</div></div>
         <div><div class="k">Encuestas</div><div class="v">${num(tot.n)}</div></div>
@@ -16133,7 +16328,7 @@ function tnHtmlCuartiles(filas){
             <div class="pd"><span>Promotores ${tnLinkNotas(a.pr, a.k, a.nombre, "3", "", "g")}</span><span>Detractores ${tnLinkNotas(a.d, a.k, a.nombre, "1", "", "r")}</span></div>
             <div>Antigüedad: <b>${antigTexto(a.meses)}</b></div>
             ${a.ingreso?`<div class="ing">Ingreso ${tnFecha(a.ingreso)}</div>`:""}
-          </div>${chipM2M(a)}
+          </div>${tnHtmlPaCardInd(defsQ, a.ind)}${chipM2M(a)}
         </div>`;
     }) };
   }).filter(b=> b.n);
@@ -16245,7 +16440,8 @@ function tnHtmlAsesores(){
   let g = tnAgrupar(filas, f=>f[6], f=>f[7] || f[6]).filter(x=> x.n >= TN.minAsesor);
   g.forEach(x=>{ if(x.nombre !== x.k) x.extra = x.k; });
   const orden = TN.ordenAsesor==="peor" ? (a,b)=> (a.tnps-b.tnps) || (b.n-a.n) : TN.ordenAsesor==="mejor" ? (a,b)=> (b.tnps-a.tnps) || (b.n-a.n) : (a,b)=> b.n-a.n;
-  return tnKpis(tAs, tpAs)
+  const defsAs = tnIndPresentes(tnIndDeFilas(filas));   // v22.26
+  return tnKpis(tAs, tpAs) + tnHtmlIndKpis(filas, prevAs)
     + `<div class="tn-herr"><button class="btn-outline tn-tool" type="button" id="tn-abrir-cuartiles">😊 TNPS por Asesor</button></div>`
     + `<div class="qa-card tn-filtros">
       <label class="qa-skill">Mínimo de encuestas <input type="number" id="tn-min" min="1" max="50" value="${TN.minAsesor}" style="width:64px"/></label>
@@ -16254,7 +16450,7 @@ function tnHtmlAsesores(){
     // v22.02: los cuartiles se abren con el botón "TNPS por Asesor" (ventana como "TMO por Asesor")
     + tnHtmlTops(filas)   // v21.97: top 10 por skill
     + `<h3 class="tn-h3 tn-sep">Todos los asesores</h3>`
-    + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden, verDet:true });
+    + tnTabla(`Asesores (${g.length})`, g, { col:"Asesor", orden, verDet:true, ind: defsAs });
 }
 /* ---------- v22.08: contactos repetidos (correo o teléfono al que se envió la encuesta) ----------
    Oscar: las encuestas también se envían por correo y necesita ese dato para
@@ -16353,13 +16549,16 @@ function tnHtmlDetalle(){
     && (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor)
     && (!TN.detSkill || tnSkillDe([f[0], f[1], f[4], f[5]])===TN.detSkill)
     && (TN.detGrupo==="todos" || f[2]===TN.detGrupo)
-    && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[18]||""].join(" ").toLowerCase().includes(q)));
+    && (!TN.detSoluc || tnNoResuelta(f))   // v22.26
+    && (!q || [f[8],f[9],f[12],f[13],f[14],f[5],f[18]||"",f[21]||"",f[22]||""].join(" ").toLowerCase().includes(q)));
   const verCorreo = d.detalle.some(f=> f[18]);   // v22.08: correo al que se envió la encuesta (servidor v21.93)
+  const hayNoRes = TN.detSoluc || d.detalle.some(tnNoResuelta);   // v22.26
   const max = 500;
   TN.detFilas = filas.slice(0, max);
   const aviso = d.detalleDesde && d.detalleDesde > tnRangoFechas()[0] ? `<p class="qa-nota">El detalle muestra como máximo 31 días: desde el ${tnFecha(d.detalleDesde)}.</p>` : "";
   return `<div class="qa-card tn-filtros">
       <div class="qa-chips">${[["1","Detractores"],["2","Pasivos"],["3","Promotores"],["todos","Todos"]].map(([k,l])=>`<button type="button" class="qa-chip ${TN.detGrupo===k?"on":""}" data-grupo="${k}">${l}</button>`).join("")}</div>
+      ${hayNoRes ? `<button type="button" class="qa-chip ${TN.detSoluc?"on":""}" data-detsoluc="1" aria-pressed="${!!TN.detSoluc}" title="Solo las encuestas en que el cliente dijo que la solución NO resolvió su requerimiento">❌ No resueltas</button>` : ""}
       ${TN.volverA ? `<button type="button" class="qa-chip" id="tn-volver">‹ Volver a ${TN.volverA==="repetidos"?"Contactos repetidos":"Por asesor"}</button>` : ""}
       ${TN.detAsesor ? `<span class="tn-fchip">👤 ${qaEsc(TN.detAsesorNombre||TN.detAsesor)} <button type="button" data-quitar="asesor" aria-label="Quitar filtro de asesor">✕</button></span>` : ""}
       ${TN.detSkill ? `<span class="tn-fchip">🏷️ ${qaEsc(TN.detSkill)} <button type="button" data-quitar="skill" aria-label="Quitar filtro de skill">✕</button></span>` : ""}
@@ -16368,7 +16567,7 @@ function tnHtmlDetalle(){
     </div>${aviso}
     <div class="qa-card"><div class="tn-tabla-wrap alto"><table class="qa-tabla mini tn-tabla">
       <thead><tr><th></th><th>Fecha</th><th>Encuesta</th><th class="num">Nota</th><th>Servicio</th><th>Asesor</th><th>Cliente</th><th>Teléfono</th>${verCorreo?`<th title="Correo al que se envió la encuesta">Correo</th>`:""}<th>Comentario</th></tr></thead>
-      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td>${verCorreo?`<td class="el" title="${qaEsc(f[18]||"")}${f[19]?" · enviada por "+qaEsc(f[19]):""}">${qaEsc(f[18]||"")}</td>`:""}<td class="tn-coment">${qaEsc(f[14])}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
+      <tbody>${filas.slice(0,max).map((f,i)=>{ const rid = tnRid(f), sel = TN.sel===rid, visto = TN_VISTOS.has(rid); return `<tr class="tn-g${f[2]}${sel?" tn-sel":""}${visto?" tn-visto":""}" data-rid="${qaEsc(rid)}"><td class="nw"><button type="button" class="qa-chip tn-ver${visto?" visto":""}" data-ver="${i}" title="${visto?"Ya la revisaste — volver a abrir":"Buscar la conversación en Genesys"}">${visto?"✓ Vista":"🎧 Ver"}</button></td><td class="nw">${qaEsc(tnFecha(f[0].slice(0,10)))} ${qaEsc(f[0].slice(11,16))}</td><td class="nw">${qaEsc(f[1])}</td><td class="num"><b>${qaEsc(f[3])}</b></td><td class="el" title="${qaEsc(f[5])}">${qaEsc(f[5])}</td><td class="el" title="${qaEsc(f[8])}">${qaEsc(f[9]||f[8])}</td><td class="nw">${qaEsc(f[12])}</td><td class="nw">${qaEsc(f[13])}</td>${verCorreo?`<td class="el" title="${qaEsc(f[18]||"")}${f[19]?" · enviada por "+qaEsc(f[19]):""}">${qaEsc(f[18]||"")}</td>`:""}<td class="tn-coment">${qaEsc(f[14])}${tnHtmlIndFila(f)}</td></tr>${tnHtmlVer(f)}`; }).join("")}</tbody>
     </table></div>${filas.length>max?`<p class="qa-nota">Se muestran las primeras ${max}. Usa el buscador o los filtros para acotar.</p>`:""}</div>
     <p class="qa-nota">🔒 Datos de clientes: solo para el equipo autorizado. Cada consulta queda registrada.</p>`;
 }
@@ -16531,30 +16730,152 @@ function tnVolverAFila(){
   tr.scrollIntoView({ behavior:"smooth", block:"center" });
   tr.classList.remove("tn-flash"); void tr.offsetWidth; tr.classList.add("tn-flash");
 }
+/* ============================================================
+   v22.26: Excel del Resumen y de Por asesor (botón "⬇️ Excel")
+   ============================================================
+   Mismo formato que el Excel de clientes (colores, filtros y paneles
+   fijos) y, como pide Oscar, todo con fila de total. Lleva el TNPS y los
+   indicadores de satisfacción de lo filtrado (los que tengan respuestas).
+   Hojas: Resumen (indicadores, por encuesta, por unidad y por servicio),
+   Por día, Por asesor (todos, sin mínimo), Top por skill (con el total de
+   cada skill) y Cuartiles (con subtotal por skill). */
+Object.assign(XLS_ESTILOS, { subPct:{ f:"negrita", r:"sub", b:1, a:"c", n:"pct" } });
 function tnExcel(){
-  if(typeof XLSX==="undefined") return;
+  const d = TN.datos;
+  if(typeof XLSX==="undefined" || !d) return;
   const filas = tnFilasFiltradas();
   const [desde, hasta] = tnRangoFechas();
-  const hoja = (titulo, grupos, col)=> XLSX.utils.aoa_to_sheet([[col,"Encuestas","Promotores","Pasivos","Detractores","TNPS"]]
-    .concat(grupos.sort((a,b)=> (a.k<b.k?-1:1)).map(g=>[g.nombre||g.k, g.n, g.pr, g.p, g.d, g.tnps])));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, hoja("dia", tnAgrupar(filas, f=>f[0]), "Fecha"), "Por día");
-  XLSX.utils.book_append_sheet(wb, hoja("enc", tnAgrupar(filas, f=>f[1]), "Encuesta"), "Por encuesta");
-  XLSX.utils.book_append_sheet(wb, hoja("serv", tnAgrupar(filas, f=>f[3]), "Servicio"), "Por servicio");
-  XLSX.utils.book_append_sheet(wb, hoja("ase", tnAgrupar(filas, f=>f[6], f=>f[7]||f[6]), "Asesor"), "Por asesor");
-  const topsFilas = [["Skill","Tipo","#","Asesor","Usuario","Detractores","Promotores","Encuestas","TNPS"]];
-  tnTops(filas).forEach(x=>{
-    x.det.forEach((a,i)=> topsFilas.push([x.skill,"Top detractores",i+1,a.nombre,a.k,a.d,a.pr,a.n,a.tnps]));
-    x.pro.forEach((a,i)=> topsFilas.push([x.skill,"Top promotores",i+1,a.nombre,a.k,a.d,a.pr,a.n,a.tnps]));
-  });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(topsFilas), "Top por skill");
-  const cuFilas = [["Skill","Cuartil","Asesor","Usuario","Encuestas","Promotores","Pasivos","Detractores","TNPS","TNPS del skill","Fecha de ingreso","Antigüedad"]];
-  TN_SKILLS.map(x=>x[0]).forEach(sk=>{
-    const { asesores, tot } = tnCuartilesDe(filas, sk);
-    asesores.forEach(a=> cuFilas.push([sk, a.cuartil, a.nombre, a.k, a.n, a.pr, a.p, a.d, a.tnps, tot.tnps, a.ingreso||"", a.meses===null||a.meses===undefined ? "Sin dato" : antigLabel(a.antig)]));
-  });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cuFilas), "Cuartiles");
-  XLSX.writeFile(wb, `TNPS_${desde}_${hasta}.xlsx`);
+  const btn = document.getElementById("tn-excel");
+  if(!filas.length){ if(btn){ btn.textContent = "Sin encuestas para descargar"; setTimeout(()=>{ btn.textContent = "⬇️ Excel"; }, 2500); } return; }
+  const defs = tnIndPresentes(tnIndDeFilas(filas));
+  const p2 = n=> String(n).padStart(2, "0");
+  const fFecha = iso=> `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.slice(0,4)}`;
+  const serial = iso=> (Date.UTC(Number(iso.slice(0,4)), Number(iso.slice(5,7))-1, Number(iso.slice(8,10))) - Date.UTC(1899, 11, 30)) / 86400000;
+  const generado = (()=>{ const t = new Date(); return `Generado el ${p2(t.getDate())}/${p2(t.getMonth()+1)}/${t.getFullYear()} ${p2(t.getHours())}:${p2(t.getMinutes())}`; })();
+  const encTxt = tnEncNombre() || "Todas";
+  const filtrosTxt = `Período ${fFecha(desde)} al ${fFecha(hasta)}  ·  Encuesta: ${encTxt}  ·  Unidad: ${TN.unidad || "Todas"}`;
+  const wb = XLSX.utils.book_new(), hojas = {};
+  const agregar = (h, nombre)=>{ XLSX.utils.book_append_sheet(wb, h.hoja(), nombre); hojas[nombre] = h; };
+  const cabecera = (h, titulo, linea3)=>{ h.set(0, 0, titulo, "titulo"); h.filas[0] = { hpt: 26 }; h.set(1, 0, filtrosTxt, "sub"); h.set(2, 0, linea3 || generado, "sub"); };
+  const totalDe = grupos=>{
+    const t = tnCalc(grupos.reduce((a, g)=> a+g.d, 0), grupos.reduce((a, g)=> a+g.p, 0), grupos.reduce((a, g)=> a+g.pr, 0));
+    t.ind = grupos.reduce((acc, g)=> tnIndSumar(acc, g.ind), null);
+    return t;
+  };
+  const tot = totalDe(tnAgrupar(filas, ()=> "todo"));
+  const frac = v=> v===null || v===undefined ? "" : v/100;
+  // Métricas de cada fila: TNPS y luego los indicadores
+  const MET = ["Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Detractores", "TNPS"].concat(defs.map(def=> def.corto || def.nombre));
+  const metVals = g=> [g.n, g.pr, g.p, g.d, g.n ? g.pr/g.n : "", g.n ? g.d/g.n : "", frac(g.tnps)]
+    .concat(defs.map(def=>{ const c = tnIndCalc(def, g.ind && g.ind[def.k]); return c ? c.v/100 : ""; }));
+  const metEst = tipo=>{
+    const [n, p] = tipo==="tot" ? ["totNum", "totPct"] : tipo==="sub" ? ["subNum", "subPct"] : ["num", "pct"];
+    return [n, n, n, n, p, p, p].concat(defs.map(()=> p));
+  };
+  // Tabla: primeras columnas de texto + métricas, con fila de total
+  const tabla = (h, r0, titulo, cab, filasT, totalPrim)=>{
+    let r = r0;
+    if(titulo){ h.set(r, 0, titulo, "seccion"); r++; }
+    h.fila(r, 0, cab.concat(MET), cab.map(()=> "encIzq").concat(MET.map(()=> "enc")));
+    h.filas[r] = { hpt: 32 };
+    const encab = r;
+    filasT.forEach((x, i)=> h.fila(encab + 1 + i, 0, x.prim.concat(metVals(x.g)), x.est.concat(metEst(""))));
+    const fin = encab + 1 + filasT.length;
+    h.fila(fin, 0, totalPrim.concat(metVals(totalDe(filasT.map(x=> x.g)))), cab.map(()=> "totTxt").concat(metEst("tot")));
+    return { encab, fin };
+  };
+  const porN = (a, b)=> (b.n - a.n) || String(a.nombre||a.k).localeCompare(String(b.nombre||b.k));
+
+  // ---- Resumen ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · TNPS y satisfacción", `${generado}  ·  TNPS = % promotores − % detractores. Escala de 1 a 5: % que respondió 4 o 5. Sí/No: % que dijo Sí.`);
+    const kCab = ["Encuestas", "TNPS", "Promotores", "Pasivos", "Detractores"].concat(defs.map(def=> def.nombre));
+    const cInd = defs.map(def=> tnIndCalc(def, tot.ind && tot.ind[def.k]));
+    h.fila(4, 0, kCab, "enc"); h.filas[4] = { hpt: 30 };
+    h.fila(5, 0, [tot.n, frac(tot.tnps), tot.pr, tot.p, tot.d].concat(cInd.map(c=> c ? c.v/100 : "")),
+      ["kpi", "kpiPct", "kpiPro", "kpiPas", "kpiDet"].concat(defs.map(()=> "kpiPct")));
+    h.fila(6, 0, ["", "", tot.n ? tot.pr/tot.n : "", tot.n ? tot.p/tot.n : "", tot.n ? tot.d/tot.n : ""].concat(cInd.map(c=> c ? `${c.top.toLocaleString("es-HN")} de ${c.n.toLocaleString("es-HN")}` : "sin respuestas")),
+      ["kpiSub", "kpiSub", "pctPro", "pctPas", "pctDet"].concat(defs.map(()=> "kpiSub")));
+    h.filas[5] = { hpt: 32 };
+    let r = 8;
+    [["Por encuesta", "Encuesta", f=> f[1]], ["Por unidad", "Unidad", f=> f[2]], ["Por servicio (cola)", "Servicio", f=> f[3]]].forEach(([titulo, col, clave])=>{
+      const gs = tnAgrupar(filas, f=> clave(f) || "(sin dato)").sort(porN);
+      r = tabla(h, r, titulo, [col], gs.map(g=> ({ prim:[g.nombre || g.k], est:["txt"], g })), ["Total"]).fin + 3;
+    });
+    h.cols = [34].concat(MET.map(()=> 13));
+    agregar(h, "Resumen");
+  }
+  // ---- Por día ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · Por día");
+    const gs = tnAgrupar(filas, f=> f[0]).sort((a, b)=> a.k.localeCompare(b.k));
+    const t = tabla(h, 4, "", ["Fecha"], gs.map(g=> ({ prim:[serial(g.k)], est:["fechaC"], g })), ["Total"]);
+    h.cols = [13].concat(MET.map(()=> 12));
+    h.panel = { x: 1, y: t.encab + 1 };
+    h.filtro = `A${t.encab+1}:${XLSX.utils.encode_col(MET.length)}${t.fin}`;
+    agregar(h, "Por día");
+  }
+  // ---- Por asesor (todos, sin mínimo de encuestas) ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · Por asesor", `${generado}  ·  Todos los asesores con al menos una encuesta.`);
+    const gs = tnAgrupar(filas, f=> f[6] || "(sin usuario)", f=> f[7] || f[6]).sort(porN);
+    const t = tabla(h, 4, "", ["Asesor", "Usuario"], gs.map(g=> ({ prim:[g.nombre || g.k, g.k==="(sin usuario)" ? "" : g.k], est:["txt", "txt"], g })),
+      [`Total (${gs.length} asesor${gs.length===1?"":"es"})`, ""]);
+    h.cols = [30, 28].concat(MET.map(()=> 12));
+    h.panel = { x: 1, y: t.encab + 1 };
+    h.filtro = `A${t.encab+1}:${XLSX.utils.encode_col(MET.length+1)}${t.fin}`;
+    agregar(h, "Por asesor");
+  }
+  // ---- Top 10 por skill (con el total de cada skill) ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · Top 10 por skill", `${generado}  ·  Top detractores = más encuestas detractoras; top promotores = más encuestas promotoras.`);
+    const cab = ["Skill", "Tipo", "#", "Asesor", "Usuario", "Detractores", "Promotores", "Encuestas", "TNPS"];
+    h.fila(4, 0, cab, cab.map((x, i)=> [0,1,3,4].includes(i) ? "encIzq" : "enc")); h.filas[4] = { hpt: 22 };
+    let r = 5;
+    tnTops(filas).forEach(x=>{
+      [["Top detractores", x.det], ["Top promotores", x.pro]].forEach(([tipo, lista])=> lista.forEach((a, i)=>{
+        h.fila(r++, 0, [x.skill, tipo, i+1, a.nombre, a.k, a.d, a.pr, a.n, frac(a.tnps)], ["txt", "txt", "num", "txt", "txt", "num", "num", "num", "pct"]);
+      }));
+      h.fila(r++, 0, [`Total ${x.skill}`, "Todos los asesores", "", "", "", x.t.d, x.t.pr, x.t.n, frac(x.t.tnps)],
+        ["subTxt", "subTxt", "subTxt", "subTxt", "subTxt", "subNum", "subNum", "subNum", "subPct"]);
+    });
+    h.fila(r, 0, ["Total", "", "", "", "", tot.d, tot.pr, tot.n, frac(tot.tnps)], ["totTxt", "totTxt", "totTxt", "totTxt", "totTxt", "totNum", "totNum", "totNum", "totPct"]);
+    h.cols = [22, 19, 5, 30, 28, 12, 12, 11, 10];
+    h.panel = { y: 5 };
+    agregar(h, "Top por skill");
+  }
+  // ---- Cuartiles (subtotal por skill) ----
+  {
+    const h = new XlsHoja();
+    cabecera(h, "Qualtrics · Cuartiles por skill", `${generado}  ·  Asesores con al menos ${TN.minAsesor} encuesta${TN.minAsesor===1?"":"s"}, del mejor al más bajo TNPS dentro de su skill.`);
+    const cab = ["Skill", "Cuartil", "Asesor", "Usuario"].concat(MET, ["TNPS del skill", "Fecha de ingreso", "Antigüedad"]);
+    h.fila(4, 0, cab, cab.map((x, i)=> [0,2,3].includes(i) ? "encIzq" : "enc")); h.filas[4] = { hpt: 32 };
+    let r = 5;
+    const todosQ = [];
+    TN_SKILLS.map(x=> x[0]).concat(["Otros"]).forEach(sk=>{
+      const { asesores, tot: tSk } = tnCuartilesDe(filas, sk);
+      if(!asesores.length) return;
+      asesores.forEach(a=>{
+        todosQ.push(a);
+        h.fila(r++, 0, [sk, a.cuartil, a.nombre, a.k].concat(metVals(a), [frac(tSk.tnps), a.ingreso ? serial(a.ingreso) : "", a.meses===null || a.meses===undefined ? "Sin dato" : antigLabel(a.antig)]),
+          ["txt", "q" + a.cuartil, "txt", "txt"].concat(metEst(""), ["pct", a.ingreso ? "fechaC" : "txtC", "txtC"]));
+      });
+      h.fila(r++, 0, [`Total ${sk}`, "", `${asesores.length} asesor${asesores.length===1?"":"es"}`, ""].concat(metVals(totalDe(asesores)), [frac(tSk.tnps), "", ""]),
+        ["subTxt", "subTxt", "subTxt", "subTxt"].concat(metEst("sub"), ["subPct", "subTxt", "subTxt"]));
+    });
+    h.fila(r, 0, ["Total", "", `${todosQ.length} asesor${todosQ.length===1?"":"es"}`, ""].concat(metVals(totalDe(todosQ)), [frac(tot.tnps), "", ""]),
+      ["totTxt", "totTxt", "totTxt", "totTxt"].concat(metEst("tot"), ["totPct", "totTxt", "totTxt"]));
+    h.cols = [20, 8, 30, 28].concat(MET.map(()=> 12), [12, 13, 14]);
+    h.panel = { x: 3, y: 5 };
+    agregar(h, "Cuartiles");
+  }
+  const limpio = t=> String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
+  const extra = [TN.encuesta ? limpio(encTxt) : "", TN.unidad ? limpio(TN.unidad) : ""].filter(Boolean).join("_");
+  xlsDescargarConEstilo(wb, hojas, `Qualtrics_TNPS_y_satisfaccion_${desde}_a_${hasta}${extra ? "_"+extra : ""}.xlsx`);
 }
 
 /* ============================================================
@@ -16563,11 +16884,16 @@ function tnExcel(){
    "Quiero un Excel súper bonito donde podamos descargar toda la información:
    promotores, detractores y todo, comentarios, etc." Lleva todo el detalle del
    período, encuesta y unidad elegidos (y el asesor o skill si se entró desde
-   "Por asesor"); los botones Detractores/Pasivos/Promotores y el buscador no
-   lo recortan, porque cada tipo ya va en su hoja. El detalle llega hasta 31
-   días (lo limita el servidor). Hojas: Resumen (indicadores, por skill, por
-   encuesta y por día), Todas las encuestas, Detractores, Pasivos, Promotores,
-   Comentarios (solo con comentario, primero detractores) y Por asesor. */
+   "Por asesor"); los botones Detractores/Pasivos/Promotores, "No resueltas" y
+   el buscador no lo recortan, porque cada tipo ya va en su hoja. El detalle
+   llega hasta 31 días (lo limita el servidor). Hojas: Resumen (indicadores, por
+   skill, por encuesta y por día), Todas las encuestas, Detractores, Pasivos,
+   Promotores, No resueltas, Comentarios (con cualquier comentario, primero
+   detractores) y Por asesor.
+   v22.26: + satisfacción (Amabilidad, Conocimiento, Solución, Información
+   suficiente y los demás que tenga el período): en el Resumen, en cada tabla,
+   la respuesta de cada encuesta (de 1 a 5 o Sí/No, con color) y los dos textos
+   nuevos (¿por qué no se resolvió? y comentario adicional). */
 function tnExcelClientes(){
   const d = TN.datos;
   if(typeof XLSX==="undefined" || !d || !Array.isArray(d.detalle)) return;
@@ -16578,22 +16904,27 @@ function tnExcelClientes(){
     .filter(f=> (!TN.detAsesor || String(f[8]||"").toLowerCase()===TN.detAsesor) && (!TN.detSkill || skillDe(f)===TN.detSkill))
     .sort((a, b)=> String(b[0]).localeCompare(String(a[0])));
   const btn = document.getElementById("tn-excel-det");
-  if(!filas.length){ if(btn){ btn.textContent = "Sin encuestas para descargar"; setTimeout(()=>{ btn.textContent = "⬇️ Excel"; }, 2500); } return; }
+  if(!filas.length){ if(btn){ btn.textContent = "Sin encuestas para descargar"; setTimeout(()=>{ btn.textContent = "⬇️ Excel de clientes"; }, 2500); } return; }
   const p2 = n=> String(n).padStart(2, "0");
   const fFecha = iso=> `${iso.slice(8,10)}/${iso.slice(5,7)}/${iso.slice(0,4)}`;
   const serial = iso=> (Date.UTC(Number(iso.slice(0,4)), Number(iso.slice(5,7))-1, Number(iso.slice(8,10))) - Date.UTC(1899, 11, 30)) / 86400000;
   const hora = hm=>{ const m = /(\d{1,2}):(\d{2})/.exec(hm||""); return m ? (Number(m[1])*60 + Number(m[2]))/1440 : null; };
   const TIPO = { "3":"Promotor", "2":"Pasivo", "1":"Detractor" }, EST = { "3":"pro", "2":"pas", "1":"det" };
   const nombreAs = f=> f[9] ? tnNombrePropio(f[9]) : (f[8] || "(sin asesor)");
-  const conComentario = f=> String(f[14]||"").trim() !== "";
+  const txt = v=> String(v||"").trim();
+  const conComentario = f=> txt(f[14]) !== "";
+  const conAlgunTexto = f=> conComentario(f) || txt(f[21]) !== "" || txt(f[22]) !== "";
   const conCorreo = filas.some(f=> f[18]);
+  const defs = tnIndPresentes(tnIndDeDetalle(filas));
+  const conNoRes = filas.some(f=> txt(f[21])), conAdic = filas.some(f=> txt(f[22]));
   // Totales de cualquier grupo de encuestas
   const sumar = arr=>{
     let pr=0, pa=0, de=0, com=0, sumaNota=0, nNota=0;
     arr.forEach(f=>{ const g = String(f[2]); if(g==="3") pr++; else if(g==="2") pa++; else if(g==="1") de++; if(conComentario(f)) com++; const nota = Number(f[3]); if(f[3]!=="" && !isNaN(nota)){ sumaNota += nota; nNota++; } });
     const n = pr+pa+de;
-    return { n, pr, pa, de, com, tnps: n ? (pr-de)/n : null, nota: nNota ? sumaNota/nNota : null };
+    return { n, pr, pa, de, com, tnps: n ? (pr-de)/n : null, nota: nNota ? sumaNota/nNota : null, ind: tnIndDeDetalle(arr) };
   };
+  const indFrac = s=> defs.map(def=>{ const c = tnIndCalc(def, s.ind && s.ind[def.k]); return c ? c.v/100 : ""; });
   const agrupar = (arr, clave)=>{ const m = new Map(); arr.forEach(f=>{ const k = clave(f) || "(sin dato)"; if(!m.has(k)) m.set(k, []); m.get(k).push(f); }); return m; };
   const tot = sumar(filas);
   const encTxt = TN.encuesta ? (TN.encuesta===TN_ENC_GRUPO.valor ? TN_ENC_GRUPO.etiqueta : TN.encuesta) : "Todas";
@@ -16618,59 +16949,77 @@ function tnExcelClientes(){
     h.fila(5, 0, [tot.n, tot.tnps, tot.pr, tot.pa, tot.de, tot.com, tot.nota===null ? "—" : Math.round(tot.nota*10)/10], ["kpi", "kpiPct", "kpiPro", "kpiPas", "kpiDet", "kpi", "kpiDec"]);
     h.fila(6, 0, ["", "", pct(tot.pr, tot.n), pct(tot.pa, tot.n), pct(tot.de, tot.n), pct(tot.com, tot.n), ""], ["kpiSub", "kpiSub", "pctPro", "pctPas", "pctDet", "kpiSubPct", "kpiSub"]);
     h.filas[4] = { hpt: 20 }; h.filas[5] = { hpt: 32 };
-    const cols = ["Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Pasivos", "% Detractores", "TNPS", "Con comentario"];
+    let r = 8;
+    if(defs.length){   // v22.26: satisfacción
+      const cs = defs.map(def=> tnIndCalc(def, tot.ind && tot.ind[def.k]));
+      h.set(r, 0, "Satisfacción con la atención", "seccion");
+      h.fila(r+1, 0, defs.map(def=> def.nombre), "enc"); h.filas[r+1] = { hpt: 30 };
+      h.fila(r+2, 0, cs.map(c=> c ? c.v/100 : ""), defs.map(()=> "kpiPct")); h.filas[r+2] = { hpt: 32 };
+      h.fila(r+3, 0, cs.map(c=> c ? `${c.top.toLocaleString("es-HN")} de ${c.n.toLocaleString("es-HN")}` : "sin respuestas"), defs.map(()=> "kpiSub"));
+      h.set(r+4, 0, "Escala de 1 a 5: % que respondió 4 o 5. Sí/No: % que dijo Sí. Resuelto al primer contacto: % que dijo No a «¿fue necesario contactarnos más de una vez?».", "sub");
+      r += 6;
+    }
+    const cols = ["Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Pasivos", "% Detractores", "TNPS", "Con comentario"].concat(defs.map(def=> def.corto || def.nombre));
     const tabla = (r0, titulo, primera, grupos, esFecha)=>{
       h.set(r0, 0, titulo, "seccion");
       h.fila(r0+1, 0, [primera].concat(cols), ["encIzq"].concat(cols.map(()=> "enc")));
       h.filas[r0+1] = { hpt: 30 };
-      let r = r0 + 2;
+      let rr = r0 + 2;
       grupos.forEach(([k, s])=>{
-        h.fila(r, 0, [esFecha ? serial(k) : k, s.n, s.pr, s.pa, s.de, pct(s.pr,s.n), pct(s.pa,s.n), pct(s.de,s.n), s.tnps, s.com],
-          [esFecha ? "fechaC" : "txt", "num", "num", "num", "num", "pct", "pct", "pct", "pct", "num"]);
-        r++;
+        h.fila(rr, 0, [esFecha ? serial(k) : k, s.n, s.pr, s.pa, s.de, pct(s.pr,s.n), pct(s.pa,s.n), pct(s.de,s.n), s.tnps, s.com].concat(indFrac(s)),
+          [esFecha ? "fechaC" : "txt", "num", "num", "num", "num", "pct", "pct", "pct", "pct", "num"].concat(defs.map(()=> "pct")));
+        rr++;
       });
-      h.fila(r, 0, ["Total", tot.n, tot.pr, tot.pa, tot.de, pct(tot.pr,tot.n), pct(tot.pa,tot.n), pct(tot.de,tot.n), tot.tnps, tot.com],
-        ["totTxt", "totNum", "totNum", "totNum", "totNum", "totPct", "totPct", "totPct", "totPct", "totNum"]);
-      return r + 2;
+      h.fila(rr, 0, ["Total", tot.n, tot.pr, tot.pa, tot.de, pct(tot.pr,tot.n), pct(tot.pa,tot.n), pct(tot.de,tot.n), tot.tnps, tot.com].concat(indFrac(tot)),
+        ["totTxt", "totNum", "totNum", "totNum", "totNum", "totPct", "totPct", "totPct", "totPct", "totNum"].concat(defs.map(()=> "totPct")));
+      return rr + 2;
     };
     const ordenN = m=> Array.from(m.entries()).map(([k, arr])=> [k, sumar(arr)]).sort((a, b)=> b[1].n - a[1].n || String(a[0]).localeCompare(String(b[0])));
-    let r = tabla(8, "Por skill", "Skill", ordenN(agrupar(filas, skillDe)));
+    r = tabla(r, "Por skill", "Skill", ordenN(agrupar(filas, skillDe)));
     r = tabla(r, "Por encuesta", "Encuesta", ordenN(agrupar(filas, f=> f[1])));
     tabla(r, "Por día", "Fecha", Array.from(agrupar(filas, f=> String(f[0]).slice(0,10)).entries()).sort((a, b)=> a[0].localeCompare(b[0])).map(([k, arr])=> [k, sumar(arr)]), true);
-    h.cols = [26, 13, 13, 13, 13, 13, 13, 13, 11, 14];
+    h.cols = [26, 13, 13, 13, 13, 13, 13, 13, 11, 14].concat(defs.map(()=> 14));
     agregar(h, "Resumen");
   }
 
   // ---- Hojas de detalle (una fila por encuesta) ----
-  const COLS = [["Fecha",11],["Hora",7],["Tipo",11],["Nota",6],["Skill",15],["Encuesta",22],["Unidad",17],["Servicio",20],["Asesor",28],["Supervisor",20],["Comentario",70],["ID cliente",14],["Teléfono",13]]
-    .concat(conCorreo ? [["Correo",30]] : [], [["ID transacción",22],["Canal",12],["Medio",13],["Envío",11],["ResponseId",21]]);
-  const iCom = COLS.findIndex(c=> c[0]==="Comentario");
+  const IND_COLS = defs.map(def=> ({ def, nom: def.k==="recontacto" ? "¿Contactó más de una vez?" : (def.corto || def.nombre), ancho: def.k==="recontacto" ? 14 : 12 }));
+  const COLS = [["Fecha",11],["Hora",7],["Tipo",11],["Nota",6]].concat(IND_COLS.map(c=> [c.nom, c.ancho]),
+    [["Skill",15],["Encuesta",22],["Unidad",17],["Servicio",20],["Asesor",28],["Supervisor",20],["Comentario",60]],
+    conNoRes ? [["¿Por qué no se resolvió?",45]] : [], conAdic ? [["Comentario adicional",45]] : [],
+    [["ID cliente",14],["Teléfono",13]], conCorreo ? [["Correo",30]] : [], [["ID transacción",22],["Canal",12],["Medio",13],["Envío",11],["ResponseId",21]]);
+  const TEXTOS = new Set(["Comentario", "¿Por qué no se resolvió?", "Comentario adicional"]);
+  const respDe = (f, def)=> f[20] && f[20][def.k] ? f[20][def.k][0] : null;
+  const lineas = (t, ancho)=> String(t||"").split(/\n/).reduce((s, p)=> s + Math.max(1, Math.ceil(p.length/(ancho+2))), 0);
   const detalle = (nombre, lista, titulo, nota)=>{
     const h = new XlsHoja();
     const s = sumar(lista);
     cabecera(h, titulo, `${resumenTxt(s)}  ·  ${generado}${nota ? "  ·  "+nota : ""}`);
     const r0 = 4;
-    h.fila(r0, 0, COLS.map(c=> c[0]), COLS.map((c, i)=> i===iCom || c[0]==="Asesor" || c[0]==="Encuesta" ? "encIzq" : "enc"));
-    h.filas[r0] = { hpt: 22 };
+    h.fila(r0, 0, COLS.map(c=> c[0]), COLS.map(c=> TEXTOS.has(c[0]) || c[0]==="Asesor" || c[0]==="Encuesta" ? "encIzq" : "enc"));
+    h.filas[r0] = { hpt: 30 };
     if(!lista.length){ h.set(r0+1, 0, "No hay encuestas de este tipo con estos filtros.", "sub"); }
     lista.forEach((f, i)=>{
       const r = r0 + 1 + i, fh = String(f[0]);
       const nota = Number(f[3]);
-      const valores = [serial(fh.slice(0,10)), hora(fh.slice(11)), TIPO[String(f[2])] || "", f[3]==="" || isNaN(nota) ? "" : nota, skillDe(f), f[1], f[4], f[5], nombreAs(f), f[10], String(f[14]||"").trim(), f[12], f[13]]
-        .concat(conCorreo ? [f[18]] : [], [f[11], f[6], f[7], f[19], f[17]]);
+      const valores = [serial(fh.slice(0,10)), hora(fh.slice(11)), TIPO[String(f[2])] || "", f[3]==="" || isNaN(nota) ? "" : nota]
+        .concat(IND_COLS.map(c=>{ const v = respDe(f, c.def); return !v ? "" : c.def.tipo==="escala" ? v : (v===1 ? "Sí" : "No"); }),
+          [skillDe(f), f[1], f[4], f[5], nombreAs(f), f[10], txt(f[14])], conNoRes ? [txt(f[21])] : [], conAdic ? [txt(f[22])] : [],
+          [f[12], f[13]], conCorreo ? [f[18]] : [], [f[11], f[6], f[7], f[19], f[17]]);
       h.fila(r, 0, valores.map(v=> v===null || v===undefined ? "" : v));
-      const com = String(f[14]||"");
-      if(com.length > 70){ const lineas = com.split(/\n/).reduce((s, p)=> s + Math.max(1, Math.ceil(p.length/72)), 0); h.filas[r] = { hpt: Math.min(lineas, 9) * 15 + 3 }; }
+      const alto = Math.max(lineas(f[14], 60), conNoRes ? lineas(f[21], 45) : 1, conAdic ? lineas(f[22], 45) : 1);
+      if(alto > 1) h.filas[r] = { hpt: Math.min(alto, 9) * 15 + 3 };
     });
     // Estilos por columna (se calculan al escribir: no hace falta guardar uno por celda)
-    const tipoDe = r=>{ const f = lista[r - r0 - 1]; return f ? EST[String(f[2])] : ""; };
     h.estiloDe = ({ r, c })=>{
       if(r <= r0 || r > r0 + lista.length) return null;
-      const col = COLS[c] && COLS[c][0];
+      const f = lista[r - r0 - 1], col = COLS[c] && COLS[c][0];
       if(col==="Fecha") return "dFecha";
       if(col==="Hora") return "dHora";
-      if(col==="Tipo" || col==="Nota"){ const t = tipoDe(r); return t ? "d" + t : "dTxtC"; }
-      if(col==="Comentario") return "dComent";
+      if(col==="Tipo" || col==="Nota"){ const t = EST[String(f[2])]; return t ? "d" + t : "dTxtC"; }
+      const ic = IND_COLS.find(x=> x.nom===col);
+      if(ic){ const v = respDe(f, ic.def); if(!v) return "dTxtC"; const cls = tnIndRespuesta(ic.def, v).cls; return cls==="ok" ? "dpro" : cls==="warn" ? "dpas" : "ddet"; }
+      if(TEXTOS.has(col)) return "dComent";
       if(col==="Skill" || col==="Canal" || col==="Medio" || col==="Envío") return "dTxtC";
       return "dTxt";
     };
@@ -16684,15 +17033,17 @@ function tnExcelClientes(){
   detalle("Detractores", filas.filter(f=> String(f[2])==="1"), "Qualtrics · Detractores (0 a 6)");
   detalle("Pasivos", filas.filter(f=> String(f[2])==="2"), "Qualtrics · Pasivos (7 y 8)");
   detalle("Promotores", filas.filter(f=> String(f[2])==="3"), "Qualtrics · Promotores (9 y 10)");
+  if(defs.some(def=> def.k==="soluc")) detalle("No resueltas", filas.filter(tnNoResuelta), "Qualtrics · No resueltas (Solución = No)", "Con el «¿por qué no se resolvió?» del cliente");
   const ordenTipo = { "1":0, "2":1, "3":2 };
-  detalle("Comentarios", filas.filter(conComentario).sort((a, b)=> (ordenTipo[String(a[2])] - ordenTipo[String(b[2])]) || String(b[0]).localeCompare(String(a[0]))),
+  detalle("Comentarios", filas.filter(conAlgunTexto).sort((a, b)=> (ordenTipo[String(a[2])] - ordenTipo[String(b[2])]) || String(b[0]).localeCompare(String(a[0]))),
     "Qualtrics · Encuestas con comentario", "Primero los detractores");
 
   // ---- Por asesor ----
   {
     const h = new XlsHoja();
     cabecera(h, "Qualtrics · Por asesor", `${resumenTxt(tot)}  ·  ${generado}`);
-    const enc = ["Asesor", "Usuario", "Supervisor", "Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Detractores", "TNPS", "Con comentario", "Detractores con comentario"];
+    const enc = ["Asesor", "Usuario", "Supervisor", "Encuestas", "Promotores", "Pasivos", "Detractores", "% Promotores", "% Detractores", "TNPS"]
+      .concat(defs.map(def=> def.corto || def.nombre), ["Con comentario", "Detractores con comentario"]);
     const r0 = 4;
     h.fila(r0, 0, enc, enc.map((x, i)=> i<3 ? "encIzq" : "enc")); h.filas[r0] = { hpt: 30 };
     const grupos = Array.from(agrupar(filas, f=> String(f[8]||"").toLowerCase()).entries()).map(([k, arr])=>{
@@ -16701,19 +17052,20 @@ function tnExcelClientes(){
     }).sort((a, b)=> b.s.n - a.s.n || a.nombre.localeCompare(b.nombre));
     grupos.forEach((g, i)=>{
       const s = g.s;
-      h.fila(r0+1+i, 0, [g.nombre, g.k === "(sin dato)" ? "" : g.k, g.sup, s.n, s.pr, s.pa, s.de, pct(s.pr,s.n), pct(s.de,s.n), s.tnps, s.com, g.detCom],
-        ["txt", "txt", "txt", "num", "num", "num", "num", "pct", "pct", "pct", "num", "num"]);
+      h.fila(r0+1+i, 0, [g.nombre, g.k === "(sin dato)" ? "" : g.k, g.sup, s.n, s.pr, s.pa, s.de, pct(s.pr,s.n), pct(s.de,s.n), s.tnps].concat(indFrac(s), [s.com, g.detCom]),
+        ["txt", "txt", "txt", "num", "num", "num", "num", "pct", "pct", "pct"].concat(defs.map(()=> "pct"), ["num", "num"]));
     });
     const rt = r0 + 1 + grupos.length;
-    h.fila(rt, 0, [`Total (${grupos.length} asesor${grupos.length===1?"":"es"})`, "", "", tot.n, tot.pr, tot.pa, tot.de, pct(tot.pr,tot.n), pct(tot.de,tot.n), tot.tnps, tot.com, filas.filter(f=> String(f[2])==="1" && conComentario(f)).length],
-      ["totTxt", "totTxt", "totTxt", "totNum", "totNum", "totNum", "totNum", "totPct", "totPct", "totPct", "totNum", "totNum"]);
-    h.cols = [30, 26, 22, 11, 11, 10, 11, 12, 12, 10, 13, 14];
+    h.fila(rt, 0, [`Total (${grupos.length} asesor${grupos.length===1?"":"es"})`, "", "", tot.n, tot.pr, tot.pa, tot.de, pct(tot.pr,tot.n), pct(tot.de,tot.n), tot.tnps]
+      .concat(indFrac(tot), [tot.com, filas.filter(f=> String(f[2])==="1" && conComentario(f)).length]),
+      ["totTxt", "totTxt", "totTxt", "totNum", "totNum", "totNum", "totNum", "totPct", "totPct", "totPct"].concat(defs.map(()=> "totPct"), ["totNum", "totNum"]));
+    h.cols = [30, 26, 22, 11, 11, 10, 11, 12, 12, 10].concat(defs.map(()=> 13), [13, 14]);
     h.panel = { x: 1, y: r0 + 1 };
     h.filtro = `A${r0+1}:${XLSX.utils.encode_col(enc.length-1)}${rt}`;
     agregar(h, "Por asesor");
   }
 
-  const limpio = t=> String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
+  const limpio = t=> String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]+/g, "_").replace(/^_+|_+$/g, "");
   const extra = [TN.encuesta ? limpio(encTxt) : "", TN.unidad ? limpio(TN.unidad) : "", TN.detSkill ? limpio(TN.detSkill) : "", TN.detAsesor ? limpio(TN.detAsesor.split("@")[0]) : ""].filter(Boolean).join("_");
   xlsDescargarConEstilo(wb, hojas, `Qualtrics_clientes_${dDesde}_a_${hasta}${extra ? "_"+extra : ""}.xlsx`);
 }
@@ -16733,6 +17085,7 @@ function tnWire(){
   const mi = document.getElementById("tn-min"); if(mi) mi.addEventListener("change", ()=>{ TN.minAsesor = Math.max(1, Number(mi.value)||1); tnRender(); });
   body.querySelectorAll("[data-orden]").forEach(b=> b.addEventListener("click", ()=>{ TN.ordenAsesor = b.dataset.orden; tnRender(); }));
   body.querySelectorAll("[data-grupo]").forEach(b=> b.addEventListener("click", ()=>{ TN.detGrupo = b.dataset.grupo; tnRender(); }));
+  body.querySelectorAll("[data-detsoluc]").forEach(b=> b.addEventListener("click", ()=>{ TN.detSoluc = TN.detSoluc ? "" : "no"; tnRender(); }));   // v22.26
   body.querySelectorAll("[data-ver]").forEach(b=> b.addEventListener("click", ()=> tnVerConversacion(TN.detFilas[Number(b.dataset.ver)])));
   // v21.98: del número (top / lista de asesores) a sus notas en el detalle
   body.querySelectorAll("[data-verdet]").forEach(b=> b.addEventListener("click", ()=>{
