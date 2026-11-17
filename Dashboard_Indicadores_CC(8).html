@@ -15670,7 +15670,9 @@ const TN = { rango:"mes", desde:"", hasta:"", encuesta:"", unidad:"", vista:"res
   repTipo:"", repMin:3,      // v22.08
   detSoluc:"" };             // v22.26: "no" = solo las encuestas en que la solución NO resolvió: contactos repetidos ("" = correos si hay; mínimo de encuestas por contacto)
 // v22.22: "traer lo último de Qualtrics" (ver tnTraerLoUltimo). estado: "" | "trayendo" | "listo" | "error"
-const TN_SINC = { estado:"", avisos:[], detalle:"", pedidoEn:0, promesa:null };
+const TN_SINC = { estado:"", avisos:[], detalle:"", pedidoEn:0, promesa:null,
+  pendientes:0, ciclos:0, timer:null };   // v22.29: estado "fondo" = otra bajada usa Qualtrics (pendientes = tramos de historia que faltan)
+let TN_SINC_REVISION_MS = 60000;           // v22.29: cada cuánto se vuelve a preguntar mientras otra bajada usa Qualtrics
 // v21.89: encuestas ya revisadas (solo el ID de la respuesta, en este navegador)
 const TN_VISTOS = new Set((()=>{ try{ return JSON.parse(localStorage.getItem("tn_vistos")||"[]"); }catch(e){ return []; } })());
 function tnMarcarVisto(rid){
@@ -15972,7 +15974,10 @@ function tnTextoSub(){
   const d = TN.datos;
   let t = "Encuestas de satisfacción (TNPS) · Honduras";
   if(d && d.ultimaSinc && d.ultimaSinc.en) t += ` · actualizado ${tnFecha(d.ultimaSinc.en.slice(0,10))} ${d.ultimaSinc.en.slice(11,16)}`;
-  if(TN_SINC.estado==="trayendo") t += " · trayendo lo último de Qualtrics…";
+  const pend = TN_SINC.estado==="fondo" ? TN_SINC.pendientes : ((d && d.historiaPendiente) || 0);   // v22.29
+  if(TN_SINC.estado==="trayendo") t += " · buscando encuestas nuevas en Qualtrics; podés seguir usando la pestaña…";
+  else if(pend) t += ` · cargando la historia de Qualtrics en segundo plano: faltan ${pend} tramo${pend===1?"":"s"} de 15 días (se actualiza sola)`;
+  else if(TN_SINC.estado==="fondo") t += " · Qualtrics se está actualizando en segundo plano (se actualiza sola)";
   else if(TN_SINC.estado==="error") t += " · no se pudo traer lo último de Qualtrics";
   else if(TN_SINC.estado==="listo" && TN_SINC.avisos.length) t += ` · no se pudo traer: ${TN_SINC.avisos.join(", ")}`;
   return t.endsWith("…") ? t : t + ".";
@@ -15983,47 +15988,69 @@ function tnPintarSub(){
   sub.textContent = tnTextoSub();
   sub.title = TN_SINC.estado==="error" ? TN_SINC.detalle : "";
 }
-function tnTraerLoUltimo(){
+/* v22.29 (Oscar, 2026-11-17: "siento demasiado lento esto"): si otra bajada está usando Qualtrics
+   (el activador de 4 horas o "Volver a cargar toda la historia"), antes se esperaba 15 s y se volvía a
+   preguntar hasta 8 veces (2 minutos con "trayendo lo último…"). Ahora no se espera: queda dicho bajo
+   el título que se actualiza en segundo plano y, con la pestaña abierta, se vuelve a preguntar cada
+   minuto; si llegó algo nuevo se refrescan los datos (salvo que estés escribiendo en un filtro). */
+function tnTraerLoUltimo(opc){
+  opc = opc || {};
   if(TN_SINC.promesa) return TN_SINC.promesa;
   if(!genesysGetStoredToken()) return Promise.resolve(false);
-  if(Date.now() - TN_SINC.pedidoEn < 60*1000) return Promise.resolve(false);   // a lo sumo una vez por minuto desde este navegador
+  if(!opc.programado && Date.now() - TN_SINC.pedidoEn < 60*1000) return Promise.resolve(false);   // a lo sumo una vez por minuto desde este navegador
   const cfg = loadLiveConfig();
   const base = (cfg.json && cfg.json.url) || DEFAULT_JSON_URL;
   if(!base) return Promise.resolve(false);
+  if(!opc.programado){ clearTimeout(TN_SINC.timer); TN_SINC.ciclos = 0; }
   TN_SINC.pedidoEn = Date.now();
   const enAntes = (TN.datos && TN.datos.ultimaSinc && TN.datos.ultimaSinc.en) || "";
   TN_SINC.promesa = (async ()=>{
-    TN_SINC.estado = "trayendo"; TN_SINC.avisos = []; TN_SINC.detalle = ""; tnPintarSub();
-    let nuevo = false;
+    const enFondo = TN_SINC.estado==="fondo";
+    if(!enFondo){ TN_SINC.estado = "trayendo"; TN_SINC.avisos = []; TN_SINC.detalle = ""; tnPintarSub(); }
+    let nuevo = false, fondo = false;
     try{
-      for(let intento = 0; intento < 8; intento++){
-        const res = await fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"tnps_sincronizar", token: scriptSesionToken() }) }, 330000);
-        const d = await parseJsonUrlPayload(await res.text());
-        if(d && d.error==="codigo_invalido"){ TN_SINC.estado = ""; break; }   // Apps Script sin v22.22: queda como antes
+      const res = await fetchWithTimeout(base, { method:"POST", body: JSON.stringify({ accion:"tnps_sincronizar", token: scriptSesionToken() }) }, 330000);
+      const d = await parseJsonUrlPayload(await res.text());
+      if(d && d.error==="codigo_invalido") TN_SINC.estado = "";   // Apps Script sin v22.22: queda como antes
+      else {
         if(d && d.error==="sesion_requerida") throw new Error(SCRIPT_MSG_SESION);
         if(!d || !d.ok) throw new Error((d && (d.detalle || d.error)) || "Respuesta inesperada del servidor.");
-        if(d.motivo==="en_curso"){ await new Promise(r=> setTimeout(r, 15000)); continue; }   // otra bajada corriendo: se espera
         const enAhora = (d.ultimaSinc && d.ultimaSinc.en) || "";
         nuevo = !!d.hecho || (!!enAhora && enAhora !== enAntes);
-        TN_SINC.avisos = Array.isArray(d.encuestasConError) ? d.encuestasConError : [];
-        TN_SINC.estado = "listo";
-        break;
+        if(d.motivo==="en_curso" || d.motivo==="historia"){
+          fondo = true; TN_SINC.estado = "fondo"; TN_SINC.pendientes = d.motivo==="historia" ? (Number(d.pendientes) || 0) : 0;
+        } else {
+          TN_SINC.avisos = Array.isArray(d.encuestasConError) ? d.encuestasConError : [];
+          TN_SINC.estado = "listo"; TN_SINC.pendientes = 0; TN_SINC.ciclos = 0;
+        }
+        if(TN.datos && d.motivo!=="en_curso") TN.datos.historiaPendiente = TN_SINC.pendientes;   // lo que dice el servidor ahora manda sobre lo de la última carga
       }
-      if(TN_SINC.estado==="trayendo") TN_SINC.estado = "";   // siguió ocupado: queda para la próxima
     }catch(err){
       console.error("Detalle técnico (traer lo último de Qualtrics):", err);
-      TN_SINC.estado = "error"; TN_SINC.detalle = (err && err.message) || "";
+      TN_SINC.estado = "error"; TN_SINC.detalle = (err && err.message) || ""; TN_SINC.pendientes = 0;
     }
     if(nuevo){
       TN.clave = "";                                    // esta pestaña vuelve a pedir sus datos
-      if(state.tab==="tnps") await tnCargar(true);
+      const escribiendo = (()=>{ const a = document.activeElement; return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest("#tn-root, #tnasesor-modal")); })();
+      if(state.tab==="tnps" && !escribiendo) await tnCargar(true);
       if(TNPS_QX.estado==="ok") tnpsQxCargar(true);    // TNPS mensual de la pestaña Genesys
     }
+    if(fondo) tnProgramarRevision();
     tnPintarSub();
     return nuevo;
   })();
   TN_SINC.promesa.finally(()=>{ TN_SINC.promesa = null; });
   return TN_SINC.promesa;
+}
+// v22.29: con la pestaña Qualtrics abierta, se vuelve a preguntar cada minuto (como mucho ~40 minutos)
+function tnProgramarRevision(){
+  clearTimeout(TN_SINC.timer);
+  if(++TN_SINC.ciclos > 40) return;
+  TN_SINC.timer = setTimeout(()=>{
+    if(state.tab!=="tnps"){ TN_SINC.ciclos = 0; TN_SINC.pedidoEn = 0; return; }   // al volver a la pestaña se pregunta de nuevo, sin esperar el minuto
+    if(document.hidden){ tnProgramarRevision(); return; }
+    tnTraerLoUltimo({ programado:true });
+  }, TN_SINC_REVISION_MS);
 }
 // v22.22: Actualizar también pide lo último de Qualtrics en las pestañas que lo muestran
 document.getElementById("btn-refresh-online").addEventListener("click", ()=>{
