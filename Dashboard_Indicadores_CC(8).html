@@ -938,11 +938,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .yoy-card .val{font-size:20px;font-weight:800;margin:4px 0;}
 
   table.data-table{width:100%;border-collapse:collapse;font-size:12px;}
-  table.data-table th{background:var(--red);color:#fff;padding:7px 9px;text-align:left;white-space:nowrap;position:sticky;top:0;}
+  table.data-table th{background:var(--red);color:#fff;padding:7px 9px;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:2;}   /* v22.30: z-index, el lápiz ✏️ ya no se ve encima del encabezado */
   .table-total-row td{background:#161616 !important;color:#fff;font-weight:800;position:sticky;bottom:0;}
   table.data-table td{padding:6px 9px;border-bottom:1px solid #eee;}
   table.data-table tr:nth-child(even) td{background:#FAFAFA;}
   table.data-table tfoot td{background:#EFEFEF;font-weight:700;border-top:2px solid var(--red);}
+  /* v22.30: pie de la BITÁCORA de Genesys con el total de cada categoría y el Total / Promedio */
+  table.data-table tfoot tr.gen-sub td{background:#F7F7F7;border-top:1px solid #E5E5E5;}
+  table.data-table tfoot tr.gen-sub:first-child td{border-top:2px solid var(--red);}
+  table.data-table tfoot tr.gen-tot td{background:#EFEFEF;}
   .table-wrap{max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:#fff;}
 
   .empty-msg{padding:24px;text-align:center;color:var(--gray);font-size:12px;}
@@ -2486,6 +2490,8 @@ document.addEventListener("click", (e)=>{
   if(kind==="chart") downloadChartAsImage(btn.dataset.canvas, btn.dataset.name);
   else if(kind==="table") downloadTableAsExcel(btn.dataset.wrap, btn.dataset.name);
   else if(kind==="kpi") downloadKpiGridAsExcel(btn.dataset.grid, btn.dataset.name);
+  else if(kind==="genesys-bitacora") genesysBitacoraExcel();       // v22.30: con los colores y totales de la tabla
+  else if(kind==="genesys-categorias") genesysCategoriasExcel();
 });
 
 
@@ -8120,10 +8126,19 @@ const XLS_FUENTES = {
   kpiVerde: '<b/><sz val="18"/><color rgb="FF166534"/><name val="Calibri"/><family val="2"/>',
   kpiAmbar: '<b/><sz val="18"/><color rgb="FF7A5600"/><name val="Calibri"/><family val="2"/>',
   kpiRoja: '<b/><sz val="18"/><color rgb="FFB4021F"/><name val="Calibri"/><family val="2"/>',
+  // v22.30: los MISMOS colores de la tabla del dashboard (BITÁCORA de Genesys)
+  dNormal: '<sz val="11"/><color rgb="FF161616"/><name val="Calibri"/><family val="2"/>',
+  dVerde: '<b/><sz val="11"/><color rgb="FF1E9E4B"/><name val="Calibri"/><family val="2"/>',
+  dAmbar: '<b/><sz val="11"/><color rgb="FFC98A00"/><name val="Calibri"/><family val="2"/>',
+  dRoja: '<b/><sz val="11"/><color rgb="FFE4032E"/><name val="Calibri"/><family val="2"/>',
+  dGris: '<sz val="11"/><color rgb="FF6B6B6B"/><name val="Calibri"/><family val="2"/>',
+  dGrisItal: '<i/><sz val="11"/><color rgb="FF6B6B6B"/><name val="Calibri"/><family val="2"/>',
 };
 // Formatos de número (v22.24: se agregaron decimal, porcentaje, fecha y hora para Qualtrics)
-const XLS_FORMATOS = { tmo:"[m]:ss", num:"#,##0", dec:"0.0", pct:"0.0%", fecha:"dd/mm/yyyy", hora:"hh:mm" };
-const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2" };
+const XLS_FORMATOS = { tmo:"[m]:ss", num:"#,##0", dec:"0.0", pct:"0.0%", fecha:"dd/mm/yyyy", hora:"hh:mm",
+  pctSigno:"+0.0%;-0.0%;0.0%", seg:'0"s"' };   // v22.30: Desviación con signo (+4.1%) y segundos como en pantalla (312s)
+const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2",
+  dPar:"FFFAFAFA", dTot:"FFEFEFEF", dSub:"FFF7F7F7" };   // v22.30: cebra y pie de la tabla del dashboard
 const XLS_ESTILOS = (()=>{
   const e = {
     titulo:{ f:"titulo" }, sub:{ f:"sub" }, seccion:{ f:"seccion" },
@@ -8146,6 +8161,28 @@ const XLS_ESTILOS = (()=>{
     dTxt:{ b:1, a:"t" }, dTxtC:{ b:1, a:"ct" }, dFecha:{ b:1, a:"ct", n:"fecha" }, dHora:{ b:1, a:"ct", n:"hora" }, dComent:{ b:1, a:"tw" },
     dpro:{ f:"verde", r:"q1", b:1, a:"ct" }, dpas:{ f:"ambar", r:"q3", b:1, a:"ct" }, ddet:{ f:"roja", r:"q4", b:1, a:"ct" },
   });
+  // v22.30: BITÁCORA y Detalle por categoría de Genesys, igual que la tabla del dashboard: encabezado rojo
+  // con letra blanca, filas con una línea gris abajo (b:2) y cebra (las que terminan en Z), y el pie gris con
+  // la línea roja arriba (b:3). Todo alineado a la izquierda, como en pantalla.
+  e.gEnc = { f:"blanca", r:"rojo", a:"i" };
+  const fila = {
+    gTxtB:{ f:"negrita" }, gTxt:{ f:"dNormal" }, gGuion:{ f:"dGris" },
+    gFecha:{ f:"dNormal", n:"fecha" }, gFechaB:{ f:"negrita", n:"fecha" },
+    gNum:{ f:"dNormal", n:"num" }, gPct:{ f:"dNormal", n:"pct" }, gSeg:{ f:"dNormal", n:"seg" },
+    gNsV:{ f:"dVerde", n:"pct" }, gNsA:{ f:"dAmbar", n:"pct" }, gNsR:{ f:"dRoja", n:"pct" },
+    gDesvR:{ f:"dRoja", n:"pctSigno" }, gDesvV:{ f:"dVerde", n:"pctSigno" }, gDesvN:{ f:"negrita", n:"pctSigno" },
+    gJusV:{ f:"dVerde", a:"iw" }, gJusG:{ f:"dGris", a:"iw" },
+  };
+  Object.keys(fila).forEach(k=>{
+    e[k] = Object.assign({ b:2, a:"i" }, fila[k]);
+    e[k+"Z"] = Object.assign({}, e[k], { r:"dPar" });
+  });
+  const pie = { Txt:{}, Num:{ n:"num" }, Pct:{ n:"pct" }, Seg:{ n:"seg" }, DesvR:{ f:"dRoja", n:"pctSigno" }, DesvV:{ f:"dVerde", n:"pctSigno" }, DesvN:{ n:"pctSigno" } };
+  Object.keys(pie).forEach(k=>{
+    e["gTot"+k] = Object.assign({ f:"negrita", r:"dTot", b:3, a:"i" }, pie[k]);    // Total / Promedio
+    e["gSub"+k] = Object.assign({ f:"negrita", r:"dSub", b:2, a:"i" }, pie[k]);    // total de una categoría
+    e["gSub1"+k] = Object.assign({}, e["gSub"+k], { b:3 });                       // el primero lleva la línea roja
+  });
   return e;
 })();
 function xlsEstilosXml(){
@@ -8153,7 +8190,7 @@ function xlsEstilosXml(){
   const claveFmt = Object.keys(XLS_FORMATOS), FMT = {}; claveFmt.forEach((k, i)=> FMT[k] = 164 + i);
   const xf = k=>{
     const s = XLS_ESTILOS[k];
-    const fontId = fuentes.indexOf(s.f || "normal"), fillId = s.r ? 2 + rellenos.indexOf(s.r) : 0, numFmtId = s.n ? FMT[s.n] : 0, borderId = s.b ? 1 : 0;
+    const fontId = fuentes.indexOf(s.f || "normal"), fillId = s.r ? 2 + rellenos.indexOf(s.r) : 0, numFmtId = s.n ? FMT[s.n] : 0, borderId = s.b || 0;   // v22.30: b:2 y b:3
     // alineación: "c" centrada (si no, a la izquierda), "t" arriba (si no, al medio), "w" ajustar texto
     const al = s.a ? `<alignment horizontal="${s.a.includes("c")?"center":"left"}" vertical="${s.a.includes("t")?"top":"center"}"${s.a.includes("w")?' wrapText="1"':""}/>` : "";
     return `<xf numFmtId="${numFmtId}" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0"${numFmtId?' applyNumberFormat="1"':""} applyFont="1"${fillId?' applyFill="1"':""}${borderId?' applyBorder="1"':""}${al?' applyAlignment="1"':""}>${al}</xf>`;
@@ -8164,7 +8201,10 @@ function xlsEstilosXml(){
     + `<numFmts count="${claveFmt.length}">${claveFmt.map(k=> `<numFmt numFmtId="${FMT[k]}" formatCode="${XLS_FORMATOS[k].replace(/"/g, "&quot;")}"/>`).join("")}</numFmts>`
     + `<fonts count="${fuentes.length}">${fuentes.map(k=> `<font>${XLS_FUENTES[k]}</font>`).join("")}</fonts>`
     + `<fills count="${rellenos.length+2}"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${rellenos.map(k=> `<fill><patternFill patternType="solid"><fgColor rgb="${XLS_RELLENOS[k]}"/><bgColor indexed="64"/></patternFill></fill>`).join("")}</fills>`
-    + `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border>${lado("left")}${lado("right")}${lado("top")}${lado("bottom")}<diagonal/></border></borders>`
+    + `<borders count="4"><border><left/><right/><top/><bottom/><diagonal/></border><border>${lado("left")}${lado("right")}${lado("top")}${lado("bottom")}<diagonal/></border>`
+    // v22.30: 2 = solo la línea gris de abajo (filas de la tabla del dashboard); 3 = línea roja arriba (pie)
+    + '<border><left/><right/><top/><bottom style="thin"><color rgb="FFE5E5E5"/></bottom><diagonal/></border>'
+    + '<border><left/><right/><top style="medium"><color rgb="FFE4032E"/></top><bottom style="thin"><color rgb="FFE5E5E5"/></bottom><diagonal/></border></borders>'
     + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
     + `<cellXfs count="${claves.length+1}"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>${claves.map(xf).join("")}</cellXfs>`
     + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
@@ -8189,6 +8229,15 @@ function xlsDescargarConEstilo(wb, hojas, nombre){
         const k = h.est[ad] || (h.estiloDe ? h.estiloDe(XLSX.utils.decode_cell(ad)) : null), s = k && est.indice[k] ? ` s="${est.indice[k]}"` : "";
         return `<c r="${ad}"${s}${resto.replace(/\s+s="\d+"/, "")}>`;
       });
+      if(h.rico){   // v22.30: texto con partes de distinto color en la misma celda (h.rico[celda] = [{ t, f:fuente }])
+        const limpio = t=> String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        xml = xml.replace(/<c r="([A-Z]+[0-9]+)"([^>]*?)(?:\/>|>[\s\S]*?<\/c>)/g, (m, ad, attrs)=>{
+          const partes = h.rico[ad];
+          if(!partes) return m;
+          const runs = partes.map(x=> `<r><rPr>${XLS_FUENTES[x.f].replace("<name ", "<rFont ")}</rPr><t xml:space="preserve">${limpio(x.t)}</t></r>`).join("");
+          return `<c r="${ad}"${attrs.replace(/\s+t="[^"]*"/, "")} t="inlineStr"><is>${runs}</is></c>`;
+        });
+      }
       const p = h.panel;
       const pane = p ? `<pane${p.x?` xSplit="${p.x}"`:""}${p.y?` ySplit="${p.y}"`:""} topLeftCell="${XLSX.utils.encode_cell({ r:p.y||0, c:p.x||0 })}" activePane="${p.x&&p.y?"bottomRight":p.y?"bottomLeft":"topRight"}" state="frozen"/>` : "";
       xml = xml.replace(/<sheetView workbookViewId="0"\s*\/>/, `<sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView>`);
@@ -11710,6 +11759,204 @@ function genesysDeltaBadgesHtml(metricKey, currV, momV, yoyV, momLabel, yoyLabel
        + chipHtml(deltaForMetric(currV, momV, metricKey), metricKey, "M2M", momLabel, momV);
 }
 
+/* ============================================================
+   v22.30: EXCEL de la BITÁCORA (y del Detalle por categoría) de Genesys
+   ============================================================
+   A pedido de Oscar (2026-11-17): "que las bitácoras se descarguen así como
+   se miran en el dash, sus colores y todo, mismos colores, y que siempre
+   totalice al momento de descargar". Antes el botón bajaba la tabla de la
+   pantalla tal cual (texto plano, sin colores). Ahora el Excel se arma con los
+   mismos datos de la tabla y los MISMOS colores: encabezado rojo, filas cebra,
+   NS verde/ámbar/rojo, Desviación roja/verde, "Objetivo" en verde con el
+   comentario en gris cursiva y la fecha en negrita cuando el NS quedó bajo
+   85%. Los números van como números de Excel (se pueden sumar y filtrar) con
+   el mismo formato que en pantalla (85.3%, +4.1%, 312s). Al final van el total
+   de cada categoría (si hay más de una) y el Total / Promedio: los mismos
+   números del pie de la tabla, que salen de las mismas funciones. */
+let genesysXls = { bitacora:null, categorias:null };
+// Lo que se ve en cada fila de la BITÁCORA (lo usan la tabla y el Excel, para que nunca digan distinto)
+function genesysBitFila(r){
+  const ns = r.nivelServicio, hayNs = ns!==null && ns!==undefined;
+  const debajo = hayNs && ns<0.85, cumple = hayNs && ns>=0.85;
+  const hayPron = r.pronostico!==null && r.pronostico!==undefined;
+  // Desviación (a pedido de Oscar, 2026-09-03): misma fórmula que ya usan en
+  // Excel — Entrantes/Pronóstico - 1. Positivo = llegaron más llamadas de las
+  // pronosticadas (rojo); negativo = llegaron menos (verde). null si no hay
+  // Pronóstico cargado en el Sheet para ese día/skill.
+  const desv = (hayPron && r.pronostico!==0 && r.interacciones!==null && r.interacciones!==undefined)
+    ? (r.interacciones/r.pronostico) - 1 : null;
+  const justTxt = stripAttribution(r.justificacion || "");
+  return {
+    debajo, cumple, hayPron, desv, justTxt,
+    nsNivel: !hayNs ? "" : ns>=0.85 ? "ok" : ns>=0.80 ? "warn" : "crit",
+    esObjetivo: /objetivo/i.test(justTxt),
+    comObj: cumple ? justifComentarioObjetivo(justTxt) : "",
+  };
+}
+// Total / Promedio de un grupo de filas de la BITÁCORA: conteos sumados y
+// Accesibilidad, NS, ASA y TMO ponderados por volumen (Entrantes), igual que
+// siempre lo hizo el pie de la tabla. La Desviación del total compara solo
+// los días que SÍ tienen Pronóstico (v22.30): antes se dividían las Entrantes
+// de todos los días entre el Pronóstico de algunos, y un día o una categoría
+// sin Pronóstico (Helpdesk nunca tiene) inflaba la Desviación del total.
+function genesysBitTotales(rows){
+  let e=0, pron=0, ePron=0, hayPron=false, c=0, a=0, t=0, w=0, nsW=0, accW=0, asaW=0, tmoW=0;
+  rows.forEach(r=>{
+    e += r.interacciones||0; c += r.respondidas||0; a += r.abandonadas||0; t += r.transferidas||0;
+    if(r.pronostico!==null && r.pronostico!==undefined){
+      pron += r.pronostico; hayPron = true;
+      if(r.pronostico > 0) ePron += r.interacciones||0;
+    }
+    const vol = r.interacciones||0; w += vol;
+    nsW += (r.nivelServicio||0)*vol; accW += (r.accesibilidad||0)*vol; asaW += (r.asa||0)*vol; tmoW += (r.tmo||0)*vol;
+  });
+  return {
+    e, c, a, t,
+    pron: hayPron ? pron : null,
+    desv: hayPron && pron ? (ePron/pron) - 1 : null,
+    acc: w ? accW/w : null, ns: w ? nsW/w : null,
+    asa: w ? Math.round(asaW/w) : null, tmo: w ? Math.round(tmoW/w) : null,
+  };
+}
+function genesysBitPieHtml(etiqueta, T, clase){
+  const desv = T.desv===null ? "—"
+    : `<span style="color:${T.desv>0?"var(--red)":(T.desv<0?"var(--green)":"var(--black)")};">${T.desv>0?"+":""}${(T.desv*100).toFixed(1)}%</span>`;
+  return `<tr${clase?` class="${clase}"`:""}><td colspan="2">${etiqueta}</td><td>${fmtNum(T.e)}</td><td>${T.pron!==null?fmtNum(T.pron):"—"}</td><td>${desv}</td><td>${fmtNum(T.c)}</td><td>${fmtNum(T.a)}</td>
+            <td>${fmtVal(T.acc,"pct")}</td><td>${fmtVal(T.ns,"pct")}</td><td>${T.asa!==null?T.asa+"s":"—"}</td>
+            <td>${T.tmo!==null?T.tmo+"s":"—"}</td><td>${fmtNum(T.t)}</td><td></td></tr>`;
+}
+// Pie de la BITÁCORA: el total de cada categoría (solo si hay más de una) y el Total / Promedio
+function genesysBitCatsDe(rows){ return GENESYS_CATEGORIAS.filter(c=> rows.some(r=> r.cat===c)); }
+function genesysBitPie(rows){
+  const cats = genesysBitCatsDe(rows);
+  const subs = cats.length > 1 ? cats.map(c=> genesysBitPieHtml(`Total ${c}`, genesysBitTotales(rows.filter(r=> r.cat===c)), "gen-sub")).join("") : "";
+  return subs + genesysBitPieHtml("Total / Promedio", genesysBitTotales(rows), subs ? "gen-tot" : "");
+}
+function genesysXlsBoton(tipo){
+  return `<div class="table-dl-row"><button class="dl-btn" data-dl="genesys-${tipo}" title="Descargar en Excel con los mismos colores de la tabla y los totales">${DL_ICON_SVG} Excel</button></div>`;
+}
+function genesysXlsArchivo(prefijo, d){
+  const cats = !d.cats.length ? "Todas las categorías"
+    : d.cats.length <= 3 ? d.cats.join(", ") : `${d.cats.slice(0, 2).join(", ")} y ${d.cats.length - 2} más`;
+  return `${prefijo} - ${cats} - ${d.periodLabel}.xlsx`.replace(/[\\/:*?"<>|]+/g, "-");
+}
+// Título y líneas de contexto arriba de la tabla; devuelve la fila donde va el encabezado
+function genesysXlsEncabezado(h, titulo, d, lineas){
+  const p2 = n=> String(n).padStart(2, "0"), t = new Date();
+  h.set(0, 0, titulo, "titulo"); h.filas[0] = { hpt:26 };
+  h.set(1, 0, [
+    "Genesys Cloud",
+    `Período: ${d.periodLabel}`,
+    d.cats.length ? `${d.cats.length===1 ? "Categoría" : "Categorías"}: ${d.cats.join(", ")}` : "Todas las categorías",
+    `Generado el ${p2(t.getDate())}/${p2(t.getMonth()+1)}/${t.getFullYear()} ${p2(t.getHours())}:${p2(t.getMinutes())}`,
+  ].join("  ·  "), "sub");
+  let r = 2;
+  (lineas || []).forEach(l=> h.set(r++, 0, l, "sub"));
+  return r + 1;   // una fila en blanco antes de la tabla
+}
+function genesysXlsVacio(v){ return v===null || v===undefined || (typeof v==="number" && isNaN(v)); }
+// Fila de total con el estilo del pie de la tabla (pre: "gTot" total general, "gSub" total de una categoría)
+function genesysXlsPie(h, rr, celdas, pre){
+  celdas.forEach(([c, v, est, guion])=>{
+    if(est===null) h.set(rr, c, v, pre + "Txt");
+    else if(genesysXlsVacio(v)) h.set(rr, c, guion || "—", pre + "Txt");
+    else h.set(rr, c, v, pre + est);
+  });
+}
+function genesysBitacoraExcel(){
+  const d = genesysXls.bitacora;
+  if(!d || !d.rows || !d.rows.length) return;
+  const h = new XlsHoja();
+  const r0 = genesysXlsEncabezado(h, `BITÁCORA — ${d.catsLabel.toUpperCase()} (${d.periodLabel.toUpperCase()})`, d, [
+    "NS: verde = 85% o más (objetivo)  ·  ámbar = de 80% a 84.9%  ·  rojo = menos de 80%",
+    "Desviación = Entrantes ÷ Pronóstico − 1: roja si entraron más llamadas de las pronosticadas, verde si entraron menos (en los totales cuentan solo los días con Pronóstico)",
+  ]);
+  h.fila(r0, 0, ["Categoría","Fecha","Entrantes","Pronóstico","Desviación","Contestadas","Abandonadas","Accesibilidad","NS","ASA","TMO","Transferidas","Justificación"], "gEnc");
+  h.filas[r0] = { hpt:22 };
+  const serial = iso=> (Date.UTC(+iso.slice(0,4), +iso.slice(5,7)-1, +iso.slice(8,10)) - Date.UTC(1899, 11, 30))/864e5;
+  h.rico = {};
+  d.rows.forEach((x, i)=>{
+    const rr = r0 + 1 + i, z = i%2 ? "Z" : "", f = genesysBitFila(x);   // cebra: la 2.ª, 4.ª… fila, como en pantalla
+    const poner = (c, v, est, guion = "-", estGuion = "gTxt")=> genesysXlsVacio(v) ? h.set(rr, c, guion, estGuion + z) : h.set(rr, c, v, est + z);
+    h.set(rr, 0, x.cat, "gTxtB" + z);
+    h.set(rr, 1, serial(x.isoFecha), (f.debajo ? "gFechaB" : "gFecha") + z);
+    poner(2, x.interacciones, "gNum");
+    poner(3, x.pronostico, "gNum", "-", "gGuion");
+    poner(4, f.desv, f.desv>0 ? "gDesvR" : f.desv<0 ? "gDesvV" : "gDesvN", "-", "gGuion");
+    poner(5, x.respondidas, "gNum");
+    poner(6, x.abandonadas, "gNum");
+    poner(7, x.accesibilidad, "gPct");
+    poner(8, x.nivelServicio, f.nsNivel==="ok" ? "gNsV" : f.nsNivel==="warn" ? "gNsA" : "gNsR", "-", "gTxtB");
+    poner(9, x.asa, "gSeg", "—");
+    poner(10, x.tmo, "gSeg", "—");
+    poner(11, x.transferidas, "gNum");
+    if(f.cumple && f.comObj){   // "Objetivo" en verde y el comentario en gris cursiva, en la misma celda
+      h.set(rr, 12, "Objetivo – " + f.comObj, "gJusV" + z);
+      h.rico[XLSX.utils.encode_cell({ r:rr, c:12 })] = [{ t:"Objetivo", f:"dVerde" }, { t:" – " + f.comObj, f:"dGrisItal" }];
+    }
+    else if(f.cumple) h.set(rr, 12, "Objetivo", "gJusV" + z);
+    else if(f.justTxt) h.set(rr, 12, f.justTxt, (f.esObjetivo ? "gJusV" : "gJusG") + z);
+    else h.set(rr, 12, "-", "gJusG" + z);
+  });
+  const ult = r0 + d.rows.length;   // última fila de datos
+  let rr = ult + 1;
+  const pie = (etiqueta, T, pre)=>{
+    genesysXlsPie(h, rr, [
+      [0, etiqueta, null], [1, "", null], [2, T.e, "Num"], [3, T.pron, "Num"],
+      [4, T.desv, T.desv>0 ? "DesvR" : T.desv<0 ? "DesvV" : "DesvN"], [5, T.c, "Num"], [6, T.a, "Num"],
+      [7, T.acc, "Pct", "-"], [8, T.ns, "Pct", "-"], [9, T.asa, "Seg"], [10, T.tmo, "Seg"], [11, T.t, "Num"], [12, "", null],
+    ], pre);
+    h.unir(rr, 0, rr, 1);
+    rr++;
+  };
+  const cats = genesysBitCatsDe(d.rows);
+  if(cats.length > 1) cats.forEach((c, i)=> pie(`Total ${c}`, genesysBitTotales(d.rows.filter(x=> x.cat===c)), i ? "gSub" : "gSub1"));
+  pie("Total / Promedio", genesysBitTotales(d.rows), "gTot");
+  if(d.insights.length){   // lo mismo del aviso de arriba de la tabla (día con más llamadas y racha bajo el objetivo)
+    rr++;
+    h.set(rr++, 0, "Lo más destacado", "seccion");
+    d.insights.forEach(t=> h.set(rr++, 0, t, "sub"));
+  }
+  h.cols = [Math.min(34, Math.max(14, ...cats.map(c=> c.length + 3))), 12, 11, 12, 12, 13, 13, 14, 9, 8, 8, 13, 60];
+  h.panel = { x:2, y:r0 + 1 };
+  h.filtro = `A${r0 + 1}:M${ult + 1}`;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, h.hoja(), "Bitácora");
+  wb.Workbook = { Names:[{ Name:"_xlnm.Print_Titles", Sheet:0, Ref:`'Bitácora'!$${r0 + 1}:$${r0 + 1}` }] };   // al imprimir, el encabezado se repite en cada hoja
+  xlsDescargarConEstilo(wb, { "Bitácora": h }, genesysXlsArchivo("Bitácora Genesys", d));
+}
+function genesysCategoriasExcel(){
+  const d = genesysXls.categorias;
+  if(!d || !d.rows || !d.rows.length) return;
+  const h = new XlsHoja();
+  const r0 = genesysXlsEncabezado(h, "DETALLE POR CATEGORÍA", d, []);
+  h.fila(r0, 0, ["Categoría","Interacciones","Nivel de Servicio","ASA","TMO","% Abandono","Transferidas"], "gEnc");
+  h.filas[r0] = { hpt:22 };
+  d.rows.forEach((x, i)=>{
+    const rr = r0 + 1 + i, z = i%2 ? "Z" : "";
+    const poner = (c, v, est, guion = "-")=> genesysXlsVacio(v) ? h.set(rr, c, guion, "gTxt" + z) : h.set(rr, c, v, est + z);
+    h.set(rr, 0, x.cat, "gTxtB" + z);
+    poner(1, x.interacciones, "gNum");
+    poner(2, x.nivelServicio, "gPct");
+    poner(3, x.asa, "gSeg", "—");
+    poner(4, x.tmo, "gSeg", "—");
+    poner(5, x.abandono, "gPct");
+    poner(6, x.transferidas, "gNum");
+  });
+  const T = d.total, ult = r0 + d.rows.length;
+  genesysXlsPie(h, ult + 1, [
+    [0, "Total", null], [1, T.interacciones, "Num"], [2, T.nivelServicio, "Pct", "-"], [3, T.asa, "Seg"],
+    [4, T.tmo, "Seg"], [5, T.abandono, "Pct", "-"], [6, T.transferidas, "Num"],
+  ], "gTot");
+  h.cols = [Math.min(34, Math.max(14, ...d.rows.map(x=> x.cat.length + 3))), 14, 17, 9, 9, 13, 13];
+  h.panel = { x:1, y:r0 + 1 };
+  h.filtro = `A${r0 + 1}:G${ult + 1}`;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, h.hoja(), "Detalle por categoría");
+  wb.Workbook = { Names:[{ Name:"_xlnm.Print_Titles", Sheet:0, Ref:`'Detalle por categoría'!$${r0 + 1}:$${r0 + 1}` }] };
+  xlsDescargarConEstilo(wb, { "Detalle por categoría": h }, genesysXlsArchivo("Detalle por categoría Genesys", d));
+}
+
 function renderGenesys(){
   const container = document.getElementById("tab-genesys");
   const token = genesysGetStoredToken();
@@ -12109,13 +12356,8 @@ function renderGenesys(){
     }
 
     if(bitacoraRows){
-      let totE=0,totPron=0,hasPron=false,totC=0,totA=0,totT=0,w=0,nsW=0,accW=0,asaW=0,tmoW=0;
-      bitacoraRows.forEach(r=>{
-        totE+=r.interacciones||0; totC+=r.respondidas||0; totA+=r.abandonadas||0; totT+=r.transferidas||0;
-        if(r.pronostico!==null && r.pronostico!==undefined){ totPron+=r.pronostico; hasPron=true; }
-        const vol = r.interacciones||0; w+=vol;
-        nsW += (r.nivelServicio||0)*vol; accW += (r.accesibilidad||0)*vol; asaW += (r.asa||0)*vol; tmoW += (r.tmo||0)*vol;
-      });
+      // v22.30: el pie (Total / Promedio y, si hay varias categorías, el total
+      // de cada una) sale de genesysBitTotales/genesysBitPie — lo mismo que usa el Excel.
 
       // Insights (a pedido de Oscar, 2026-09-03; restilizados el mismo día
       // como banner de una sola línea — mismo look que ya usa Resumen Mensual
@@ -12147,6 +12389,8 @@ function renderGenesys(){
           insightParts.push(`Racha más larga bajo el objetivo (85%)${catLabelIns}: <b>${info.rachaLen} días consecutivos</b> (${fmtFechaGenesys(info.rachaStart)} – ${fmtFechaGenesys(info.rachaEnd)})`);
         }
       });
+      genesysXls.bitacora = { rows: bitacoraRows, catsLabel, periodLabel, cats: Array.from(catsFiltro || []),
+        insights: insightParts.map(p=> p.replace(/<[^>]+>/g, "").replace(", calculando hora pico…", "")) };   // v22.30: para el Excel
       const insightsHtml = insightParts.length ? `<div class="insight-banner"><span class="insight-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.5.4.8 1 .8 1.7v.6h6.4v-.6c0-.7.3-1.3.8-1.7A7 7 0 0 0 12 2z"/></svg></span><span>${insightParts.join(" &nbsp;·&nbsp; ")}</span></div>` : "";
       bodyHtml += `
       ${insightsHtml}
@@ -12156,16 +12400,12 @@ function renderGenesys(){
         <div style="display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 0;">
           <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openPronosticoModal()">📈 Cargar Pronóstico del mes</button>
         </div>
-        ${tableDlBtn("genesys-table-wrap","genesys-bitacora")}
+        ${genesysXlsBoton("bitacora")}
         <div class="table-wrap" id="genesys-table-wrap"><table class="data-table">
           <thead><tr><th>Categoría</th><th>Fecha</th><th>Entrantes</th><th>Pronóstico</th><th>Desviación</th><th>Contestadas</th><th>Abandonadas</th><th>Accesibilidad</th><th>NS</th><th>ASA</th><th>TMO</th><th>Transferidas</th><th>Justificación</th></tr></thead>
           <tbody>${bitacoraRows.map(r=>{
-            let nsColor = "var(--black)";
-            if(r.nivelServicio!==null && r.nivelServicio!==undefined){
-              if(r.nivelServicio>=0.85) nsColor = "var(--green)";
-              else if(r.nivelServicio>=0.80) nsColor = "#C98A00";
-              else nsColor = "var(--red)";
-            }
+            const f = genesysBitFila(r);   // v22.30: lo mismo que usa el Excel (colores, desviación y justificación)
+            const nsColor = f.nsNivel==="ok" ? "var(--green)" : f.nsNivel==="warn" ? "#C98A00" : f.nsNivel==="crit" ? "var(--red)" : "var(--black)";
             // La fecha se resalta en negrita cuando el NS cerró bajo 85%
             // (para que salte a la vista el día que necesita justificación).
             // Justificación (a pedido de Oscar, 2026-09-03): si el NS del día
@@ -12175,10 +12415,7 @@ function renderGenesys(){
             // en el Sheet). Solo cuando el NS quedó bajo 85% se usa el texto
             // que el equipo escriba manualmente en el Sheet (mismo mecanismo
             // que ya existía) — si aún no lo han llenado, se muestra "-".
-            const belowUmbral = r.nivelServicio!==null && r.nivelServicio!==undefined && r.nivelServicio<0.85;
-            const meetsObjetivo = r.nivelServicio!==null && r.nivelServicio!==undefined && r.nivelServicio>=0.85;
-            const justTxt = stripAttribution(r.justificacion || "");
-            const isObjetivo = /objetivo/i.test(justTxt);
+            const belowUmbral = f.debajo, meetsObjetivo = f.cumple, justTxt = f.justTxt, isObjetivo = f.esObjetivo;
             // Lápiz de edición en vivo (a pedido de Oscar, 2026-09-05): solo en
             // los días que NO cumplen el objetivo de NS, porque esos son los
             // únicos que llevan una justificación manual real — las filas con
@@ -12189,22 +12426,18 @@ function renderGenesys(){
             // v21.84 (Oscar, 2026-10-23): los días en Objetivo también llevan
             // lápiz, para dejar un comentario de algo que impactó aunque se
             // cerró en objetivo. Se ve: "Objetivo" (verde) – comentario (cursiva).
-            const comObj = meetsObjetivo ? justifComentarioObjetivo(justTxt) : "";
+            const comObj = f.comObj;
             const pencilObj = meetsObjetivo && skillIndex(r.cat) >= 0
               ? `<button type="button" class="justif-pencil-btn" title="Agregar comentario al día en Objetivo" onclick="openJustifModal('${r.isoFecha}','${r.cat}',true)">✏️</button>`
               : "";
             const justCell = meetsObjetivo
               ? `<span style="color:var(--green);font-weight:700;">Objetivo</span>${comObj ? ` <span style="color:var(--gray);font-style:italic;">– ${justifEsc(comObj)}</span>` : ""}${pencilObj}`
               : (justTxt
-                  ? `<span style="color:${isObjetivo?"var(--green)":"var(--gray)"};font-weight:${isObjetivo?"700":"400"};">${justTxt}</span>${pencilBtn}`
+                  ? `<span style="color:${isObjetivo?"var(--green)":"var(--gray)"};font-weight:${isObjetivo?"700":"400"};">${justifEsc(justTxt)}</span>${pencilBtn}`
                   : `<span style="color:var(--gray);">-</span>${pencilBtn}`);
-            const pronCell = (r.pronostico!==null && r.pronostico!==undefined) ? fmtNum(r.pronostico) : `<span style="color:var(--gray);">-</span>`;
-            // Desviación (a pedido de Oscar, 2026-09-03): misma fórmula que ya
-            // usan en Excel — Entrantes/Pronóstico - 1, en %. Positivo = llegaron
-            // más llamadas de las pronosticadas (rojo); negativo = llegaron menos
-            // (verde). "-" si no hay Pronóstico cargado en el Sheet para ese día/skill.
-            const desv = (r.pronostico!==null && r.pronostico!==undefined && r.pronostico!==0 && r.interacciones!==null && r.interacciones!==undefined)
-              ? (r.interacciones/r.pronostico) - 1 : null;
+            const pronCell = f.hayPron ? fmtNum(r.pronostico) : `<span style="color:var(--gray);">-</span>`;
+            // Desviación: ver genesysBitFila. "-" si no hay Pronóstico cargado en el Sheet para ese día/skill.
+            const desv = f.desv;
             const desvCell = desv===null
               ? `<span style="color:var(--gray);">-</span>`
               : `<span style="color:${desv>0?"var(--red)":(desv<0?"var(--green)":"var(--black)")};font-weight:700;">${desv>0?"+":""}${(desv*100).toFixed(1)}%</span>`;
@@ -12215,16 +12448,16 @@ function renderGenesys(){
               <td style="max-width:260px;">${justCell}</td></tr>`;
           }).join("")}
           </tbody>
-          <tfoot><tr><td colspan="2">Total / Promedio</td><td>${fmtNum(totE)}</td><td>${hasPron?fmtNum(totPron):"—"}</td><td>${hasPron&&totPron?(()=>{const d=(totE/totPron)-1; return `<span style="color:${d>0?"var(--red)":(d<0?"var(--green)":"var(--black)")};">${d>0?"+":""}${(d*100).toFixed(1)}%</span>`;})():"—"}</td><td>${fmtNum(totC)}</td><td>${fmtNum(totA)}</td>
-            <td>${fmtVal(w?accW/w:null,"pct")}</td><td>${fmtVal(w?nsW/w:null,"pct")}</td><td>${w?Math.round(asaW/w)+"s":"—"}</td>
-            <td>${w?Math.round(tmoW/w)+"s":"—"}</td><td>${fmtNum(totT)}</td><td></td></tr></tfoot>
+          <tfoot>${genesysBitPie(bitacoraRows)}</tfoot>
         </table></div>
       </div>`;
     } else {
+      // v22.30: fila de Total (los mismos números de las tarjetas de arriba) y Excel con los colores de la tabla
+      genesysXls.categorias = { rows: catRows, total: currTotal, catsLabel, periodLabel, cats: Array.from(catsFiltro || []) };
       bodyHtml += `
       <div class="chart-card">
         <div class="ch-title"><span>DETALLE POR CATEGORÍA</span></div>
-        ${tableDlBtn("genesys-table-wrap","genesys-detalle-categoria")}
+        ${genesysXlsBoton("categorias")}
         <div class="table-wrap" id="genesys-table-wrap"><table class="data-table">
           <thead><tr><th>Categoría</th><th>Interacciones</th><th>Nivel de Servicio</th><th>ASA</th><th>TMO</th><th>% Abandono</th><th>Transferidas</th></tr></thead>
           <tbody>${catRows.map(r=>`
@@ -12233,6 +12466,9 @@ function renderGenesys(){
               <td>${r.tmo!==null?r.tmo+"s":"—"}</td><td>${fmtVal(r.abandono,"pct")}</td>
               <td>${fmtNum(r.transferidas)}</td></tr>`).join("")}
           </tbody>
+          <tfoot><tr><td>Total</td><td>${fmtNum(currTotal.interacciones)}</td><td>${fmtVal(currTotal.nivelServicio,"pct")}</td>
+            <td>${currTotal.asa!==null?currTotal.asa+"s":"—"}</td><td>${currTotal.tmo!==null?currTotal.tmo+"s":"—"}</td>
+            <td>${fmtVal(currTotal.abandono,"pct")}</td><td>${fmtNum(currTotal.transferidas)}</td></tr></tfoot>
         </table></div>
       </div>`;
     }
