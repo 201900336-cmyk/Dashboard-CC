@@ -992,7 +992,44 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     .gherr-txt b{font-size:12.5px;}
     .gherr-txt small{font-size:11px;}
   }
+  /* v22.32 (Oscar, 2026-11-19): las 8 tarjetas de indicadores de la pestaña Genesys con el diseño
+     "Ejecutiva oscura" (eligió la "Opción 3" entre 3 diseños, y dejó el negro del dashboard en vez
+     de un gris: "resalta mejor los números"). Tarjeta negra, número blanco grande, ícono en círculo
+     rojo, el % de Contestadas / % Abandono al lado del nombre (antes se montaba sobre el ícono) y
+     Y2Y / M2M en dos columnas con flecha. Mismo orden, mismos datos y mismo tooltip de antes: solo
+     cambia cómo se ve. Todo lo de adentro va en "em" y la base (.gk-in) se achica con el ancho de la
+     tarjeta (cqw), así en pantallas más angostas la tarjeta se encoge pareja en vez de montarse.
+     Solo aplica a #kpi-grid-genesys: las tarjetas de FCR, Incidencias y Qualtrics siguen igual. */
+  .gk-card{background:var(--black);border:0;border-radius:14px;padding:13px 12px 12px;gap:0;box-shadow:0 6px 16px rgba(22,22,22,.18);container-type:inline-size;}
+  .gk-in{display:flex;flex-direction:column;min-width:0;font-size:10px;}
+  @supports (font-size:1cqw){ .gk-in{font-size:clamp(8px,7.37cqw,10px);} }   /* 10px con la tarjeta a su ancho normal (160px) */
+  .gk-card .kpi-top{gap:.6em;}
+  .gk-card .kpi-value{font-size:3em;font-weight:700;line-height:1.1;color:#fff;white-space:nowrap;}
+  .gk-card .kpi-icon-badge{width:3.4em;height:3.4em;background:var(--red);color:#fff;}
+  .gk-card .kpi-icon-badge svg{width:1.8em;height:1.8em;}
+  .gk-lbl{display:flex;align-items:center;justify-content:space-between;gap:.6em;min-height:1.6em;margin-top:.6em;}
+  .gk-card .kpi-label{font-size:max(9.5px,1.1em);line-height:1.45;letter-spacing:.03em;color:#BDBDBD;white-space:nowrap;}
+  .gk-sub{font-size:max(10px,1.2em);font-weight:700;line-height:1.3;color:#fff;white-space:nowrap;}
+  .gk-div{height:1px;background:rgba(255,255,255,.12);margin:1em 0 .9em;}
+  .gk-deltas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8em;}
+  .gk-d{min-width:0;}
+  .gk-d + .gk-d{padding-left:.8em;border-left:1px solid rgba(255,255,255,.12);}
+  .gk-d-cap{display:block;font-size:max(9px,1em);font-weight:700;line-height:1.3;letter-spacing:.05em;color:#A3A3A3;}
+  .gk-d-val{display:flex;align-items:center;gap:.32em;margin-top:.24em;font-size:1.25em;font-weight:700;line-height:1.2;white-space:nowrap;}
+  .gk-d-val svg{width:.64em;height:.64em;flex-shrink:0;}
+  .gk-d-val.up{color:#5EDC8E;} .gk-d-val.down{color:#FF8091;} .gk-d-val.flat{color:#A3A3A3;}
+  .gk-d-val.lg{font-size:1.1em;} .gk-d-val.xl{font-size:.98em;}   /* comparativos largos ("+250.3%", "+1,250.3%") */
+  @media (max-width:1220px){ #kpi-grid-genesys{grid-template-columns:repeat(4,1fr) !important;} }   /* 8 en fila ya no se leen: 2 filas de 4 */
+  @media (max-width:700px){ #kpi-grid-genesys{grid-template-columns:repeat(2,1fr) !important;} }    /* celular: de 2 en 2 */
   @media print{
+    /* v22.32: en papel las tarjetas negras salen claras (el navegador no imprime fondos y el número blanco se perdería) */
+    .gk-card{background:#fff !important;border:1px solid #C9C9C9 !important;box-shadow:none !important;}
+    .gk-card .kpi-value, .gk-sub{color:#000 !important;}
+    .gk-card .kpi-label, .gk-d-cap{color:#444 !important;}
+    .gk-card .kpi-icon-badge{background:#fff !important;color:var(--red-dark) !important;border:1px solid var(--red-dark);}
+    .gk-div{background:#DDD !important;}
+    .gk-d + .gk-d{border-left-color:#DDD !important;}
+    .gk-d-val.up{color:#17733F !important;} .gk-d-val.down{color:var(--red-dark) !important;} .gk-d-val.flat{color:#666 !important;}
     .gherr-sec, .gherr{display:none !important;}   /* v22.31: los botones no van en papel */
     #header-actions, #filterbar, .tabs-row, .tb-sep{display:none !important;}
     .tb-status{min-height:0;margin-left:0;padding:0;border:0;}
@@ -2497,10 +2534,12 @@ function downloadKpiGridAsExcel(gridId, filename){
   const aoa = [["Indicador","Valor","M2M","Y2Y"]];
   cards.forEach(card=>{
     const label = card.querySelector(".kpi-label")?.textContent.trim() || "";
-    const value = card.querySelector(".kpi-value")?.textContent.trim() || "";
+    // v22.32: las tarjetas de Genesys (diseño "Ejecutiva oscura") ya no llevan chips; traen el texto
+    // para el Excel en data-xl-* (el mismo "Y2Y: ▼ -48.2%" de antes). Las demás pestañas siguen igual.
+    const value = card.dataset.xlValor || card.querySelector(".kpi-value")?.textContent.trim() || "";
     const chips = Array.from(card.querySelectorAll(".chip")).map(c=>c.textContent.trim());
-    const mom = chips.find(c=>c.startsWith("M2M")) || "";
-    const yoy = chips.find(c=>c.startsWith("Y2Y")) || "";
+    const mom = card.dataset.xlM2m || chips.find(c=>c.startsWith("M2M")) || "";
+    const yoy = card.dataset.xlY2y || chips.find(c=>c.startsWith("Y2Y")) || "";
     aoa.push([label, value, mom, yoy]);
   });
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -11785,6 +11824,48 @@ function genesysDeltaBadgesHtml(metricKey, currV, momV, yoyV, momLabel, yoyLabel
        + chipHtml(deltaForMetric(currV, momV, metricKey), metricKey, "M2M", momLabel, momV);
 }
 
+/* v22.32 (Oscar, 2026-11-19): tarjetas de indicadores con el diseño "Ejecutiva oscura" (la
+   "Opción 3" que eligió entre 3 diseños). Estas dos funciones arman lo propio de la tarjeta
+   nueva: el comparativo (Y2Y o M2M) en su columna y el tamaño del número grande. El cálculo
+   es el mismo de chipHtml (deltaForMetric + METRICS[...].good, mismo tooltip); cambia el
+   dibujo: flecha SVG, verde/rojo sobre negro y "s" en vez de "seg" para que quepa en media
+   tarjeta. Sin dato para comparar sale "—" en gris, como el chip "flat". Las gráficas de más
+   abajo siguen usando genesysDeltaBadgesHtml (los chips de siempre). */
+const GK_FLECHA_SUBE = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.2 9.4 8.6H.6z" fill="currentColor"/></svg>';
+const GK_FLECHA_BAJA = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.8.6 1.4h8.8z" fill="currentColor"/></svg>';
+function genesysKpiDeltaHtml(metricKey, currV, prevV, label, periodLabel){
+  const delta = deltaForMetric(currV, prevV, metricKey);
+  if(delta===null || delta===undefined || isNaN(delta)){
+    return `<div class="gk-d"><span class="gk-d-cap">${label}</span><span class="gk-d-val flat">—</span></div>`;
+  }
+  const m = METRICS[metricKey];
+  const up = delta>0, down = delta<0;
+  let cls = "flat";
+  if(up || down){
+    if(m.good===1) cls = up?"up":"down";
+    else if(m.good===-1) cls = up?"down":"up";
+  }
+  const sign = up ? "+" : (down ? "-" : "");
+  const txt = (m && m.unit === "seg")
+    ? `${sign}${Math.abs(delta).toFixed(0)}s`
+    : `${sign}${Math.abs(delta*100).toFixed(1)}%`;
+  const largo = txt.length>=8 ? " xl" : (txt.length===7 ? " lg" : "");
+  const hover = periodLabel
+    ? ` onmouseenter="genesysShowChipTooltip(event,'${label}','${periodLabel}','${formatMetricValue(metricKey, prevV)}')" onmouseleave="genesysHideIntervalTooltip()"`
+    : "";
+  return `<div class="gk-d"><span class="gk-d-cap">${label}</span><span class="gk-d-val ${cls}${largo}${periodLabel ? " chip-hoverable" : ""}"${hover}>${up ? GK_FLECHA_SUBE : (down ? GK_FLECHA_BAJA : "")}${txt}</span></div>`;
+}
+// Tamaño del número grande, en em: 3em si cabe; si el número es largo ("167,432", "1,204,332")
+// se achica lo justo para no montarse sobre el ícono. Los anchos por carácter son los de Segoe UI
+// Bold (en em, ya con el letter-spacing de -.02em); 9.3em es lo que queda libre al lado del ícono.
+function genesysKpiValorTam(txt){
+  const ANCHO = {",":.251, ".":.251, "%":.847, "s":.42, "-":.384, "—":.98, " ":.256, "+":.687};
+  let w = 0;
+  for(const ch of String(txt)) w += (ANCHO[ch]!==undefined ? ANCHO[ch] : .555);
+  if(w<=0) return 3;
+  return Math.max(1.6, Math.min(3, Math.floor(9.3/w*100)/100));
+}
+
 /* ============================================================
    v22.30: EXCEL de la BITÁCORA (y del Detalle por categoría) de Genesys
    ============================================================
@@ -12180,18 +12261,26 @@ function renderGenesys(){
     const kpiHtml = kpiDefs.map(d=>{
       const displayV = currTotal[d.valueKey];
       const deltaCurr = currTotal[d.deltaKey], deltaMom = momTotal[d.deltaKey], deltaYoy = yoyTotal[d.deltaKey];
-      const subHtml = d.subKey ? `<span style="color:var(--gray);font-size:12.5px;font-weight:700;margin-left:6px;">${d.subFmt(currTotal[d.subKey])}</span>` : "";
       // TNPS en modo Hoy/Ayer compara contra MESES (ver arriba), no contra
       // días como el resto de las tarjetas — así que su tooltip necesita su
       // propia etiqueta en vez de la genérica momLabel/yoyLabel de este render.
       const useTnpsLabels = d.metricKey==="tnps" && tnpsMomLabel && tnpsYoyLabel;
       const cardMomLabel = useTnpsLabels ? tnpsMomLabel : momLabel;
       const cardYoyLabel = useTnpsLabels ? tnpsYoyLabel : yoyLabel;
+      // v22.32: tarjeta con el diseño "Ejecutiva oscura" (Opción 3). El % de Contestadas /
+      // % Abandono va al lado del nombre (antes iba pegado al número y se montaba sobre el
+      // ícono). Los data-xl-* son lo que baja "Tarjetas en Excel": el mismo texto de siempre.
+      const valorTxt = d.fmt(displayV);
+      const subTxt = d.subKey ? d.subFmt(currTotal[d.subKey]) : "";
+      const xlChip = (prevV, etiqueta)=> chipHtml(deltaForMetric(deltaCurr, prevV, d.metricKey), d.metricKey, etiqueta).replace(/<[^>]*>/g, "");
       return `
-        <div class="kpi-card">
-          <div class="kpi-top"><span class="kpi-value">${d.fmt(displayV)}${subHtml}</span>${iconBadge(d.icon)}</div>
-          <span class="kpi-label">${d.label}</span>
-          <div class="kpi-deltas">${genesysDeltaBadgesHtml(d.metricKey, deltaCurr, deltaMom, deltaYoy, cardMomLabel, cardYoyLabel)}</div>
+        <div class="kpi-card gk-card" data-xl-valor="${valorTxt}${subTxt ? ` (${subTxt})` : ""}" data-xl-y2y="${xlChip(deltaYoy, "Y2Y")}" data-xl-m2m="${xlChip(deltaMom, "M2M")}">
+          <div class="gk-in">
+            <div class="kpi-top"><span class="kpi-value" style="font-size:${genesysKpiValorTam(valorTxt)}em;">${valorTxt}</span>${iconBadge(d.icon)}</div>
+            <div class="gk-lbl"><span class="kpi-label">${d.label}</span>${subTxt ? `<span class="gk-sub">${subTxt}</span>` : ""}</div>
+            <div class="gk-div"></div>
+            <div class="gk-deltas">${genesysKpiDeltaHtml(d.metricKey, deltaCurr, deltaYoy, "Y2Y", cardYoyLabel)}${genesysKpiDeltaHtml(d.metricKey, deltaCurr, deltaMom, "M2M", cardMomLabel)}</div>
+          </div>
         </div>`;
     }).join("");
 
