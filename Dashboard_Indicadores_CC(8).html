@@ -8010,6 +8010,7 @@ let tmoAsesorAntig = "";   // v22.05: filtro de antigüedad ("" = todas)
 let tmoAsesorCuartilesVis = new Set([1,2,3,4]);   // v22.07: cuartiles a la vista (casilla en el encabezado de cada columna)
 /* ============================================================
    v22.23 (Oscar, 2026-11-17): CRUCE CON LA MALLA en WhatsApp y Redes Sociales
+   (v22.33: y WhatsApp Corporativo)
    ============================================================
    "Que la información de los cuartiles y toda la información haga el cruce con
    la malla de turno, así solo trae la información de los asesores puntuales."
@@ -8020,10 +8021,18 @@ let tmoAsesorCuartilesVis = new Set([1,2,3,4]);   // v22.07: cuartiles a la vist
    (TMO_MALLA_CATS) y se pueden cambiar en la ventana; lo elegido queda guardado
    en este navegador. Si la malla no trae fechas del período, se usa toda la
    malla guardada y se avisa. La casilla "Solo asesores de la malla" permite ver
-   a todos sin volver a consultar Genesys. */
+   a todos sin volver a consultar Genesys.
+   v22.33 (Oscar, 2026-11-19): "necesito la misma estructura para WhatsApp
+   Corporativo" — entra como tercer skill con el mismo cruce (ventana y Excel).
+   Sus skills de la malla se eligen solos cuando el nombre trae WhatsApp (o WA /
+   WSP / Canales Digitales) Y Corporativo (o Corp / Empresas / Pyme) — justo los
+   que el cruce de WhatsApp deja por fuera; los de "No Contactados" no cuentan.
+   Si la malla lo llama de otra forma, la ventana pide marcarlo —igual que en
+   los otros dos— y mientras tanto muestra a todos. */
 const TMO_MALLA_CATS = {
   "WhatsApp":       { si: /whats|wsp|canal(es)? digital/, no: /corporat|empresa|pyme|no contact/ },
   "Redes Sociales": { si: /redes|rrss|social|facebook|instagram|messenger|canal(es)? digital/, no: /corporat|empresa|pyme/ },
+  "WhatsApp Corporativo": { si: /^(?=.*(whats|wsp|\bwa\b|canal(es)? digital))(?=.*(corp|empresa|pyme))/, no: /no contact/ },   // v22.33
 };
 let tmoMallaActivo = true;         // casilla "Solo asesores de la malla"
 let tmoMallaPanelAbierto = false;  // lista de skills de la malla a la vista
@@ -8078,7 +8087,8 @@ function tmoMallaEsta(ix, a){
   const n = antigNombreNorm(a.nombre); return !!(n && ix.nombre.has(n));
 }
 // Lo que muestran la ventana y el Excel: asesores con antigüedad y semáforo y, en WhatsApp / Redes
-// Sociales, cruzados con la malla. (El filtro de antigüedad se aplica después, en cada lugar.)
+// Sociales / WhatsApp Corporativo (v22.33), cruzados con la malla. (El filtro de antigüedad se aplica
+// después, en cada lugar.)
 function tmoAsesorVista(){
   const c = tmoAsesorUltimoCalculo;
   const cat = c.cat || (document.getElementById("tmoasesor-input-categoria")||{}).value || "";
@@ -8505,7 +8515,7 @@ document.getElementById("tmoasesor-excel").addEventListener("click", tmoAsesorEx
 
 function tmoAsesorRenderResultado(){
   if(!tmoAsesorUltimoCalculo) return;
-  // v22.23: asesores con antigüedad y, en WhatsApp / Redes Sociales, ya cruzados con la malla
+  // v22.23: asesores con antigüedad y, en WhatsApp / Redes Sociales (v22.33: y WhatsApp Corporativo), ya cruzados con la malla
   const vista = tmoAsesorVista();
   const { meta, cat, desde, todos } = vista;
   const refIso = vista.hasta;
