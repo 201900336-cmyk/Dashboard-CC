@@ -8010,11 +8010,11 @@ let tmoAsesorAntig = "";   // v22.05: filtro de antigüedad ("" = todas)
 let tmoAsesorCuartilesVis = new Set([1,2,3,4]);   // v22.07: cuartiles a la vista (casilla en el encabezado de cada columna)
 /* ============================================================
    v22.23 (Oscar, 2026-11-17): CRUCE CON LA MALLA en WhatsApp y Redes Sociales
-   (v22.33: y WhatsApp Corporativo)
+   (v22.33: y WhatsApp Corporativo · v22.34: en TODOS los skills)
    ============================================================
    "Que la información de los cuartiles y toda la información haga el cruce con
    la malla de turno, así solo trae la información de los asesores puntuales."
-   En esos dos skills solo cuentan los asesores que la malla tiene en ese skill
+   Solo cuentan los asesores que la malla tiene en ese skill
    en alguna fecha del período consultado (así no entran supervisores, apoyos de
    otros skills, etc.). El cruce es por asesor (correo, login o nombre, igual que
    la antigüedad). Los skills de la malla se eligen solos por su nombre
@@ -8028,15 +8028,42 @@ let tmoAsesorCuartilesVis = new Set([1,2,3,4]);   // v22.07: cuartiles a la vist
    WSP / Canales Digitales) Y Corporativo (o Corp / Empresas / Pyme) — justo los
    que el cruce de WhatsApp deja por fuera; los de "No Contactados" no cuentan.
    Si la malla lo llama de otra forma, la ventana pide marcarlo —igual que en
-   los otros dos— y mientras tanto muestra a todos. */
+   los otros dos— y mientras tanto muestra a todos.
+   v22.34 (Oscar, 2026-11-19): "haz lo mismo para todos los skill mejor, así
+   todos están igual con el tema del TMO". El cruce aplica en los 16 skills:
+   · Cada skill busca los suyos en la malla por nombre: el mismo nombre del
+     skill siempre vale, y además las reglas de TMO_MALLA_CATS (las de WhatsApp,
+     Redes Sociales y WhatsApp Corporativo quedaron como estaban).
+   · Si la malla no tiene un skill con ese nombre, se cruza con TODA la malla
+     (salen los que están en la malla, del skill que sea) y la ventana lo dice.
+   · Para no esconder a un equipo por una mala elección automática, el cruce NO
+     se aplica solo —se muestran todos y se avisa— cuando ninguno de los que
+     atendieron está en la malla, cuando el skill elegido por nombre atendió
+     menos del 20% o cuando toda la malla atendió menos de la mitad. Lo que se
+     marca a mano en la ventana (o "Usar estos skills") siempre se respeta. */
+// Palabras de otros canales / equipos: un skill de la malla que las traiga no es de voz (Fijo, Móvil)
+const TMO_MALLA_NO_VOZ = /whats|wsp|\bwa\b|canal(es)? digital|redes|rrss|social|mail|correo|\bchat|despacho|back ?office|corp|empresa|pyme|help ?desk|recuper|no contact/;
 const TMO_MALLA_CATS = {
+  "Fijo":           { si: /\bfij[oa]s?\b|residencial|\bhogar/, no: TMO_MALLA_NO_VOZ },   // v22.34
+  "Móvil":          { si: /\bmovil(es)?\b|celular|prepago|pos ?pago|post ?pago/, no: TMO_MALLA_NO_VOZ },   // v22.34
+  "Despacho":       { si: /despacho/, no: /mail|correo|back ?office|\bbo\b|whats|wsp|\bchat|recuper/ },   // v22.34
+  "Corporativo":    { si: /corp|empresa|pyme/, no: /whats|wsp|\bwa\b|canal(es)? digital|redes|rrss|social|mail|correo|\bchat|despacho|help ?desk|recuper|no contact/ },   // v22.34
   "WhatsApp":       { si: /whats|wsp|canal(es)? digital/, no: /corporat|empresa|pyme|no contact/ },
+  "Helpdesk":       { si: /help ?desk|mesa de ayuda/ },   // v22.34
   "Redes Sociales": { si: /redes|rrss|social|facebook|instagram|messenger|canal(es)? digital/, no: /corporat|empresa|pyme/ },
+  "Chat Web":       { si: /\bchat\b|web ?chat/, no: /whats|wsp|corp|empresa|pyme/ },   // v22.34
+  "Mail Clientes":  { si: /mail|correo/, no: /corp|empresa|pyme|\bvip\b|despacho/ },   // v22.34
+  "Mail Corporativo": { si: /^(?=.*(mail|correo))(?=.*(corp|empresa|pyme|\bvip\b))/, no: /despacho/ },   // v22.34
   "WhatsApp Corporativo": { si: /^(?=.*(whats|wsp|\bwa\b|canal(es)? digital))(?=.*(corp|empresa|pyme))/, no: /no contact/ },   // v22.33
+  "BackOffice Despacho": { si: /back ?office|\bbo\b/, no: /mail|correo/ },   // v22.34
+  "Recuperación de equipos": { si: /recuper/ },   // v22.34
+  "WhatsApp No Contactados": { si: /no contact/ },   // v22.34
+  "Mail Despacho (Horario Hábil)":    { si: /^(?=.*(mail|correo))(?=.*despacho)/, no: /fuera/ },   // v22.34: un solo "Mail Despacho" en la malla sirve a los dos horarios
+  "Mail Despacho (Fuera de Horario)": { si: /^(?=.*(mail|correo))(?=.*despacho)/, no: /habil/ },   // v22.34
 };
 let tmoMallaActivo = true;         // casilla "Solo asesores de la malla"
 let tmoMallaPanelAbierto = false;  // lista de skills de la malla a la vista
-function tmoMallaAplica(cat){ return Object.prototype.hasOwnProperty.call(TMO_MALLA_CATS, cat); }
+function tmoMallaAplica(cat){ return !!cat; }   // v22.34: todos los skills (antes solo los de TMO_MALLA_CATS)
 function tmoMallaSkillsDisponibles(){
   const malla = asistenciaMallaData || asistenciaMallaGuardada;
   const set = new Set();
@@ -8047,31 +8074,35 @@ function tmoMallaSkillsElegidos(cat){
   const disp = tmoMallaSkillsDisponibles();
   let guardados = null;
   try{ guardados = JSON.parse(localStorage.getItem("cc_tmo_malla_skills_"+cat) || "null"); }catch(e){}
+  // v22.34: .aMano = lo eligió la persona en la ventana (se respeta tal cual, sin el freno del 20%)
   if(Array.isArray(guardados)){
-    if(!guardados.length) return [];
+    if(!guardados.length) return [];   // desmarcó todos: sin skill elegido (v22.34: se cruza con toda la malla)
     const ok = guardados.filter(s=> disp.includes(s));
-    if(ok.length) return ok;   // si ya no existen en la malla (cambió el nombre), se vuelve a elegir solo
+    if(ok.length){ ok.aMano = true; return ok; }   // si ya no existen en la malla (cambió el nombre), se vuelve a elegir solo
   }
-  const r = TMO_MALLA_CATS[cat]; if(!r) return [];
-  return disp.filter(s=>{ const n = antigNombreNorm(s); return r.si.test(n) && !r.no.test(n); });
+  // v22.34: vale el skill de la malla que se llama igual que el skill, y además los de su regla (si tiene)
+  const r = TMO_MALLA_CATS[cat], igual = antigNombreNorm(cat);
+  return disp.filter(s=>{ const n = antigNombreNorm(s); return n===igual || !!(r && r.si.test(n) && !(r.no && r.no.test(n))); });
 }
 function tmoMallaGuardarSkills(cat){
   const elegidos = Array.from(document.querySelectorAll("#tmoasesor-resultado [data-tmo-malla-skill]:checked")).map(x=> x.value);
   try{ localStorage.setItem("cc_tmo_malla_skills_"+cat, JSON.stringify(elegidos)); }catch(e){}
 }
 // Asesores que la malla tiene en esos skills entre desde y hasta → índice correo / login / nombre
-function tmoMallaIndice(skills, desde, hasta){
+// v22.34: con todos=true entran los asesores de TODA la malla (del skill que sea)
+function tmoMallaIndice(skills, desde, hasta, todos){
   const malla = asistenciaMallaData || asistenciaMallaGuardada;
   const res = { correo:new Set(), login:new Set(), nombre:new Set(), n:0, deTodaLaMalla:false };
-  if(!malla || !malla.filasPorFecha || !skills.length) return res;
+  if(!malla || !malla.filasPorFecha || (!skills.length && !todos)) return res;
   const set = new Set(skills);
+  const vale = f=> !!todos || set.has(f.skill);
   const fechas = Object.keys(malla.filasPorFecha).sort();
-  const enRango = fechas.filter(iso=> iso>=desde && iso<=hasta && (malla.filasPorFecha[iso]||[]).some(f=> set.has(f.skill)));
+  const enRango = fechas.filter(iso=> iso>=desde && iso<=hasta && (malla.filasPorFecha[iso]||[]).some(vale));
   const usar = enRango.length ? enRango : fechas;
   res.deTodaLaMalla = !enRango.length;
   const personas = new Set();
   usar.forEach(iso=> (malla.filasPorFecha[iso]||[]).forEach(f=>{
-    if(!set.has(f.skill)) return;
+    if(!vale(f)) return;
     const correo = String(f.correo||"").toLowerCase();
     if(correo){ res.correo.add(correo); const l = antigLogin(correo); if(l) res.login.add(l); }
     const nn = antigNombreNorm(f.nombre); if(nn) res.nombre.add(nn);
@@ -8086,9 +8117,9 @@ function tmoMallaEsta(ix, a){
   const l = antigLogin(correo); if(l && ix.login.has(l)) return true;
   const n = antigNombreNorm(a.nombre); return !!(n && ix.nombre.has(n));
 }
-// Lo que muestran la ventana y el Excel: asesores con antigüedad y semáforo y, en WhatsApp / Redes
-// Sociales / WhatsApp Corporativo (v22.33), cruzados con la malla. (El filtro de antigüedad se aplica
-// después, en cada lugar.)
+// Lo que muestran la ventana y el Excel: asesores con antigüedad y semáforo, cruzados con la malla
+// (v22.23 WhatsApp / Redes Sociales · v22.33 WhatsApp Corporativo · v22.34 todos los skills). (El filtro
+// de antigüedad se aplica después, en cada lugar.)
 function tmoAsesorVista(){
   const c = tmoAsesorUltimoCalculo;
   const cat = c.cat || (document.getElementById("tmoasesor-input-categoria")||{}).value || "";
@@ -8102,17 +8133,29 @@ function tmoAsesorVista(){
     const meses = antigMeses(ingreso, hasta);
     return { ...a, correo, ingreso, meses, antig: antigGrupo(meses), clase: tmoAsesorSemaforoClase(a.tmoProm, meta) };
   });
-  const cruce = { aplica: tmoMallaAplica(cat), activo:false, sinMalla:false, disponibles:[], skills:[], indice:null, fuera:[] };
+  // v22.34: aMano = skills elegidos en la ventana · todaLaMalla = la malla no tiene un skill con ese nombre ·
+  // freno = por qué NO se aplica solo el cruce ("vacia" | "ninguno" | "pocos") · parte = fracción de las
+  // contestadas que atendieron los asesores de la malla
+  const cruce = { aplica: tmoMallaAplica(cat), activo:false, sinMalla:false, disponibles:[], skills:[], indice:null, fuera:[], aMano:false, todaLaMalla:false, freno:"", parte:0 };
   if(cruce.aplica){
     cruce.disponibles = tmoMallaSkillsDisponibles();
     cruce.sinMalla = !cruce.disponibles.length;
-    cruce.skills = cruce.sinMalla ? [] : tmoMallaSkillsElegidos(cat);
-    if(cruce.skills.length){
-      cruce.indice = tmoMallaIndice(cruce.skills, desde, hasta);
+    if(!cruce.sinMalla){
+      cruce.skills = tmoMallaSkillsElegidos(cat);
+      cruce.aMano = !!cruce.skills.aMano;
+      cruce.todaLaMalla = !cruce.skills.length;
+      cruce.indice = tmoMallaIndice(cruce.skills, desde, hasta, cruce.todaLaMalla);
       todos.forEach(a=>{ a.enMalla = tmoMallaEsta(cruce.indice, a); });
       cruce.fuera = todos.filter(a=> !a.enMalla).sort((x,y)=> y.contestadas - x.contestadas);
-      cruce.activo = tmoMallaActivo && cruce.indice.n > 0;
-      if(cruce.activo) todos = todos.filter(a=> a.enMalla);
+      const dentro = todos.filter(a=> a.enMalla);
+      const suma = lista=> lista.reduce((s,a)=> s + (a.contestadas||0), 0);
+      const total = suma(todos);
+      cruce.parte = total ? suma(dentro)/total : 0;
+      if(!cruce.indice.n) cruce.freno = "vacia";
+      else if(!dentro.length) cruce.freno = "ninguno";
+      else if(cruce.todaLaMalla ? cruce.parte < 0.5 : (!cruce.aMano && cruce.parte < 0.2)) cruce.freno = "pocos";
+      cruce.activo = tmoMallaActivo && !cruce.freno;
+      if(cruce.activo) todos = dentro;
     }
   }
   return { cat, desde, hasta, meta, todos, cruce };
@@ -8122,25 +8165,40 @@ function tmoMallaHtml(v){
   if(!cr.aplica) return "";
   if(cr.sinMalla) return `<div class="tmo-cruce aviso"><span class="txt">No se pudo leer la malla de turnos: se muestran todos los asesores que atendieron ${qaEsc(v.cat)}.</span></div>`;
   const nombreDe = a=> a.nombre===a.userId ? a.nombre : tnNombrePropio(a.nombre);
-  const abierta = tmoMallaPanelAbierto || !cr.skills.length;
+  // v22.34: sin un skill con ese nombre el cruce es con toda la malla; con un freno ("ninguno" / "pocos")
+  // se muestran todos y la lista de skills sale abierta para corregirlo ahí mismo.
+  const catB = `<b>${qaEsc(v.cat)}</b>`;
+  const cuales = cr.todaLaMalla ? "toda la malla" : `<b>${qaEsc(cr.skills.join(" + "))}</b>`;
+  const forzada = cr.freno==="pocos" || (cr.freno==="ninguno" && !cr.todaLaMalla);
+  const abierta = tmoMallaPanelAbierto || forzada;
+  const pct = Math.round(cr.parte*100);
   let txt;
-  if(!cr.skills.length) txt = `No encontré en la malla un skill de <b>${qaEsc(v.cat)}</b>. Marcá abajo cuál o cuáles son; mientras tanto se muestran todos.`;
-  else if(!cr.indice.n) txt = `La malla no tiene asesores en <b>${qaEsc(cr.skills.join(" + "))}</b>: se muestran todos.`;
+  if(cr.freno==="vacia") txt = cr.todaLaMalla ? "La malla guardada no trae asesores: se muestran todos." : `La malla no tiene asesores en ${cuales}: se muestran todos.`;
+  else if(cr.freno==="ninguno") txt = cr.todaLaMalla
+    ? `Ninguno de los que atendieron ${catB} está en la malla: se muestran todos.`
+    : `Ninguno de los que atendieron ${catB} está en la malla en ${cuales}: se muestran todos. Si su skill en la malla es otro, marcalo abajo.`;
+  else if(cr.freno==="pocos") txt = cr.todaLaMalla
+    ? `No encontré en la malla un skill con el nombre de ${catB}, y los asesores de la malla solo atendieron el ${pct}%: se muestran todos. Si ${catB} tiene un skill en la malla, marcalo abajo.`
+    : `Los asesores de la malla en ${cuales} solo atendieron el ${pct}% de ${catB}: no se aplicó el cruce y se muestran todos. Si ese es el skill correcto, tocá “Usar estos skills”; si es otro, marcalo abajo.`;
   else {
-    txt = `Malla: <b>${qaEsc(cr.skills.join(" + "))}</b> · ${fmtNum(cr.indice.n)} asesor${cr.indice.n===1?"":"es"} en la malla`;
+    txt = cr.todaLaMalla
+      ? `No encontré en la malla un skill con el nombre de ${catB}: se cruzó con <b>toda la malla</b> · ${fmtNum(cr.indice.n)} asesor${cr.indice.n===1?"":"es"} en la malla`
+      : `Malla: ${cuales} · ${fmtNum(cr.indice.n)} asesor${cr.indice.n===1?"":"es"} en la malla`;
     if(cr.indice.deTodaLaMalla) txt += ` <span title="La malla guardada no trae fechas de este período">(la malla no cubre estas fechas: se usó toda la malla guardada)</span>`;
+    const uno = cr.fuera.length===1;   // v22.34: "1 quedó fuera" en singular
     txt += cr.fuera.length
-      ? ` · <b>${fmtNum(cr.fuera.length)}</b> ${cr.activo ? "quedaron fuera" : "no están en la malla"} (atendieron ${fmtNum(cr.fuera.reduce((s,a)=>s+a.contestadas,0))})`
+      ? ` · <b>${fmtNum(cr.fuera.length)}</b> ${cr.activo ? (uno ? "quedó fuera" : "quedaron fuera") : (uno ? "no está en la malla" : "no están en la malla")} (${uno ? "atendió" : "atendieron"} ${fmtNum(cr.fuera.reduce((s,a)=>s+a.contestadas,0))})`
       : " · todos los que atendieron están en la malla";
   }
-  const sw = cr.skills.length && cr.indice && cr.indice.n
+  const sw = !cr.freno
     ? `<label class="sw"><input type="checkbox" data-tmo-malla-activo ${tmoMallaActivo?"checked":""}/> Solo asesores de la malla</label>` : "";
-  const cambiar = cr.skills.length ? `<button type="button" class="cambiar" data-tmo-malla-cambiar aria-expanded="${abierta?"true":"false"}">${abierta?"Listo":"Cambiar skills de la malla"}</button>` : "";
+  const usar = cr.freno==="pocos" && !cr.todaLaMalla ? `<button type="button" class="cambiar" data-tmo-malla-usar>Usar estos skills</button>` : "";
+  const cambiar = forzada ? "" : `<button type="button" class="cambiar" data-tmo-malla-cambiar aria-expanded="${abierta?"true":"false"}">${abierta ? "Listo" : (cr.skills.length ? "Cambiar skills de la malla" : "Elegir skills de la malla")}</button>`;
   const skills = abierta ? `<div class="skills" role="group" aria-label="Skills de la malla para ${qaEsc(v.cat)}">${cr.disponibles.map(s=>
       `<label><input type="checkbox" data-tmo-malla-skill value="${qaEsc(s)}" ${cr.skills.includes(s)?"checked":""}/> ${qaEsc(s)}</label>`).join("")}</div>` : "";
   const fuera = cr.fuera.length && cr.indice && cr.indice.n ? `<details><summary>${cr.activo?"Ver quiénes quedaron fuera":"Ver quiénes no están en la malla"}</summary><div class="fuera">${cr.fuera.map(a=>
       `<span>${qaEsc(nombreDe(a))} · ${fmtNum(a.contestadas)}</span>`).join("")}</div></details>` : "";
-  return `<div class="tmo-cruce">${sw}<span class="txt">${txt}</span>${cambiar}${skills}${fuera}</div>`;
+  return `<div class="tmo-cruce${cr.freno ? " aviso" : ""}">${sw}<span class="txt">${txt}</span>${usar}${cambiar}${skills}${fuera}</div>`;
 }
 function tmoAsesorExcelHabilitar(si){
   const b = document.getElementById("tmoasesor-excel");
@@ -8377,7 +8435,7 @@ function tmoAsesorExcel(){
   });
   cuartilizar(filas.map(f=> f.per));
   meses.forEach(me=> cuartilizar(filas.map(f=> f.porMes[me.k])));
-  const cruceTxt = !v.cruce.aplica ? "" : v.cruce.activo ? `Solo asesores de la malla (${v.cruce.skills.join(" + ")})` : "Sin cruce con la malla (todos los que atendieron)";
+  const cruceTxt = !v.cruce.aplica ? "" : v.cruce.activo ? `Solo asesores de la malla (${v.cruce.todaLaMalla ? "toda la malla" : v.cruce.skills.join(" + ")})` : "Sin cruce con la malla (todos los que atendieron)";   // v22.34: + toda la malla
   const filtroTxt = tmoAsesorAntig ? `Antigüedad: ${antigLabel(tmoAsesorAntig)}` : "";
   // Título y dos líneas de contexto (sin unir celdas: el texto se ve completo hacia la derecha)
   const encabezado = (h, titulo, sub2)=>{
@@ -8515,7 +8573,7 @@ document.getElementById("tmoasesor-excel").addEventListener("click", tmoAsesorEx
 
 function tmoAsesorRenderResultado(){
   if(!tmoAsesorUltimoCalculo) return;
-  // v22.23: asesores con antigüedad y, en WhatsApp / Redes Sociales (v22.33: y WhatsApp Corporativo), ya cruzados con la malla
+  // v22.23: asesores con antigüedad y ya cruzados con la malla (v22.34: en todos los skills)
   const vista = tmoAsesorVista();
   const { meta, cat, desde, todos } = vista;
   const refIso = vista.hasta;
@@ -8604,6 +8662,8 @@ function tmoAsesorRenderResultado(){
 // v22.07: clics dentro del resultado (se conecta una sola vez; el contenido se vuelve a dibujar)
 document.getElementById("tmoasesor-resultado").addEventListener("click", (e)=>{
   if(e.target.closest("[data-tmo-malla-cambiar]")){ tmoMallaPanelAbierto = !tmoMallaPanelAbierto; tmoAsesorRenderResultado(); return; }   // v22.23
+  // v22.34: "Usar estos skills" guarda los que están marcados como elegidos a mano (así el cruce se aplica aunque hayan atendido poco)
+  if(e.target.closest("[data-tmo-malla-usar]")){ if(tmoAsesorUltimoCalculo) tmoMallaGuardarSkills(tmoAsesorUltimoCalculo.cat); tmoAsesorRenderResultado(); return; }
   const fila = e.target.closest("[data-antig]");
   if(fila && !fila.disabled){
     tmoAsesorAntig = fila.dataset.antig;
