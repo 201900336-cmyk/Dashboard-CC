@@ -1452,6 +1452,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-dl:hover:not(:disabled){border-color:var(--red);background:#FFF8F8;}
   .qa-dl .ico{font-size:18px;} .qa-dl b{display:block;font-size:12.5px;} .qa-dl small{display:block;font-size:11px;color:var(--qa-mut);}
   .qa-dl.off{opacity:.5;cursor:default;}
+  .qa-dl:disabled{cursor:default;}
+  .qa-dl-nota{grid-column:1 / -1;line-height:1.4;}   /* v22.35: aviso bajo los botones (pantalla con varios monitores) */
+  .qa-dl-nota a{color:var(--red-dark);font-weight:700;}
   .qa-liberada{color:#17733F !important;font-weight:700;}
   .qa-eval-det:empty{display:none;}
   .qa-eval-det{padding:0 0 10px;}
@@ -13338,6 +13341,15 @@ function renderIncidencias(){
    v21.78 — Pre-evaluación del sistema: matriz propia de 8 criterios que se
    califica sola con la transcripción, con momento, observación editable,
    alertas (cancelar, supervisor, reclamo…) y Excel.
+
+   v22.35 — Pantalla con varios monitores (Oscar, 2026-11-19: "hay asesores
+   que tienen 2 monitores y la grabación siempre solo me trae una; me meto en
+   Genesys y sí están ambas pantallas"). Genesys graba CADA monitor como una
+   grabación aparte (hasta 4, media "screen") y entrega un video .webm por
+   monitor: no existe un archivo con todos juntos. El dashboard tomaba solo la
+   primera grabación de pantalla (y de ella, el primer video). Ahora "Pantalla"
+   baja TODOS los videos: "Asesor - teléfono - pantalla 1", "- pantalla 2"…
+   Con un solo monitor todo queda igual que antes (mismo nombre de archivo).
    ============================================================ */
 const QA = {
   vista: "buscar",            // buscar | bandeja
@@ -13932,6 +13944,49 @@ function qaUrisDe(rec){
     .map(k=> ({ clave:k, uri: m[k] && (m[k].mediaUri || m[k].uri) })).filter(x=> x.uri);
 }
 function qaUriDe(rec){ const l = qaUrisDe(rec); return l.length ? l[0].uri : null; }
+// v22.35 (Oscar): "hay asesores que tienen 2 monitores y la grabación siempre
+// solo me trae una". Genesys graba cada monitor como una grabación aparte
+// (media "screen", hasta 4) y antes se usaba solo la primera. Aquí se juntan
+// los videos de TODAS las grabaciones de pantalla, en el orden en que los
+// entrega Genesys. (Si alguna vez una sola grabación trae varios videos en
+// mediaUris, también entran todos.)
+function qaEsPantalla(rec){ return !!rec && String(rec.media||"").toLowerCase()==="screen"; }
+// Devuelve [{ uri, rec, n }]: n es el número de pantalla (1, 2…). Una grabación
+// listada pero todavía sin video guarda su número, así "pantalla 2" es siempre
+// el mismo monitor aunque el video de otro llegue después.
+function qaPantallasDe(recs){
+  const vistos = new Set(), out = [];
+  let n = 0;
+  (recs||[]).filter(qaEsPantalla).forEach(r=>{
+    const uris = qaUrisDe(r);
+    if(!uris.length){ n++; return; }
+    uris.forEach(x=>{
+      if(vistos.has(x.uri)) return;
+      vistos.add(x.uri); out.push({ uri:x.uri, rec:r, n: ++n });
+    });
+  });
+  return out;
+}
+// Grabaciones de pantalla que Genesys listó pero todavía sin video.
+function qaPantallasSinVideo(recs){ return (recs||[]).filter(r=> qaEsPantalla(r) && !qaUrisDe(r).length); }
+// Estado del archivo en Genesys (fileState), en español para los avisos.
+const QA_FILESTATE_ES = { available:"disponible", uploading:"subiéndose", archived:"archivado", restoring:"restaurándose", restored:"restaurado", deleted:"eliminado", error:"con error" };
+// Una grabación de pantalla que llegó sin video se le pide sola a Genesys
+// (mientras responda 202 la sigue preparando; se insiste poco para no colgar el botón).
+async function qaRecPantalla(convId, rec){
+  if(!rec || !rec.id) return false;
+  const esperar = ms=> new Promise(r=> setTimeout(r, ms));
+  for(let i=0; i<3; i++){
+    let r;
+    try{ r = await qaFetchRaw(`/api/v2/conversations/${encodeURIComponent(convId)}/recordings/${encodeURIComponent(rec.id)}?formatId=WEBM&maxWaitMs=10000`); }
+    catch(e){ if(/HTTP 429/.test(e.message||"")){ await esperar(4000); continue; } return false; }
+    const mu = r.data && r.data.mediaUris;
+    if(r.status!==202 && mu && Object.keys(mu).length){ rec.mediaUris = mu; if(r.data.fileState) rec.fileState = r.data.fileState; return true; }
+    if(r.status!==202){ if(r.data && r.data.fileState) rec.fileState = r.data.fileState; return false; }   // respondió sin video (archivada, con error…): no tiene caso insistir
+    await esperar(2500);
+  }
+  return false;
+}
 // v21.73: cuando la grabación tiene grabación de dos canales, la lista de Genesys trae
 // DOS archivos de una sola voz cada uno (claves "0" = cliente y "1" = asesor),
 // no uno con las dos voces. Antes se tomaba solo el primero → solo se oía al
@@ -14128,7 +14183,8 @@ async function qaUnirPistasMp3(uris, onProg, niv){
   return await qaMp3(qaMezclaMono(bufs, niv), 16000, onProg);
 }
 // Video/pantalla (u otro archivo) con nombre propio; la extensión sale del tipo real.
-async function qaDescargarMedia(url, base){
+// Si no se puede leer, se abre en otra pestaña (salvo sinAbrir: quien llama ofrece el enlace).
+async function qaDescargarMedia(url, base, sinAbrir){
   try{
     const r = await qaLeerAudio(url);
     const t = (r.tipo||"").toLowerCase();
@@ -14137,9 +14193,77 @@ async function qaDescargarMedia(url, base){
     return true;
   }catch(e){
     console.warn("QA descarga", e);
-    window.open(url, "_blank", "noopener");
+    if(!sinAbrir) window.open(url, "_blank", "noopener");
     return false;
   }
+}
+// v22.35: vuelve a dibujar solo los botones de "Descargas" (sin tocar el reproductor).
+function qaPintarDescargas(){
+  const cont = qaIaContenedor(); const d = cont && cont.querySelector(".qa-dls");
+  if(d && QA.detalle && QA.detalle.f){ const tmp = document.createElement("div"); tmp.innerHTML = qaHtmlDescargas(QA.detalle.f); d.replaceWith(tmp.firstElementChild); }
+}
+// v22.35 (Oscar): "Pantalla" baja el video de TODOS los monitores del asesor,
+// uno tras otro (Genesys entrega un .webm por monitor). Con un solo video el
+// archivo se llama igual que siempre; con varios, "… - pantalla 1", "… - pantalla 2".
+async function qaDescargarPantallas(){
+  const det = QA.detalle;
+  if(!det || det.pantDl) return;
+  const vigente = ()=> QA.detalle === det;
+  const estado = t=>{ det.pantDl = t; if(vigente()) qaPintarDescargas(); };
+  const recs = (det.grab && det.grab.recs) || [];
+  let llegaron = 0;
+  det.pantNota = ""; det.pantEnlaces = [];
+  det.pantDl = "preparando…";   // de una vez, para que un doble clic no arranque otra tanda
+  try{
+    estado(det.pantDl);
+    const pendientes = qaPantallasSinVideo(recs);   // listadas por Genesys pero sin video todavía
+    const varias = qaPantallasDe(recs).length + pendientes.length > 1;
+    const hechos = new Set();
+    const noLeidos = [];   // el dashboard no pudo leerlos (ni directo ni por el Apps Script): se ofrece el enlace
+    let bajados = 0;
+    const bajarListos = async ()=>{
+      for(const p of qaPantallasDe(recs).filter(x=> !hechos.has(x.uri))){
+        if(hechos.size) await new Promise(r=> setTimeout(r, 700));   // que el navegador registre cada descarga antes de la siguiente
+        hechos.add(p.uri);
+        const total = qaPantallasDe(recs).length;
+        estado(total > 1 ? `descargando ${hechos.size} de ${total}…` : "descargando…");
+        // el primero que falle se abre solo en otra pestaña (como siempre); a los demás el navegador les bloquearía la ventana
+        const ok = await qaDescargarMedia(p.uri, qaNombreArchivo(det.f, "", varias ? `pantalla ${p.n}` : ""), noLeidos.length > 0);
+        if(ok) bajados++; else noLeidos.push({ uri: p.uri, texto: varias ? `pantalla ${p.n}` : "abrir el video" });
+      }
+    };
+    await bajarListos();   // primero lo que ya está listo…
+    if(pendientes.length){   // …y luego lo que faltaba: se le pide a Genesys grabación por grabación
+      estado(hechos.size ? "pidiendo a Genesys el video que falta…" : "pidiendo el video a Genesys…");
+      for(const r of pendientes){ if(await qaRecPantalla(det.id, r)) llegaron++; }
+      if(llegaron) await bajarListos();
+    }
+    const pants = qaPantallasDe(recs);
+    const faltan = qaPantallasSinVideo(recs);
+    const notas = [];
+    if(bajados > 1) notas.push(`Se bajaron ${bajados} videos, uno por monitor. Si el navegador solo guardó uno, permite "descargar varios archivos" en el aviso de la barra de direcciones y toca Pantalla otra vez.`);
+    if(faltan.length){
+      const ests = Array.from(new Set(faltan.map(r=> String(r.fileState||"").toLowerCase()).filter(Boolean)));
+      const est = ests.length ? ` (en Genesys aparece ${ests.map(e=> QA_FILESTATE_ES[e] || e).join(", ")})` : "";
+      const cuantos = !pants.length ? "el video de la pantalla" : faltan.length===1 ? "1 video más" : faltan.length+" videos más";
+      // archivado / eliminado / con error no se arregla esperando; subiéndose o sin estado, sí
+      notas.push(ests.some(e=> e==="archived" || e==="deleted" || e==="error")
+        ? `Genesys no entrega ${cuantos}${est}.`
+        : `Genesys todavía no entrega ${cuantos}${est}; intenta de nuevo en unos minutos.`);
+    }
+    if(noLeidos.length){   // va de último: los enlaces se dibujan justo después de esta frase
+      notas.push(`No se ${noLeidos.length===1 ? "pudo leer 1 video" : "pudieron leer "+noLeidos.length+" videos"} desde el dashboard. ${noLeidos.length===1 ? "Ábrelo" : "Ábrelos"} en otra pestaña y ${noLeidos.length===1 ? "guárdalo" : "guárdalos"} desde ahí:`);
+      det.pantEnlaces = noLeidos;
+    }
+    det.pantNota = notas.join(" ");
+  }catch(e){
+    console.warn("QA pantalla", e);
+    det.pantNota = "No se pudo descargar la pantalla. Intenta de nuevo."; det.pantEnlaces = [];
+  }
+  det.pantDl = null;
+  if(!vigente()) return;
+  // si al pedirlo llegó un video que faltaba se redibuja todo (aviso y detalles técnicos); si no, solo los botones
+  if(llegaron) qaPintarDetalle(); else qaPintarDescargas();
 }
 async function qaDescargarGrabacionesSel(filas){
   const ids = Array.from(QA.sel);
@@ -14199,8 +14323,9 @@ function qaDrawer(){
 function qaClickDetalle(e){
   const ev = e.target.closest("[data-ver-eval]");
   if(ev){ qaVerEvaluacion(ev.dataset.verEval); return true; }
-  const dl = e.target.closest("[data-dl]");
-  if(dl){ e.preventDefault(); const sm = dl.querySelector("small"); const antes = sm && sm.textContent; if(sm) sm.textContent = "descargando…"; qaDescargarMedia(dl.dataset.dl, dl.dataset.nombre).finally(()=>{ if(sm) sm.textContent = antes; }); return true; }
+  // v22.35: "Pantalla" baja el video de todos los monitores (antes: un solo video, data-dl)
+  const dlp = e.target.closest("[data-dl-pantallas]");
+  if(dlp){ e.preventDefault(); qaDescargarPantallas(); return true; }
   const dlt = e.target.closest("[data-dl-transcripcion]");
   if(dlt){ qaDescargarTranscripcion(); return true; }
   const copiar = e.target.closest("[data-copiar]");
@@ -14486,18 +14611,23 @@ function qaHtmlGrabacionBloque(f, conOnda){
     }
     return `${principal && conOnda ? ondaHtml : ""}${etiqueta}${rep}${principal ? ctrlMezcla + vacio + mono + sinMezcla : ""}`;
   }).join("");
-  return html + (pantallas.length ? `<div class="qa-sec-msg mut">🖥️ Esta llamada también tiene grabación de pantalla (descárgala abajo).</div>` : "") + qaHtmlDiagAudio(audios);
+  const nPant = qaPantallasDe(recs).length;   // v22.35: Genesys entrega un video por monitor
+  return html + (pantallas.length ? `<div class="qa-sec-msg mut">🖥️ ${nPant > 1 ? `Esta llamada también tiene grabación de pantalla: ${nPant} videos, uno por monitor (descárgalos abajo).` : "Esta llamada también tiene grabación de pantalla (descárgala abajo)."}</div>` : "") + qaHtmlDiagAudio(audios, pantallas);
 }
 // Datos técnicos para revisar con el administrador de Genesys si algo no suena bien.
-function qaHtmlDiagAudio(audios){
+function qaHtmlDiagAudio(audios, pantallas){
   if(!audios.length) return "";
   const o = QA.detalle.onda;
+  // v22.35: cuántas grabaciones de pantalla entregó Genesys (una por monitor) y si cada una trae su video
+  const pant = pantallas && pantallas.length
+    ? `<li>Pantalla: Genesys entregó <b>${pantallas.length}</b> ${pantallas.length===1 ? "grabación" : "grabaciones"} (${pantallas.map(r=>{ const n = qaUrisDe(r).length; return n ? `${n} video${n===1?"":"s"}` : `sin video${r.fileState ? " · " + qaEsc(String(r.fileState).toLowerCase()) : ""}`; }).join(" + ")})</li>`
+    : "";
   const filas = audios.map((r,i)=>{
     const claves = Object.keys(r.mediaUris||{});
     return `<li>Grabación ${i+1}: pistas recibidas <b>${qaEsc(claves.join(", ")||"ninguna")}</b>${r._estereo?" · audio unido pedido a Genesys ✓":""}${r._estereoError?` · audio unido: ${qaEsc(r._estereoError)}`:""}${qaEsDual(r)?" · el dashboard une las 2 voces en un solo audio":""}</li>`;
   }).join("");
   const lectura = !o ? "pendiente" : o.cargando ? "en curso (puede tardar unos segundos si pasa por el Apps Script)" : o.ok ? `ok (${o.estereo?"2 voces":"1 canal"}${o.dur?`, ${qaDur(o.dur)}`:""}${o.via==="apps script"?", leído a través del Apps Script":""})` : o.error ? `el servidor de grabaciones no deja leer el archivo desde el dashboard (${qaEsc(o.msg||"")})` : "en curso";
-  return `<details class="qa-attrs qa-diag"><summary>Detalles técnicos del audio</summary><ul>${filas}<li>Lectura para onda y mezcla: ${lectura}</li></ul></details>`;
+  return `<details class="qa-attrs qa-diag"><summary>Detalles técnicos del audio${pant ? " y la pantalla" : ""}</summary><ul>${filas}${pant}<li>Lectura para onda y mezcla: ${lectura}</li></ul></details>`;
 }
 // Índice de canal de cada lado (0 = cliente/externo, 1 = asesor/interno),
 // convención de Genesys; se puede intercambiar desde el panel.
@@ -14584,14 +14714,22 @@ function qaHtmlDescargas(f){
   const audio = recs.find(r=> (r.media||"audio").toLowerCase()==="audio" && qaUriDe(r));
   const completo = audio && qaUriAudioCompleto(audio);
   const pistas = audio && !completo ? qaUrisDe(audio) : [];
-  const pant = recs.find(r=> (r.media||"").toLowerCase()==="screen" && qaUriDe(r));
+  // v22.35 (Oscar): todos los videos de pantalla — Genesys entrega uno por monitor — y no solo el primero
+  const det = QA.detalle;
+  const pants = qaPantallasDe(recs), pantFaltan = qaPantallasSinVideo(recs).length;
+  const pantSub = det.pantDl ? det.pantDl
+    : !pants.length ? (pantFaltan ? "Genesys aún prepara el video" : "sin grabación de pantalla")
+    : pantFaltan ? `${pants.length} de ${pants.length + pantFaltan} videos listos`
+    : pants.length > 1 ? `${pants.length} monitores · ${pants.length} videos`
+    : "video del escritorio del asesor";
   const frases = qaFrasesActuales();
   const onda = QA.detalle.onda;
   const item = (ico, titulo, sub, attrs, on)=> `<button type="button" class="qa-dl ${on?"":"off"}" ${on?attrs:"disabled"}><span class="ico">${ico}</span><span><b>${titulo}</b><small>${sub}</small></span></button>`;
   return `<div class="qa-dls">
     ${item("🎧","Audio de la llamada", "cliente y asesor juntos", `data-dl-audio="1"`, !!(completo || pistas.length))}
-    ${item("🖥️","Pantalla", pant?"video del escritorio del asesor":"sin grabación de pantalla", pant?`data-dl="${qaEsc(qaUriDe(pant))}" data-nombre="${qaEsc(qaNombreArchivo(f,""))}"`:"", !!pant)}
+    ${item("🖥️","Pantalla", qaEsc(pantSub), `data-dl-pantallas="1"${det.pantDl ? " disabled" : ""}`, !!(pants.length || pantFaltan))}
     ${frases&&frases.length ? item("📝","Transcripción", "texto con tiempos (.txt)", `data-dl-transcripcion="1"`, true) : ""}
+    ${det.pantNota ? `<div class="qa-sec-msg mut qa-dl-nota"><span>${qaEsc(det.pantNota)}${(det.pantEnlaces||[]).map((x,i)=> `${i ? " ·" : ""} <a href="${qaEsc(x.uri)}" target="_blank" rel="noopener">${qaEsc(x.texto)}</a>`).join("")}</span></div>` : ""}
   </div>`;
 }
 function qaHtmlTranscripcionBloque(alto){
@@ -15262,8 +15400,7 @@ function qaIaPintarLista(){
 function qaIaPintar(){
   qaIaPintarEstado(); qaIaPintarLista(); qaPePintar();
   // botón de descarga de la transcripción
-  const cont = qaIaContenedor(); const d = cont && cont.querySelector(".qa-dls");
-  if(d && QA.detalle && QA.detalle.f){ const tmp = document.createElement("div"); tmp.innerHTML = qaHtmlDescargas(QA.detalle.f); d.replaceWith(tmp.firstElementChild); }
+  qaPintarDescargas();
 }
 // Resalta la frase que está sonando y la mantiene a la vista.
 function qaResaltarFrase(seg, sinScroll){
