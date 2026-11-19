@@ -967,7 +967,33 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     .grid-2{grid-template-columns:1fr;}
     .grid-3{grid-template-columns:1fr;}
   }
+  /* v22.31 (Oscar, 2026-11-19): herramientas de la pestaña Genesys en tarjetas con descripción
+     (eligió la "Opción B" entre 3 diseños): ícono rojo en círculo rosado como el de las tarjetas de
+     indicadores, nombre, para qué sirve y flecha. 4 por fila; 2 en pantallas medianas y en el celular. */
+  .gherr-sec{margin:2px 0 8px;}
+  .gherr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px;}
+  .gherr-card{display:flex;align-items:center;gap:12px;min-height:64px;padding:11px 12px 11px 13px;background:#fff;border:1px solid var(--border);border-radius:12px;font-family:inherit;color:var(--black);text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;}
+  .gherr-card:hover{border-color:var(--red);box-shadow:0 6px 16px rgba(228,3,46,.10);transform:translateY(-1px);}
+  .gherr-card:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .gherr-ico{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#FDE7EA;color:var(--red-dark);flex-shrink:0;transition:background .15s,color .15s;}
+  .gherr-card:hover .gherr-ico{background:var(--red);color:#fff;}
+  .gherr-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .gherr-txt b{font-size:13px;font-weight:700;line-height:1.2;}
+  .gherr-txt small{font-size:11.5px;color:var(--gray);line-height:1.25;}
+  .gherr-fl{display:flex;color:#C4C4C4;flex-shrink:0;transition:color .15s,transform .15s;}
+  .gherr-card:hover .gherr-fl{color:var(--red);transform:translateX(2px);}
+  @media (max-width:1100px){ .gherr{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:560px){
+    .gherr{gap:8px;}
+    .gherr-card{gap:9px;min-height:58px;padding:9px 10px;}
+    .gherr-ico{width:32px;height:32px;}
+    .gherr-ico svg{width:16px;height:16px;}
+    .gherr-fl{display:none;}
+    .gherr-txt b{font-size:12.5px;}
+    .gherr-txt small{font-size:11px;}
+  }
   @media print{
+    .gherr-sec, .gherr{display:none !important;}   /* v22.31: los botones no van en papel */
     #header-actions, #filterbar, .tabs-row, .tb-sep{display:none !important;}
     .tb-status{min-height:0;margin-left:0;padding:0;border:0;}
     #main{padding:0;}
@@ -11957,6 +11983,46 @@ function genesysCategoriasExcel(){
   xlsDescargarConEstilo(wb, { "Detalle por categoría": h }, genesysXlsArchivo("Detalle por categoría Genesys", d));
 }
 
+/* v22.31 (Oscar, 2026-11-19): "otro diseño para estas tarjetas" — las herramientas de la
+   pestaña Genesys (antes una fila de botones con emoji que en pantallas de ~1170 px se apretaban
+   en 2 líneas) ahora son tarjetas con ícono de línea, nombre y para qué sirve ("Opción B").
+   Cada tarjeta abre lo mismo que el botón de antes; "Tarjetas en Excel" sigue usando
+   data-dl="kpi" (downloadKpiGridAsExcel de las 8 tarjetas de indicadores). */
+const GENESYS_HERRAMIENTAS = [
+  { titulo:"Calculadora de Agentes", sub:"Cuántos agentes necesitás", accion:"openErlangModal()",
+    ayuda:"Con el volumen y el TMO reales de Genesys, calcula cuántos agentes se necesitan para cumplir el Nivel de Servicio (Erlang C).",
+    ico:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M16 14v4"/><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>' },
+  { titulo:"Pronóstico de Llamadas", sub:"Llamadas esperadas por día", accion:"openPrevisionModal()",
+    ayuda:"Proyecta las llamadas por día y por franja de 30 minutos con el histórico real de Genesys.",
+    ico:'<path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/>' },
+  { titulo:"Asistencia", sub:"Malla vs. conexión real", accion:"openAsistenciaModal()",
+    ayuda:"Cruza la malla de turnos con la conexión real en Genesys: el detalle de cada asesor, llegadas tarde y días sin conexión.",
+    ico:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>' },
+  { titulo:"TMO por Asesor", sub:"Cuartiles del equipo", accion:"openTmoAsesorModal()",
+    ayuda:"El TMO de cada asesor en su cuartil, con el resumen del equipo y la comparación por antigüedad.",
+    ico:'<path d="M10 2h4"/><path d="m12 14 3-3"/><circle cx="12" cy="14" r="8"/>' },
+  { titulo:"KPIs del día", sub:"La foto de hoy", accion:"openKpisDiaModal()",
+    ayuda:"La foto del día que el equipo manda por WhatsApp, en vivo (hora Honduras).",
+    ico:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/>' },
+  { titulo:"Llamadas por Skill", sub:"Excel por día y skill", accion:"openExportColasModal()",
+    ayuda:"Descarga en Excel las llamadas ofertadas por día: una columna por skill y el total.",
+    ico:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/>' },
+  { titulo:"Distribución Intradía", sub:"Excel del % por hora", accion:"openIntradiaModal()",
+    ayuda:"Descarga en Excel el % de llamadas por hora, sumando los skills que elijas.",
+    ico:'<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>' },
+  { titulo:"Tarjetas en Excel", sub:"Los 8 indicadores de abajo", descarga:true,
+    ayuda:"Descarga en Excel las 8 tarjetas de indicadores de abajo.",
+    ico:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>' },
+];
+function genesysHerramientasHtml(){
+  const svg = (trazo, tam)=> `<svg width="${tam}" height="${tam}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${trazo}</svg>`;
+  const llave = '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>';
+  const flecha = '<path d="m9 18 6-6-6-6"/>';
+  return `<div class="fb-sec-title gherr-sec">${svg(llave, 15)}Herramientas</div>
+      <div class="gherr">${GENESYS_HERRAMIENTAS.map(h=> `<button type="button" class="gherr-card" ${h.descarga
+        ? 'data-dl="kpi" data-grid="kpi-grid-genesys" data-name="genesys-tarjetas"' : `onclick="${h.accion}"`} title="${h.ayuda}"><span class="gherr-ico">${svg(h.ico, 18)}</span><span class="gherr-txt"><b>${h.titulo}</b><small>${h.sub}</small></span><span class="gherr-fl">${svg(h.descarga ? h.ico : flecha, 16)}</span></button>`).join("")}</div>`;
+}
+
 function renderGenesys(){
   const container = document.getElementById("tab-genesys");
   const token = genesysGetStoredToken();
@@ -12235,19 +12301,8 @@ function renderGenesys(){
       </details>`;
 
     bodyHtml += `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-        <span class="note">Periodo: <b>${periodLabel}</b> — ${catsLabel}</span>
-        <span style="display:flex;gap:8px;align-items:center;">
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openErlangModal()">🧮 Calculadora de Agentes</button>
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openPrevisionModal()">🔮 Pronóstico de Llamadas</button>
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openAsistenciaModal()">🧑‍💼 Asistencia (Malla vs. Genesys)</button>
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openTmoAsesorModal()">⏱️ TMO por Asesor</button>
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openKpisDiaModal()">📋 KPIs del día</button>
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openExportColasModal()">📥 Exportar Llamadas por Skill</button>
-          <button class="btn-outline" style="font-size:11px;padding:5px 12px;border-radius:16px;font-weight:700;" onclick="openIntradiaModal()">📥 Distribución Intradía</button>
-          ${kpiDlBtn("kpi-grid-genesys","genesys-tarjetas")}
-        </span>
-      </div>
+      <div style="margin-bottom:8px;"><span class="note">Periodo: <b>${periodLabel}</b> — ${catsLabel}</span></div>
+      ${genesysHerramientasHtml()}
       ${workforcePanelHtml}
       <div id="kpi-grid-genesys" class="kpi-grid-common" style="grid-template-columns:repeat(8,1fr);">${kpiHtml}</div>`;
 
