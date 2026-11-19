@@ -1175,17 +1175,39 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-tabla.mini{font-size:11.5px;} .qa-tabla.mini th{position:static;}
   .qa-tabla tr.qa-sub > td{background:var(--qa-soft);padding:10px 12px;cursor:default;}
   /* v21.88: conversación escrita en QA */
-  .qa-chat{display:flex;flex-direction:column;gap:8px;max-height:460px;overflow:auto;padding:10px;background:#F6F7F9;border-radius:10px;}
-  .qa-msg{max-width:78%;align-self:flex-start;}
-  .qa-msg.asesor{align-self:flex-end;}
-  .qa-msg.bot{align-self:center;max-width:90%;}
-  .qa-msg-q{font-size:10.5px;font-weight:700;color:var(--qa-mut);margin:0 4px 2px;}
-  .qa-msg.asesor .qa-msg-q{text-align:right;}
-  .qa-msg-t{font-size:12.5px;line-height:1.45;padding:7px 10px;border-radius:10px;background:#fff;border:1px solid var(--qa-line);white-space:normal;word-break:break-word;}
-  .qa-msg.asesor .qa-msg-t{background:#FDEBEC;border-color:#F6C6CE;}
-  .qa-msg.bot .qa-msg-t{background:#EEF0F3;font-size:11.5px;color:#3B4350;}
-  .qa-msg.correo{max-width:100%;}
-  .qa-msg-adj{margin-top:4px;font-size:11px;color:var(--qa-mut);}
+  /* v22.36 (Oscar: "no se visualiza bien la conversación"): burbujas del diseño "Ejecutiva oscura" —
+     el cliente a la izquierda (blanco) y el lado de Claro a la derecha (asesor en negro, bot en gris),
+     con la hora dentro de la burbuja, el día como separador y un aviso cuando el asesor toma la conversación. */
+  .qa-chat{display:flex;flex-direction:column;gap:4px;max-height:460px;overflow:auto;padding:12px 18px 14px 16px;background:#FAFAFA;border-radius:10px;scrollbar-width:thin;}
+  .qa-chat-dia{align-self:center;flex:none;font-size:11px;font-weight:600;color:#5B6472;background:#fff;border:1px solid #E6E8EC;border-radius:999px;padding:3px 12px;margin:2px 0 4px;}
+  .qa-chat-ev{display:flex;align-items:center;gap:10px;flex:none;margin:5px 0;font-size:11px;font-weight:600;color:#5B6472;}
+  .qa-chat-ev::before,.qa-chat-ev::after{content:"";flex:1;height:1px;background:#DDE0E5;}
+  .qa-chat-ev span{display:inline-flex;align-items:center;gap:6px;text-align:center;}
+  .qa-msg{max-width:72%;align-self:flex-start;flex:none;}
+  .qa-msg.asesor,.qa-msg.bot{align-self:flex-end;}
+  .qa-msg.ini{margin-top:5px;}
+  .qa-msg-q{font-size:11px;font-weight:700;color:#5B6472;margin:0 0 3px 36px;line-height:1.3;}
+  .qa-msg-q span{font-weight:600;color:#667085;}
+  .qa-msg.asesor .qa-msg-q,.qa-msg.bot .qa-msg-q{text-align:right;margin:0 36px 3px 0;}
+  .qa-msg-f{display:flex;gap:8px;align-items:flex-start;}
+  .qa-msg.asesor .qa-msg-f,.qa-msg.bot .qa-msg-f{flex-direction:row-reverse;}
+  .qa-av{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;background:#E3E5E9;color:#5B6472;}
+  .qa-msg.asesor .qa-av{background:var(--red);color:#fff;}
+  .qa-msg.bot .qa-av{background:#AEB4BD;color:#fff;}
+  .qa-av.no{visibility:hidden;}
+  .qa-msg-t{display:flex;align-items:flex-end;gap:12px;min-width:0;font-size:13px;line-height:1.42;padding:6px 10px 6px 12px;border-radius:14px 14px 14px 4px;background:#fff;border:1px solid #E3E3E3;color:#1F2430;word-break:break-word;box-shadow:0 1px 2px rgba(22,22,22,.04);}
+  .qa-msg.asesor .qa-msg-t{background:var(--black);border-color:var(--black);color:#fff;border-radius:14px 14px 4px 14px;box-shadow:none;}
+  .qa-msg.bot .qa-msg-t{background:#E7E8EB;border-color:#E7E8EB;color:#3B3F47;font-size:12.5px;border-radius:14px 14px 4px 14px;box-shadow:none;}
+  .qa-msg-x{min-width:0;}
+  .qa-msg-h{flex:none;font-size:10px;line-height:1.6;color:#667085;font-variant-numeric:tabular-nums;}
+  .qa-msg.asesor .qa-msg-h{color:#A3A3A3;}
+  .qa-msg.bot .qa-msg-h{color:#5B6472;}
+  .qa-msg-adj{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+  .qa-msg-adj span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;border-radius:7px;padding:3px 8px;background:#F6F7F9;border:1px solid #E6E8EC;color:#1F2430;}
+  .qa-msg.asesor .qa-msg-adj span{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18);color:#E9EAEC;}
+  .qa-msg.correo{max-width:100%;align-self:stretch;}
+  .qa-msg.correo .qa-msg-q{margin-left:36px;}
+  .qa-msg.correo .qa-msg-f > .qa-msg-t{flex:1;display:block;border-radius:12px;}
   /* v21.87: pestaña TNPS (Prueba) — reutiliza los estilos de QA */
   .tn-root{--qa-ink:#1F2430;--qa-mut:#5B6472;--qa-line:#E6E8EC;--qa-soft:#F6F7F9;--qa-blue:#1D4ED8;padding:4px 0 24px;color:var(--qa-ink);}
   .tn-root .mut{color:var(--qa-mut);}
@@ -1343,26 +1365,64 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-tabla td.small{font-size:11px;}
   .btn-outline.mini{padding:3px 9px;font-size:11px;border-radius:7px;}
 
-  /* panel lateral de detalle */
-  #qa-drawer{position:fixed;inset:0;z-index:120;pointer-events:none;}
-  #qa-drawer .qa-dw-fondo{position:absolute;inset:0;background:rgba(22,22,22,.42);opacity:0;transition:opacity .18s;}
-  #qa-drawer .qa-dw{position:absolute;top:0;right:0;height:100%;width:min(980px,96vw);background:#fff;box-shadow:-20px 0 60px rgba(20,24,30,.22);transform:translateX(100%);transition:transform .22s ease-out;overflow-y:auto;color:#1F2430;}
+  /* v22.36 — ventana de detalle "Ejecutiva oscura" (Oscar: "no me gusta visualmente cómo se mira, siento que
+     queda como cortada la pantalla y no se visualiza bien la conversación"; eligió la opción 2 de las maquetas).
+     Antes era un panel pegado a la derecha (980 px): en una pantalla ancha dejaba media pantalla en gris y la
+     conversación en un recuadro de 460 px. Ahora es una ventana al centro: cabecera negra con el título, las
+     alertas y los seis indicadores en blanco (como las tarjetas de Genesys); a la izquierda lo principal
+     (conversación o grabación) y a la derecha tarjetas de recorrido, datos, descargas y evaluación. */
+  #qa-drawer{position:fixed;inset:0;z-index:120;pointer-events:none;display:flex;align-items:center;justify-content:center;}   /* centrada sin transform: así el texto no sale borroso */
+  #qa-drawer .qa-dw-fondo{position:absolute;inset:0;background:rgba(22,22,22,.6);opacity:0;transition:opacity .18s;}
+  #qa-drawer .qa-dw{position:relative;flex:none;width:min(1380px,calc(100vw - 48px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:var(--bg);border-radius:18px;box-shadow:0 30px 80px rgba(10,12,16,.5);overflow:hidden;color:#1F2430;opacity:0;visibility:hidden;transform:scale(.98);transition:transform .2s ease-out,opacity .16s,visibility 0s linear .2s;}
+  #qa-drawer .qa-dw.qa-dw-alto{height:calc(100vh - 48px);}   /* conversación escrita: la ventana usa todo el alto y la conversación lo llena */
   #qa-drawer.abierto{pointer-events:auto;}
   #qa-drawer.abierto .qa-dw-fondo{opacity:1;}
-  #qa-drawer.abierto .qa-dw{transform:none;}
+  #qa-drawer.abierto .qa-dw{opacity:1;visibility:visible;transform:none;transition-delay:0s;}
   @media (prefers-reduced-motion: reduce){#qa-drawer .qa-dw,#qa-drawer .qa-dw-fondo{transition:none;}}
-  .qa-dw-head{position:sticky;top:0;z-index:2;background:#fff;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 22px 12px;border-bottom:2px solid var(--red);}
-  .qa-dw-head h3{margin:0;font-size:17px;}
-  .qa-dw-head .mut{font-size:12px;color:#5B6472;}
-  .qa-dw-cerrar{border:1px solid #E6E8EC;background:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:14px;flex:0 0 auto;}
-  .qa-dw-tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:14px 22px 0;border:1px solid #E6E8EC;border-radius:12px;overflow:hidden;}
-  .qa-dw-tiles > div{padding:9px 12px;border-left:1px solid #E6E8EC;}
-  .qa-dw-tiles > div:first-child{border-left:0;}
-  .qa-dw-tiles b{display:block;font-size:16px;font-variant-numeric:tabular-nums;}
-  .qa-dw-tiles span{font-size:11px;color:#5B6472;}
-  .qa-dw-flags{margin:10px 22px 0;}
-  .qa-dw-grid{display:grid;grid-template-columns:minmax(260px,.9fr) 1.4fr;gap:22px;padding:6px 22px 28px;}
-  .qa-dw-sec h4{font-size:12.5px;margin:16px 0 8px;color:#1F2430;}
+  #qa-dw-cont{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+  .qa-dw-head{flex:none;background:var(--black);color:#fff;border-bottom:3px solid var(--red);padding:16px 22px 14px 24px;}
+  .qa-dw-top{display:flex;align-items:center;gap:14px;}
+  .qa-dw-ico{width:42px;height:42px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 4px 10px rgba(228,3,46,.28);}
+  .qa-dw-tit{min-width:0;flex:1;}
+  .qa-dw-head h3{margin:0;font-size:18px;line-height:1.25;color:#fff;}
+  .qa-dw-sub{display:flex;align-items:center;gap:5px 10px;flex-wrap:wrap;margin-top:2px;font-size:12.5px;color:#A3A3A3;}
+  .qa-dw-head .qa-tag{margin:0;}
+  .qa-dw-head .qa-tag.crit{background:rgba(228,3,46,.24);color:#FF8091;}
+  .qa-dw-head .qa-tag.warn{background:rgba(201,138,0,.28);color:#F4C766;}
+  .qa-dw-head .qa-tag.info{background:rgba(96,134,255,.26);color:#AFC4FF;}
+  .qa-dw-xls{display:inline-flex;align-items:center;gap:7px;flex:none;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:9px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;box-shadow:0 4px 10px rgba(228,3,46,.25);}
+  .qa-dw-xls:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .qa-dw-cerrar{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;padding:0;}
+  .qa-dw-cerrar:hover{background:rgba(255,255,255,.2);}
+  .qa-dw-xls:focus-visible,.qa-dw-cerrar:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+  .qa-dw-tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:14px 0 0;}
+  .qa-dw-tiles > div{min-width:0;padding:0 10px 0 18px;border-left:1px solid rgba(255,255,255,.12);}
+  .qa-dw-tiles > div:first-child{border-left:0;padding-left:0;}
+  .qa-dw-tiles b{display:flex;align-items:center;height:28px;font-size:23px;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#fff;white-space:nowrap;}
+  .qa-dw-tiles span{font-size:11px;color:#A3A3A3;letter-spacing:.02em;}
+  .qa-dw-tiles .qa-pill{font-size:12.5px;padding:3px 11px;letter-spacing:0;color:#fff;background:rgba(255,255,255,.16);}
+  .qa-dw-tiles .qa-pill.ase{background:var(--red);}
+  .qa-dw-tiles .qa-pill.aba{background:#C98A00;color:#161616;}
+  .qa-dw-grid{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 376px;grid-template-rows:minmax(0,1fr);gap:16px;padding:16px 20px 20px;}
+  .qa-dw-grid > .qa-sec-msg{grid-column:1 / -1;align-self:start;background:#fff;}
+  .qa-dw-grid > .qa-sec-msg.err{background:#FDEBEC;}
+  .qa-dw-main,.qa-dw-lado{min-width:0;min-height:0;max-height:calc(100vh - 218px);display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin;}   /* el max-height es un respaldo: el alto real lo reparte la ventana */
+  .qa-dw-card{flex:none;min-width:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 15px 14px;box-shadow:0 4px 12px rgba(22,22,22,.05);}
+  .qa-dw-card > h4,.qa-dw-cardh h4{margin:0;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);}
+  .qa-dw-card > h4{margin-bottom:9px;}
+  .qa-dw-conv{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:0;overflow:hidden;}
+  .qa-dw-cardh{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;flex:none;padding:11px 16px;border-bottom:1px solid var(--border);}
+  .qa-dw-n{font-size:11.5px;font-weight:700;color:#fff;background:var(--black);border-radius:999px;padding:2px 10px;white-space:nowrap;}
+  .qa-dw-ley{display:flex;gap:4px 14px;flex-wrap:wrap;flex:1;font-size:11.5px;color:#5B6472;}
+  .qa-dw-ley span{white-space:nowrap;}
+  .qa-dw-ley i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid #C3C8D0;background:#DADDE3;}
+  .qa-dw-ley i.cli{background:#fff;border-color:#8D95A0;}
+  .qa-dw-ley i.ase{background:var(--black);border-color:var(--black);}
+  .qa-dw-ley b{color:#1F2430;}
+  .qa-dw-rango{font-size:11.5px;color:#5B6472;white-space:nowrap;margin-left:auto;}
+  .qa-dw-conv > .qa-chat{flex:1 1 auto;min-height:0;max-height:none;border-radius:0;}
+  .qa-dw-cuerpo{padding:12px 15px 14px;}
+  .qa-dw-card .qa-audit{margin-top:10px;}
   .qa-rail{list-style:none;margin:0;padding:0 0 0 2px;}
   .qa-rail li{position:relative;padding:0 0 12px 18px;border-left:2px solid #E6E8EC;font-size:12.5px;}
   .qa-rail li::before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;background:#C9CED6;border:2px solid #fff;}
@@ -1398,10 +1458,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-preguntas li b{text-align:right;} .qa-preguntas li b.r{color:#B4021F;}
   .qa-preguntas li small{grid-column:1 / -1;color:#5B6472;}
   .qa-com{font-size:12px;margin:8px 0 0;color:#3B4350;}
+  @media (max-width: 1100px){ .qa-dw-grid{grid-template-columns:minmax(0,1fr) 320px;} }
   @media (max-width: 900px){
-    .qa-dw-grid{grid-template-columns:1fr;}
-    .qa-dw-tiles{grid-template-columns:repeat(3,1fr);}
+    /* v22.36: pantalla angosta → una sola columna y se desplaza la ventana completa */
+    #qa-drawer .qa-dw,#qa-drawer .qa-dw.qa-dw-alto{width:calc(100vw - 24px);height:auto;max-height:calc(100vh - 24px);overflow-y:auto;border-radius:14px;}
+    #qa-dw-cont{display:block;}
+    .qa-dw-grid{display:flex;flex-direction:column;padding:14px;}
+    .qa-dw-main,.qa-dw-lado{flex:none;overflow:visible;max-height:none;}
+    .qa-dw-conv{flex:none;}
+    .qa-dw-conv > .qa-chat{flex:none;max-height:62vh;}
+    .qa-dw-head{padding:14px 16px 12px;}
+    .qa-dw-tiles{grid-template-columns:repeat(3,1fr);row-gap:12px;}
+    .qa-dw-tiles > div:nth-child(3n+1){border-left:0;padding-left:0;}
     .qa-ledger{flex-wrap:wrap;} .qa-ledger > div{flex:1 1 33%;}
+  }
+  @media (max-width: 560px){
+    #qa-drawer .qa-dw,#qa-drawer .qa-dw.qa-dw-alto{width:100vw;height:100vh;height:100dvh;max-height:none;border-radius:0;}
+    .qa-dw-top{flex-wrap:wrap;gap:10px;}
+    .qa-dw-ico{display:none;}
+    .qa-dw-xls{order:3;flex:1 1 100%;justify-content:center;}
+    .qa-dw-head h3{font-size:16px;}
+    .qa-dw-tiles b{font-size:19px;}
+    .qa-msg{max-width:90%;}
   }
 
   /* v21.72 — ficha del contacto (búsqueda por teléfono), igual a la maqueta */
@@ -1450,7 +1528,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-dls{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
   .qa-dl{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--qa-line);background:#fff;border-radius:10px;padding:9px 11px;font:inherit;cursor:pointer;color:var(--qa-ink);}
   .qa-dl:hover:not(:disabled){border-color:var(--red);background:#FFF8F8;}
-  .qa-dl .ico{font-size:18px;} .qa-dl b{display:block;font-size:12.5px;} .qa-dl small{display:block;font-size:11px;color:var(--qa-mut);}
+  .qa-dl .ico{display:flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;border-radius:8px;background:var(--qa-soft);color:var(--qa-mut);}   /* v22.36: icono dibujado (antes un emoji) */
+  .qa-dl b{display:block;font-size:12.5px;} .qa-dl small{display:block;font-size:11px;color:var(--qa-mut);}
+  .qa-dl.xls{border-color:#BFE5CC;background:#F4FBF6;}   /* v22.36: la conversación en Excel */
+  .qa-dl.xls .ico{background:#DDF3E4;color:#17733F;}
+  .qa-dl.xls:hover:not(:disabled){border-color:#1E9E4B;background:#ECF8F0;}
+  .qa-dw-lado .qa-dls{grid-template-columns:1fr;}
+  .qa-fcol .qa-chat{max-height:min(620px,72vh);}   /* v22.36: en la ficha del teléfono la conversación también se ve más alta */
+  @media (min-width: 420px){ .qa-fcol .qa-dl.xls{grid-column:span 2;} }
   .qa-dl.off{opacity:.5;cursor:default;}
   .qa-dl:disabled{cursor:default;}
   .qa-dl-nota{grid-column:1 / -1;line-height:1.4;}   /* v22.35: aviso bajo los botones (pantalla con varios monitores) */
@@ -8269,12 +8354,16 @@ const XLS_FUENTES = {
   dRoja: '<b/><sz val="11"/><color rgb="FFE4032E"/><name val="Calibri"/><family val="2"/>',
   dGris: '<sz val="11"/><color rgb="FF6B6B6B"/><name val="Calibri"/><family val="2"/>',
   dGrisItal: '<i/><sz val="11"/><color rgb="FF6B6B6B"/><name val="Calibri"/><family val="2"/>',
+  // v22.36: conversación escrita de Calidad (quién habló)
+  cAzul: '<b/><sz val="11"/><color rgb="FF1D4ED8"/><name val="Calibri"/><family val="2"/>',
+  cGris: '<b/><sz val="11"/><color rgb="FF5B6472"/><name val="Calibri"/><family val="2"/>',
 };
 // Formatos de número (v22.24: se agregaron decimal, porcentaje, fecha y hora para Qualtrics)
 const XLS_FORMATOS = { tmo:"[m]:ss", num:"#,##0", dec:"0.0", pct:"0.0%", fecha:"dd/mm/yyyy", hora:"hh:mm",
   pctSigno:"+0.0%;-0.0%;0.0%", seg:'0"s"' };   // v22.30: Desviación con signo (+4.1%) y segundos como en pantalla (312s)
 const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2",
-  dPar:"FFFAFAFA", dTot:"FFEFEFEF", dSub:"FFF7F7F7" };   // v22.30: cebra y pie de la tabla del dashboard
+  dPar:"FFFAFAFA", dTot:"FFEFEFEF", dSub:"FFF7F7F7",   // v22.30: cebra y pie de la tabla del dashboard
+  cCli:"FFEAF1FE", cAse:"FFFDEBEC" };   // v22.36: conversación de Calidad (cliente / asesor)
 const XLS_ESTILOS = (()=>{
   const e = {
     titulo:{ f:"titulo" }, sub:{ f:"sub" }, seccion:{ f:"seccion" },
@@ -8296,6 +8385,11 @@ const XLS_ESTILOS = (()=>{
     fechaC:{ b:1, a:"c", n:"fecha" },
     dTxt:{ b:1, a:"t" }, dTxtC:{ b:1, a:"ct" }, dFecha:{ b:1, a:"ct", n:"fecha" }, dHora:{ b:1, a:"ct", n:"hora" }, dComent:{ b:1, a:"tw" },
     dpro:{ f:"verde", r:"q1", b:1, a:"ct" }, dpas:{ f:"ambar", r:"q3", b:1, a:"ct" }, ddet:{ f:"roja", r:"q4", b:1, a:"ct" },
+  });
+  // v22.36: Excel de la conversación (Calidad): N.º, quién habló con su color, mensaje con ajuste de texto y el pie
+  Object.assign(e, {
+    cNum:{ f:"dGris", b:1, a:"ct" }, cCli:{ f:"cAzul", r:"cCli", b:1, a:"ct" }, cAse:{ f:"roja", r:"cAse", b:1, a:"ct" }, cBot:{ f:"cGris", r:"sub", b:1, a:"ct" }, cCor:{ f:"negrita", b:1, a:"ct" },
+    cMsgBot:{ f:"dGris", b:1, a:"tw" }, cAdj:{ f:"sub", b:1, a:"tw" }, cPie:{ f:"dNormal", r:"dTot", b:2, a:"i" }, cPieNum:{ f:"negrita", r:"dTot", b:2, a:"i", n:"num" },
   });
   // v22.30: BITÁCORA y Detalle por categoría de Genesys, igual que la tabla del dashboard: encabezado rojo
   // con letra blanca, filas con una línea gris abajo (b:2) y cebra (las que terminan en Z), y el pie gris con
@@ -13350,6 +13444,21 @@ function renderIncidencias(){
    primera grabación de pantalla (y de ella, el primer video). Ahora "Pantalla"
    baja TODOS los videos: "Asesor - teléfono - pantalla 1", "- pantalla 2"…
    Con un solo monitor todo queda igual que antes (mismo nombre de archivo).
+
+   v22.36 — Ventana de detalle "Ejecutiva oscura" y conversación en Excel
+   (Oscar, 2026-11-19: "no me gusta visualmente cómo se mira, siento que queda
+   como cortada la pantalla y no se visualiza bien la conversación… quiero
+   agregar un archivo que se pueda descargar en algún Excel esa conversación,
+   para documentación: qué dice el cliente y qué dice el asesor"). De tres
+   maquetas eligió la opción 2 y el Excel A.
+   · El detalle ya no es un panel pegado a la derecha: es una ventana al
+     centro con cabecera negra (título, alertas e indicadores en blanco), lo
+     principal a la izquierda y tarjetas a la derecha. Las llamadas de voz
+     usan la misma ventana, con la grabación y la evaluación a la izquierda.
+   · La conversación escrita (WhatsApp, chat) llena el alto de la ventana, con
+     burbujas nuevas: cliente a la izquierda, asesor y bot a la derecha.
+   · "Descargar Excel" / "Conversación en Excel": una fila por mensaje con
+     fecha, hora, quién, nombre, mensaje y adjuntos, y los totales al final.
    ============================================================ */
 const QA = {
   vista: "buscar",            // buscar | bandeja
@@ -14326,6 +14435,7 @@ function qaClickDetalle(e){
   // v22.35: "Pantalla" baja el video de todos los monitores (antes: un solo video, data-dl)
   const dlp = e.target.closest("[data-dl-pantallas]");
   if(dlp){ e.preventDefault(); qaDescargarPantallas(); return true; }
+  if(e.target.closest("[data-dl-conversacion]")){ e.preventDefault(); qaConversacionExcel(); return true; }   // v22.36
   const dlt = e.target.closest("[data-dl-transcripcion]");
   if(dlt){ qaDescargarTranscripcion(); return true; }
   const copiar = e.target.closest("[data-copiar]");
@@ -14501,8 +14611,9 @@ function qaRecorrido(f){
 }
 function qaSeccionEstado(sec, nombre){
   const s = QA.detalle[sec];
-  if(s.estado==="cargando") return `<div class="qa-sec-msg"><span class="qa-spin"></span>${s.uniendo ? "Juntando la voz del cliente y la del asesor en un solo audio…" : s.intento ? "Genesys está preparando el audio de esta llamada… (puede tardar unos segundos)" : `Cargando ${nombre}…`}</div>`;
-  if(s.estado==="preparando") return `<div class="qa-sec-msg mut">Genesys todavía está preparando el audio (pasa con llamadas largas o recién terminadas). <button type="button" class="btn-outline mini" data-reintentar="${sec}">Reintentar</button></div>`;
+  const esConv = nombre==="la conversación";   // v22.36: conversación escrita (no hay audio que preparar)
+  if(s.estado==="cargando") return `<div class="qa-sec-msg"><span class="qa-spin"></span>${s.uniendo ? "Juntando la voz del cliente y la del asesor en un solo audio…" : s.intento ? (esConv ? "Genesys está preparando el texto de esta conversación… (puede tardar unos segundos)" : "Genesys está preparando el audio de esta llamada… (puede tardar unos segundos)") : `Cargando ${nombre}…`}</div>`;
+  if(s.estado==="preparando") return `<div class="qa-sec-msg mut">${esConv ? "Genesys todavía está preparando el texto de la conversación (pasa con conversaciones largas o recién terminadas)." : "Genesys todavía está preparando el audio (pasa con llamadas largas o recién terminadas)."} <button type="button" class="btn-outline mini" data-reintentar="${sec}">Reintentar</button></div>`;
   if(s.estado==="sinpermiso") return `<div class="qa-sec-msg mut">Sin permiso para ver ${nombre} con este usuario o aplicación de Genesys.</div>`;
   if(s.estado==="nodisponible") return sec==="stta"
     ? `<div class="qa-sec-msg mut">Genesys no tiene transcripción de esta llamada (Speech &amp; Text Analytics no está activo para esta cola).</div>`
@@ -14533,7 +14644,39 @@ function qaHtmlRecorridoBloque(f){
 function qaEsTranscripcionTexto(r){
   return !!r && ((Array.isArray(r.messagingTranscript) && r.messagingTranscript.length) || (Array.isArray(r.transcript) && r.transcript.length) || (Array.isArray(r.emailTranscript) && r.emailTranscript.length));
 }
-function qaHtmlChat(recs, f){
+// v22.36: iconos dibujados (trazo) para la ventana de detalle, la conversación y las descargas.
+const QA_ICO = {
+  chat: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  tel: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  correo: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  bajar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  hoja: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/>',
+  pantalla: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+  audio: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  texto: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  persona: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  bot: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><path d="M8 13v2"/><path d="M16 13v2"/>',
+  clip: '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  reloj: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  listo: '<path d="M20 6 9 17l-5-5"/>',
+  cerrar: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+};
+function qaIco(k, tam){ return `<svg viewBox="0 0 24 24" width="${tam||16}" height="${tam||16}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${QA_ICO[k]||""}</svg>`; }
+// ¿La interacción es escrita (WhatsApp, chat, correo)? Entonces lo principal es la conversación, no el audio.
+function qaEsEscrita(f){ return /^(message|chat|email|webchat)$/i.test((f && f.media) || ""); }
+// Nombre corto del canal para títulos ("Conversación de WhatsApp"): Genesys dice qué mensajería es en la sesión.
+function qaCanalNombre(f){
+  const m = String((f && f.media) || "").toLowerCase();
+  if(m==="message"){
+    let tipo = "";
+    ((f._conv && f._conv.participants) || []).forEach(p=> (p.sessions||[]).forEach(s=>{ if(!tipo && s.messageType) tipo = String(s.messageType).toLowerCase(); }));
+    return { whatsapp:"WhatsApp", sms:"SMS", facebook:"Facebook Messenger", instagram:"Instagram", twitter:"X (Twitter)", line:"LINE", webmessaging:"chat web", apple:"Apple Messages" }[tipo] || "WhatsApp / Mensaje";
+  }
+  return { chat:"chat", webchat:"chat", email:"correo", voice:"voz", callback:"callback" }[m] || (f && f.canal) || "mensajería";
+}
+// v22.36: los mensajes de una conversación escrita, ya en orden — los usan la pantalla y el Excel.
+// Cada uno: { t, quien: "cliente" | "asesor" | "bot" | "correo", nombre, texto, adj: [nombres de adjuntos] }
+function qaChatMensajes(recs, f){
   const msgs = [];
   const telCli = String((f && f.ani) || "").replace(/\D/g,"").slice(-8);
   (recs||[]).forEach(r=>{
@@ -14543,30 +14686,72 @@ function qaHtmlChat(recs, f){
       if(m.fromUser && (m.fromUser.id || m.fromUser.name)){ quien = "asesor"; nombre = m.fromUser.name || qaUserName(m.fromUser.id); }
       else if(m.purpose==="agent" || m.purpose==="user"){ quien = "asesor"; nombre = "Asesor"; }
       else if(m.fromExternalContact || m.purpose==="customer" || m.purpose==="external" || (telCli.length>=7 && desde.replace(/\D/g,"").slice(-8)===telCli)){ quien = "cliente"; nombre = "Cliente"; }
-      const adj = (m.messageMediaAttachments||[]).map(a=> `📎 ${a.name || a.mediaType || "adjunto"}`).join(" · ");
-      msgs.push({ t: m.timestamp, quien, nombre, texto: m.messageText || "", adj });
+      msgs.push({ t: m.timestamp, quien, nombre, texto: m.messageText || "", adj: (m.messageMediaAttachments||[]).map(a=> a.name || a.mediaType || "adjunto") });
     });
     (r.transcript||[]).forEach(m=>{
       const p = String(m.participantPurpose||"").toLowerCase();
       const quien = p==="customer"||p==="external" ? "cliente" : (p==="agent"||p==="user") ? "asesor" : "bot";
-      msgs.push({ t: m.utc || m.timestamp, quien, nombre: quien==="cliente" ? "Cliente" : quien==="asesor" ? ((m.user && m.user.name) || "Asesor") : "Bot / sistema", texto: m.body || m.message || "", adj:"" });
+      msgs.push({ t: m.utc || m.timestamp, quien, nombre: quien==="cliente" ? "Cliente" : quien==="asesor" ? ((m.user && m.user.name) || "Asesor") : "Bot / sistema", texto: m.body || m.message || "", adj: [] });
     });
     (r.emailTranscript||[]).forEach(m=>{
       const de = (m.from && (m.from.name || m.from.email)) || "";
-      msgs.push({ t: m.time, quien: "correo", nombre: de || "Correo", texto: (m.subject ? `Asunto: ${m.subject}\n` : "") + String(m.textBody || "").slice(0, 4000), adj: (m.attachments||[]).map(a=> `📎 ${a.name||"adjunto"}`).join(" · ") });
+      msgs.push({ t: m.time, quien: "correo", nombre: de || "Correo", texto: (m.subject ? `Asunto: ${m.subject}\n` : "") + String(m.textBody || ""), adj: (m.attachments||[]).map(a=> a.name || "adjunto") });
     });
   });
+  const ms = x=>{ const v = Date.parse(x.t); return isNaN(v) ? 0 : v; };
+  return msgs.sort((a,b)=> ms(a) - ms(b));
+}
+function qaChatConteo(msgs){
+  const n = { total: msgs.length, cliente:0, asesor:0, bot:0, correo:0 };
+  msgs.forEach(m=>{ n[m.quien] = (n[m.quien]||0) + 1; });
+  return n;
+}
+const QA_DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const QA_MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+// v22.36: burbujas del diseño "Ejecutiva oscura". Cliente a la izquierda; asesor y bot (el lado de Claro) a la
+// derecha. Se rotula a quien habla solo cuando cambia, la hora va dentro de la burbuja, el día separa cuando
+// cambia la fecha y se avisa cuando un asesor toma la conversación.
+function qaHtmlChat(recs, f){
+  const msgs = qaChatMensajes(recs, f);
   if(!msgs.length) return "";
-  msgs.sort((a,b)=> Date.parse(a.t||0) - Date.parse(b.t||0));
-  return `<div class="qa-chat" role="log" aria-label="Conversación escrita">${msgs.map(m=>`<div class="qa-msg ${m.quien}"><div class="qa-msg-q">${qaEsc(m.nombre)}${m.t?` · ${qaHora(m.t)}`:""}</div><div class="qa-msg-t">${qaEsc(m.texto).replace(/\n/g,"<br>")}${m.adj?`<div class="qa-msg-adj">${qaEsc(m.adj)}</div>`:""}</div></div>`).join("")}</div>`;
+  const p2 = n=> String(n).padStart(2,"0");
+  const diaLargo = iso=>{ const t = qaHn(iso); return `${QA_DIAS[new Date(Date.UTC(t.y, t.mo-1, t.d)).getUTCDay()]} ${t.d} de ${QA_MESES[t.mo-1]} de ${t.y}`; };
+  const horaLarga = iso=>{ const t = qaHn(iso); return `${qaFecha(iso)} ${p2(t.h)}:${p2(t.mi)}:${p2(t.s)}`; };
+  const iniciales = n=> String(n||"").trim().split(/\s+/).slice(0,2).map(x=> x.charAt(0).toUpperCase()).join("") || "A";
+  const txt = t=> qaEsc(t).replace(/\n/g,"<br>");
+  const out = [];
+  let prev = null, diaPrev = null, asesorPrev = null;
+  msgs.forEach(m=>{
+    const hayT = !!m.t && !isNaN(Date.parse(m.t));
+    const dia = hayT ? qaFecha(m.t) : diaPrev;
+    if(hayT && dia!==diaPrev){ out.push(`<div class="qa-chat-dia">${qaEsc(diaLargo(m.t))}</div>`); diaPrev = dia; prev = null; }
+    if(m.quien==="asesor" && m.nombre!==asesorPrev){
+      const cola = asesorPrev===null && f && f.espera>0 ? `${qaDur(f.espera)} en cola · ` : "";
+      out.push(`<div class="qa-chat-ev"><span>${qaIco("reloj",12)}${cola}${qaEsc(m.nombre)} toma la conversación${hayT ? ` a las ${qaHora(m.t)}` : ""}</span></div>`);
+      asesorPrev = m.nombre; prev = null;
+    }
+    const ini = !prev || prev.quien!==m.quien || prev.nombre!==m.nombre;
+    const correo = m.quien==="correo";
+    const rotulo = m.quien==="asesor" ? (m.nombre==="Asesor" ? "Asesor" : `${qaEsc(m.nombre)} <span>· Asesor</span>`)
+      : m.quien==="bot" ? `Bot <span>· respuesta automática</span>`
+      : correo ? `${qaEsc(m.nombre)}${hayT ? ` <span>· ${qaHora(m.t)}</span>` : ""}` : "Cliente";
+    const avatar = m.quien==="asesor" ? qaEsc(iniciales(m.nombre)) : qaIco(m.quien==="bot" ? "bot" : correo ? "correo" : "persona", 14);
+    const cuerpo = (correo && m.texto.length > 4000 ? txt(m.texto.slice(0, 4000)) + "…" : txt(m.texto))
+      + (m.adj.length ? `<div class="qa-msg-adj">${m.adj.map(a=> `<span>${qaIco("clip",12)}${qaEsc(a)}</span>`).join("")}</div>` : "");
+    out.push(`<div class="qa-msg ${m.quien}${ini && prev ? " ini" : ""}">${ini || correo ? `<div class="qa-msg-q">${rotulo}</div>` : ""}<div class="qa-msg-f"><span class="qa-av${ini || correo ? "" : " no"}" aria-hidden="true">${avatar}</span><div class="qa-msg-t"><div class="qa-msg-x">${cuerpo}</div>${hayT && !correo ? `<span class="qa-msg-h" title="${qaEsc(horaLarga(m.t))}">${qaHora(m.t)}</span>` : ""}</div></div></div>`);
+    prev = m;
+  });
+  if(f && f.fin) out.push(`<div class="qa-chat-ev"><span>${qaIco("listo",12)}Fin de la conversación · ${qaHora(f.fin)}</span></div>`);
+  return `<div class="qa-chat" role="log" aria-label="Conversación escrita">${out.join("")}</div>`;
 }
 function qaHtmlGrabacionBloque(f, conOnda){
-  let html = qaSeccionEstado("grab","la grabación");
+  const escrita = qaEsEscrita(f);   // v22.36: en WhatsApp / chat / correo los avisos hablan de la conversación, no del audio
+  let html = qaSeccionEstado("grab", escrita ? "la conversación" : "la grabación");
   if(html) return html;
   const recs = QA.detalle.grab.recs || [];
   const audios = recs.filter(r=> (r.media||"audio").toLowerCase()==="audio");
   const pantallas = recs.filter(r=> (r.media||"").toLowerCase()==="screen");
-  if(!recs.length) return `<div class="qa-sec-msg mut">Esta llamada no tiene grabación (o todavía no está disponible).</div>`;
+  if(!recs.length) return `<div class="qa-sec-msg mut">${escrita ? "Genesys no tiene guardado el texto de esta conversación (o todavía no está disponible)." : "Esta llamada no tiene grabación (o todavía no está disponible)."}</div>`;
   // v21.88: chat / WhatsApp / correo → se muestra la conversación escrita
   const chatHtml = qaHtmlChat(recs, f);
   if(chatHtml && !audios.length) return chatHtml;
@@ -14724,11 +14909,16 @@ function qaHtmlDescargas(f){
     : "video del escritorio del asesor";
   const frases = qaFrasesActuales();
   const onda = QA.detalle.onda;
-  const item = (ico, titulo, sub, attrs, on)=> `<button type="button" class="qa-dl ${on?"":"off"}" ${on?attrs:"disabled"}><span class="ico">${ico}</span><span><b>${titulo}</b><small>${sub}</small></span></button>`;
+  // v22.36: iconos dibujados en vez de emojis; la conversación escrita se baja en Excel (y ahí no se ofrece
+  // "Audio de la llamada", que no existe en WhatsApp / chat / correo)
+  const hayConv = recs.some(qaEsTranscripcionTexto);
+  const sinAudio = qaEsEscrita(f) && !audio;
+  const item = (ico, titulo, sub, attrs, on, cls)=> `<button type="button" class="qa-dl ${on?"":"off"}${cls ? " "+cls : ""}" ${on?attrs:"disabled"}><span class="ico">${qaIco(ico, 17)}</span><span><b>${titulo}</b><small>${sub}</small></span></button>`;
   return `<div class="qa-dls">
-    ${item("🎧","Audio de la llamada", "cliente y asesor juntos", `data-dl-audio="1"`, !!(completo || pistas.length))}
-    ${item("🖥️","Pantalla", qaEsc(pantSub), `data-dl-pantallas="1"${det.pantDl ? " disabled" : ""}`, !!(pants.length || pantFaltan))}
-    ${frases&&frases.length ? item("📝","Transcripción", "texto con tiempos (.txt)", `data-dl-transcripcion="1"`, true) : ""}
+    ${hayConv ? item("hoja","Conversación en Excel", "lo que dijo el cliente y lo que dijo el asesor", `data-dl-conversacion="1"`, true, "xls") : ""}
+    ${sinAudio ? "" : item("audio","Audio de la llamada", "cliente y asesor juntos", `data-dl-audio="1"`, !!(completo || pistas.length))}
+    ${item("pantalla","Pantalla", qaEsc(pantSub), `data-dl-pantallas="1"${det.pantDl ? " disabled" : ""}`, !!(pants.length || pantFaltan))}
+    ${frases&&frases.length ? item("texto","Transcripción", "texto con tiempos (.txt)", `data-dl-transcripcion="1"`, true) : ""}
     ${det.pantNota ? `<div class="qa-sec-msg mut qa-dl-nota"><span>${qaEsc(det.pantNota)}${(det.pantEnlaces||[]).map((x,i)=> `${i ? " ·" : ""} <a href="${qaEsc(x.uri)}" target="_blank" rel="noopener">${qaEsc(x.texto)}</a>`).join("")}</span></div>` : ""}
   </div>`;
 }
@@ -14755,7 +14945,7 @@ function qaHtmlEvaluacionGenesys(){
   let html = qaSeccionEstado("evals","las evaluaciones");
   if(html) return html;
   const lista = QA.detalle.evals.lista || [];
-  if(!lista.length) return `<div class="qa-sec-msg mut">Esta llamada todavía no tiene evaluaciones de calidad en Genesys.</div>`;
+  if(!lista.length) return `<div class="qa-sec-msg mut">${qaEsEscrita(QA.detalle.f) ? "Esta conversación" : "Esta llamada"} todavía no tiene evaluaciones de calidad en Genesys.</div>`;
   return lista.map(ev=>{
     const sc = ev.answers && typeof ev.answers.totalScore==="number" ? ev.answers.totalScore : null;
     const cr = ev.answers && typeof ev.answers.totalCriticalScore==="number" ? ev.answers.totalCriticalScore : null;
@@ -14805,34 +14995,78 @@ function qaPintarDetalle(){
   const cont = document.getElementById("qa-dw-cont");
   if(!cont) return;
   const f = det.f;
-  if(det.errorConv){ cont.innerHTML = `<div class="qa-dw-head"><h3 id="qa-dw-titulo">Conversación</h3><button type="button" class="qa-dw-cerrar" data-cerrar="1" aria-label="Cerrar">✕</button></div><div class="qa-sec-msg err" style="margin:16px 22px;">${qaEsc(det.errorConv)}</div>`; return; }
-  if(!f){ cont.innerHTML = `<div class="qa-dw-head"><h3 id="qa-dw-titulo">Cargando conversación…</h3><button type="button" class="qa-dw-cerrar" data-cerrar="1" aria-label="Cerrar">✕</button></div><div class="qa-sec-msg" style="margin:16px 22px;"><span class="qa-spin"></span>Consultando Genesys…</div>`; return; }
+  // v22.36: ventana "Ejecutiva oscura" (ver los estilos de #qa-drawer). Mismo contenido que el panel de antes,
+  // acomodado así: cabecera negra (título, alertas, indicadores) · a la izquierda lo principal · a la derecha
+  // tarjetas. En una conversación escrita lo principal es la conversación, que llena el alto de la ventana.
+  const ventana = cont.closest(".qa-dw");
+  const btnCerrar = `<button type="button" class="qa-dw-cerrar" data-cerrar="1" aria-label="Cerrar">${qaIco("cerrar", 15)}</button>`;
+  const cabSimple = (titulo, cuerpo)=> `<div class="qa-dw-head"><div class="qa-dw-top"><div class="qa-dw-tit"><h3 id="qa-dw-titulo">${titulo}</h3></div>${btnCerrar}</div></div><div class="qa-dw-grid">${cuerpo}</div>`;
+  if(det.errorConv){ if(ventana) ventana.classList.remove("qa-dw-alto"); cont.innerHTML = cabSimple("Conversación", `<div class="qa-sec-msg err">${qaEsc(det.errorConv)}</div>`); return; }
+  if(!f){ if(ventana) ventana.classList.remove("qa-dw-alto"); cont.innerHTML = cabSimple("Cargando conversación…", `<div class="qa-sec-msg"><span class="qa-spin"></span>Consultando Genesys…</div>`); return; }
+  const escrita = qaEsEscrita(f);
+  const recs = (det.grab && det.grab.estado==="ok" && det.grab.recs) || [];
+  // misma regla que qaHtmlGrabacionBloque: hay conversación para mostrar si llegó el texto y no hay audio
+  const msgs = recs.some(r=> (r.media||"audio").toLowerCase()==="audio") ? [] : qaChatMensajes(recs, f);
   const otras = qaOtrasDelNumero(f);
   const pos = qaGuardarAudio(cont);
+  const scroll = cont.dataset.conv===det.id ? qaGuardarScroll(cont) : null;
+  const foco = cont.contains(document.activeElement) ? qaFocoClave(document.activeElement) : null;
+  if(ventana) ventana.classList.toggle("qa-dw-alto", msgs.length > 0 || (escrita && (!det.grab || det.grab.estado==="cargando")));
+  const tarjeta = (titulo, html)=> `<section class="qa-dw-card"><h4>${titulo}</h4>${html}</section>`;
+  let principal;
+  if(msgs.length){
+    const n = qaChatConteo(msgs);
+    const t0 = msgs.find(m=> m.t && !isNaN(Date.parse(m.t))), t1 = msgs.slice().reverse().find(m=> m.t && !isNaN(Date.parse(m.t)));
+    const rango = !t0 ? "" : qaFecha(t0.t)===qaFecha(t1.t) ? `de ${qaHora(t0.t)} a ${qaHora(t1.t)}` : `del ${qaFecha(t0.t)} ${qaHora(t0.t)} al ${qaFecha(t1.t)} ${qaHora(t1.t)}`;
+    const ley = [["cli","Cliente",n.cliente],["ase","Asesor",n.asesor],["bot","Bot",n.bot],["cor","Correo",n.correo]].filter(x=> x[2]).map(([c,t,k])=> `<span><i class="${c}"></i>${t} <b>${k}</b></span>`).join("");
+    principal = `<section class="qa-dw-card qa-dw-conv">
+        <div class="qa-dw-cardh"><h4>Conversación</h4><span class="qa-dw-n">${n.total} ${n.total===1 ? "mensaje" : "mensajes"}</span><div class="qa-dw-ley">${ley}</div>${rango ? `<span class="qa-dw-rango">${rango}</span>` : ""}</div>
+        ${qaHtmlChat(recs, f)}
+      </section>`;
+  } else {
+    principal = `${tarjeta(escrita ? "Conversación" : "Grabación", qaHtmlGrabacionBloque(f, true))}
+      ${qaHayTransGenesys() ? tarjeta("Transcripción y sentimiento", qaHtmlTranscripcionBloque(300)) : ""}
+      ${escrita ? "" : tarjeta("Evaluación de calidad", qaHtmlEvaluacionBloque())}`;
+  }
+  const alertas = Array.from(f.flags).map(k=>`<span class="qa-tag ${QA_FLAGS[k].cls}">${QA_FLAGS[k].label}</span>`).join("");
+  cont.dataset.conv = det.id;
   cont.innerHTML = `
     <div class="qa-dw-head">
-      <div><h3 id="qa-dw-titulo">${qaEsc(f.canal)} · ${qaFecha(f.inicio)} ${qaHora(f.inicio)}</h3><span class="mut">${qaEsc(f.cola)} · ${qaEsc(f.asesor)}</span></div>
-      <button type="button" class="qa-dw-cerrar" data-cerrar="1" aria-label="Cerrar">✕</button>
+      <div class="qa-dw-top">
+        <span class="qa-dw-ico" aria-hidden="true">${qaIco(escrita ? (/^email$/i.test(f.media||"") ? "correo" : "chat") : "tel", 21)}</span>
+        <div class="qa-dw-tit"><h3 id="qa-dw-titulo">${qaEsc(f.canal)} · ${qaFecha(f.inicio)} ${qaHora(f.inicio)}</h3><div class="qa-dw-sub"><span>${qaEsc(f.cola)} · ${qaEsc(f.asesor)}</span>${alertas}</div></div>
+        ${msgs.length ? `<button type="button" class="qa-dw-xls" data-dl-conversacion="1" title="Descargar la conversación en Excel: lo que dijo el cliente y lo que dijo el asesor">${qaIco("bajar", 15)}Descargar Excel</button>` : ""}
+        ${btnCerrar}
+      </div>
+      ${qaHtmlTiles(f)}
     </div>
-    ${qaHtmlTiles(f)}
-    ${f.flags.size?`<div class="qa-dw-flags">${Array.from(f.flags).map(k=>`<span class="qa-tag ${QA_FLAGS[k].cls}">${QA_FLAGS[k].label}</span>`).join("")}</div>`:""}
     <div class="qa-dw-grid">
-      <section class="qa-dw-sec">
-        <h4>Recorrido</h4>${qaHtmlRecorridoBloque(f)}
-        <h4>Datos</h4>${qaHtmlDatosBloque(f)}
-        ${otras.length?`<h4>Otras llamadas de este número</h4><ul class="qa-otras">${otras.map(o=>`<li><button type="button" data-ver-conv="${o.id}">${qaFecha(o.inicio)} ${qaHora(o.inicio)} · ${qaEsc(o.asesor)} · ${qaEsc(o.tipificacion)}</button></li>`).join("")}</ul>`:""}
-      </section>
-      <section class="qa-dw-sec">
-        <h4>${/^(message|chat|email|webchat)$/i.test((f && f.media)||"") ? "Conversación" : "Grabación"}</h4>${qaHtmlGrabacionBloque(f, true)}
-        ${qaHayTransGenesys() ? `<h4>Transcripción y sentimiento</h4>${qaHtmlTranscripcionBloque(300)}` : ""}
-        <h4>Descargas</h4>${qaHtmlDescargas(f)}
-        <h4>Evaluación de calidad</h4>${qaHtmlEvaluacionBloque()}
-        ${qaHtmlAuditoria()}
-      </section>
+      <div class="qa-dw-main">${principal}</div>
+      <aside class="qa-dw-lado" aria-label="Datos de la interacción">
+        ${tarjeta("Recorrido", qaHtmlRecorridoBloque(f))}
+        ${tarjeta("Datos", qaHtmlDatosBloque(f))}
+        ${tarjeta("Descargas", qaHtmlDescargas(f) + qaHtmlAuditoria())}
+        ${escrita || msgs.length ? tarjeta("Evaluación de calidad", qaHtmlEvaluacionBloque()) : ""}
+        ${otras.length ? tarjeta("Otras llamadas de este número", `<ul class="qa-otras">${otras.map(o=>`<li><button type="button" data-ver-conv="${o.id}">${qaFecha(o.inicio)} ${qaHora(o.inicio)} · ${qaEsc(o.asesor)} · ${qaEsc(o.tipificacion)}</button></li>`).join("")}</ul>`) : ""}
+      </aside>
     </div>`;
+  qaRestaurarScroll(cont, scroll);
+  if(foco){ const e = cont.querySelector(foco); if(e) e.focus({ preventScroll:true }); }
   qaRestaurarAudio(cont, pos);
   qaPrepararOnda(cont);
 }
+// v22.36: al repintar tampoco se pierde el foco del teclado (p. ej. el botón de cerrar, enfocado al abrir).
+function qaFocoClave(el){
+  if(!el || !el.getAttribute) return null;
+  if(el.classList.contains("qa-dw-cerrar")) return ".qa-dw-cerrar";
+  if(el.classList.contains("qa-dw-xls")) return ".qa-dw-xls";
+  const a = Array.from(el.attributes).find(x=> /^data-(ver-eval|ver-conv|dl-audio|dl-pantallas|dl-conversacion|dl-transcripcion|mezcla|invertir|reintentar|copiar)$/.test(x.name));
+  return a ? `${el.classList.contains("qa-dl") ? ".qa-dl" : ""}[${a.name}="${String(a.value).replace(/["\\]/g, "\\$&")}"]` : null;
+}
+// v22.36: al repintar (llega otra sección) no se pierde por dónde iba leyendo la conversación ni las columnas.
+const QA_SCROLLS = [".qa-chat", ".qa-dw-main", ".qa-dw-lado", ".qa-transcript"];
+function qaGuardarScroll(cont){ const o = {}; QA_SCROLLS.forEach(s=>{ const e = cont.querySelector(s); if(e && e.scrollTop) o[s] = e.scrollTop; }); return o; }
+function qaRestaurarScroll(cont, o){ Object.keys(o || {}).forEach(s=>{ const e = cont.querySelector(s); if(e) e.scrollTop = o[s]; }); }
 function qaHtmlTiles(f){
   return `<div class="qa-dw-tiles">
       <div><b>${qaDur(f.dur)}</b><span>duración</span></div>
@@ -14878,7 +15112,7 @@ function qaPintarFicha(posPrevia){
       ${qaHtmlAuditoria()}
     </section>
     <section class="qa-card qa-fcol">
-      <h4 class="qa-ft">${qaHayTransGenesys() ? "Grabación y transcripción" : "Grabación"}</h4>
+      <h4 class="qa-ft">${qaEsEscrita(f) ? "Conversación" : qaHayTransGenesys() ? "Grabación y transcripción" : "Grabación"}</h4>
       ${qaHtmlGrabacionBloque(f, true)}
       ${qaHtmlTranscripcionBloque(260)}
       <h4 class="qa-ft" style="margin-top:14px;">Descargas</h4>
@@ -15118,6 +15352,82 @@ function qaDescargarTranscripcion(){
   a.href = URL.createObjectURL(new Blob([txt], { type:"text/plain;charset=utf-8" }));
   a.download = qaNombreArchivo(f, "txt", "transcripcion");
   document.body.appendChild(a); a.click(); a.remove();
+}
+/* ---------- v22.36: la conversación escrita en Excel ----------
+   Oscar: "quiero agregar un archivo que se pueda descargar en algún Excel esa conversación, para documentación:
+   qué dice el cliente y qué dice el asesor". Eligió el formato A de las maquetas: arriba los datos de la
+   conversación, luego una fila por mensaje (N.º, fecha, hora, quién, nombre, mensaje, adjuntos) con filtro
+   para ver solo al cliente, al asesor o al bot, y al final los totales. Fecha y hora van como fecha y hora
+   de Excel (hora de Honduras) para poder ordenar y filtrar. */
+function qaConversacionExcel(){
+  const det = QA.detalle;
+  if(!det || !det.f) return;
+  const f = det.f;
+  const msgs = qaChatMensajes((det.grab && det.grab.recs) || [], f);
+  if(!msgs.length) return;
+  const p2 = n=> String(n).padStart(2, "0"), ahora = new Date();
+  // Excel no admite caracteres de control ni más de 32,767 caracteres por celda
+  const limpio = t=>{ const x = String(t==null ? "" : t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ""); return x.length > 32000 ? x.slice(0, 32000) + "… (texto recortado)" : x; };
+  const h = new XlsHoja(); h.rico = {};
+  h.set(0, 0, `Conversación de ${qaCanalNombre(f)}`, "titulo"); h.filas[0] = { hpt:26 };
+  h.set(1, 0, `Claro Honduras · Calidad · descargado el ${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`, "sub");
+  let r = 3;
+  const dato = (k, v)=>{   // "Asesor: Ana Pérez" con el rótulo en gris y el valor en negrita, en la misma celda
+    const val = limpio(v);
+    if(!val || val==="—") return;
+    h.set(r, 0, `${k}: ${val}`, "sub");
+    h.rico[XLSX.utils.encode_cell({ r, c:0 })] = [{ t:`${k}:  `, f:"sub" }, { t:val, f:"negrita" }];
+    r++;
+  };
+  const unDia = !f.fin || qaFecha(f.inicio)===qaFecha(f.fin);
+  dato("Fecha y hora", !f.inicio ? "" : !f.fin ? `${qaFecha(f.inicio)} · ${qaHora(f.inicio)}`
+    : `${unDia ? `${qaFecha(f.inicio)} · de ${qaHora(f.inicio)} a ${qaHora(f.fin)}` : `del ${qaFecha(f.inicio)} ${qaHora(f.inicio)} al ${qaFecha(f.fin)} ${qaHora(f.fin)}`}${f.dur!=null ? ` (duración ${qaDur(f.dur)})` : ""}`);
+  dato("Cliente (teléfono)", f.aniTxt);
+  dato("Asesor", f.asesor);
+  dato("Cola", f.cola);
+  dato("Tipificación", f.tipificacion);
+  dato("Nota de cierre", f.wrapNota);
+  dato("ID de la conversación", f.id);
+  const r0 = r + 1;   // una fila en blanco antes de la tabla
+  h.fila(r0, 0, ["N.º","Fecha","Hora","Quién","Nombre","Mensaje","Adjuntos"], ["enc","enc","enc","enc","enc","encIzq","enc"]);
+  h.filas[r0] = { hpt:22 };
+  const QUIEN = { cliente:["Cliente","cCli"], asesor:["Asesor","cAse"], bot:["Bot","cBot"], correo:["Correo","cCor"] };
+  msgs.forEach((m, i)=>{
+    const rr = r0 + 1 + i, t = m.t && !isNaN(Date.parse(m.t)) ? qaHn(m.t) : null, q = QUIEN[m.quien] || QUIEN.bot;
+    h.set(rr, 0, i + 1, "cNum");
+    if(t){
+      h.set(rr, 1, (Date.UTC(t.y, t.mo-1, t.d) - Date.UTC(1899, 11, 30))/864e5, "dFecha");
+      h.set(rr, 2, (t.h*3600 + t.mi*60 + t.s)/86400, "dHora");
+    } else { h.set(rr, 1, "—", "dTxtC"); h.set(rr, 2, "—", "dTxtC"); }
+    h.set(rr, 3, q[0], q[1]);
+    h.set(rr, 4, limpio(m.quien==="cliente" && f.aniTxt && f.aniTxt!=="—" ? f.aniTxt : m.nombre), "dTxt");
+    h.set(rr, 5, limpio(m.texto), m.quien==="bot" ? "cMsgBot" : "dComent");
+    h.set(rr, 6, limpio(m.adj.join(", ")), "cAdj");
+  });
+  // Totales (pie gris con la línea roja arriba, como en los otros Excel)
+  const n = qaChatConteo(msgs);
+  let rr = r0 + msgs.length + 2;
+  const pie = (etiqueta, valor, total)=>{
+    h.set(rr, 0, etiqueta, total ? "gTotTxt" : "cPie");
+    for(let c = 1; c <= 4; c++) h.set(rr, c, "", total ? "gTotTxt" : "cPie");
+    h.set(rr, 5, valor, total ? "gTotNum" : "cPieNum");
+    h.set(rr, 6, "", total ? "gTotTxt" : "cPie");
+    h.unir(rr, 0, rr, 4);
+    rr++;
+  };
+  pie("Total de mensajes", n.total, true);
+  const soloCorreo = n.correo===n.total;   // en un hilo de correo no hay "cliente" ni "asesor" que contar
+  if(!soloCorreo) pie("   Cliente", n.cliente);
+  if(!soloCorreo) pie("   Asesor", n.asesor);
+  if(n.bot) pie("   Bot / sistema", n.bot);
+  if(n.correo) pie("   Correo", n.correo);
+  h.cols = [6, 12, 8, 11, 24, 95, 26];
+  h.panel = { y: r0 + 1 };
+  h.filtro = `A${r0 + 1}:G${r0 + 1 + msgs.length}`;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, h.hoja(), "Conversación");
+  wb.Workbook = { Names:[{ Name:"_xlnm.Print_Titles", Sheet:0, Ref:`'Conversación'!$${r0 + 1}:$${r0 + 1}` }] };   // al imprimir, el encabezado se repite en cada hoja
+  xlsDescargarConEstilo(wb, { "Conversación": h }, qaNombreArchivo(f, "xlsx", "conversación"));
 }
 function qaEstadoEval(s){ return { PENDING:"pendiente", INPROGRESS:"en progreso", FINISHED:"finalizada" }[s] || (s||"").toLowerCase(); }
 async function qaVerEvaluacion(evalId, forzarAbrir){
