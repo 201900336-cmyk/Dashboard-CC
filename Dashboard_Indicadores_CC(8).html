@@ -749,6 +749,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .kpisdia-badge-crit{background:rgba(228,3,46,.14);color:var(--kd-accent-crit);border:1px solid rgba(228,3,46,.35);}
   .kpisdia-status-chip{font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
   #kpisdia-modal .kpisdia-nodata{color:var(--kd-nodata);}
+  /* v22.32: Pronóstico · Recibido · Desviación (como en la BITÁCORA) en cada tarjeta de skill y en los KPIs Globales */
+  .kpisdia-pron{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#F7F9FC;border-bottom:1px solid var(--kd-divider);}
+  .kpisdia-pron-cel{display:flex;flex-direction:column;gap:1px;padding:6px 14px 5px;border-left:1px solid var(--kd-divider);min-width:0;}
+  .kpisdia-pron-cel:first-child{border-left:0;}
+  .kpisdia-pron-cel .k{font-size:9.5px;color:var(--kd-text-faint);font-weight:800;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kpisdia-pron-cel .v{font-size:15px;font-weight:800;color:var(--kd-text);letter-spacing:-.01em;white-space:nowrap;}
+  .kpisdia-pron-nota{grid-column:1/-1;padding:0 14px 6px;font-size:10.5px;font-weight:600;color:var(--kd-text-dim);line-height:1.35;}
+  .kpisdia-pron.sin .kpisdia-pron-cel .v{color:var(--kd-nodata);}
+  .kpisdia-pron-global{background:var(--kd-card-bg);border:1px solid var(--kd-card-border);border-left:3px solid var(--red);border-radius:12px;margin:0 0 12px;grid-template-columns:repeat(3,minmax(0,190px)) minmax(0,1fr);align-items:center;}
+  .kpisdia-pron-global .kpisdia-pron-cel{padding:8px 16px;}
+  .kpisdia-pron-global .kpisdia-pron-cel .k{font-size:11px;}
+  .kpisdia-pron-global .kpisdia-pron-cel .v{font-size:21px;letter-spacing:-.02em;}
+  .kpisdia-pron-global .kpisdia-pron-nota{grid-column:auto;align-self:stretch;display:flex;align-items:center;padding:8px 16px;border-left:1px solid var(--kd-divider);font-size:11.5px;}
+  @media (max-width:820px){
+    .kpisdia-pron-global{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .kpisdia-pron-global .kpisdia-pron-nota{grid-column:1/-1;border-left:0;border-top:1px solid var(--kd-divider);}
+  }
+  @media (max-width:520px){
+    .kpisdia-pron-cel{padding:6px 10px 5px;}
+    .kpisdia-pron-cel .k{white-space:normal;overflow:visible;}   /* en el celular la etiqueta baja de línea en vez de cortarse */
+    .kpisdia-pron-global .kpisdia-pron-cel .v{font-size:17px;}
+  }
   /* Alertas + estado */
   .kpisdia-bottom-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:10px;}
   .kpisdia-alert-row{display:grid;grid-template-columns:1fr;gap:6px;}
@@ -11374,10 +11396,14 @@ async function kpisDiaCargarYRenderizar(){
     // Misma consulta que genesysQueryDay (P1D, por cola+canal), pero sobre el
     // intervalo completo del período — genesysRawStatsByQueue suma todos los
     // cubos diarios en uno solo.
+    kpisDiaCargadoEn = Date.now();   // v22.32: el "corte" de hoy para lo esperado a esta hora
     const periodRaw = await genesysQueryAggregates(startISO, endISO, mappedQueueIds, "P1D", ["queueId","mediaType"]);
     const rawByCat = genesysAggregateByCategoria(genesysRawStatsByQueue(periodRaw, queuesById), queuesById, new Set());
     kpisDiaUltimoRawByCat = rawByCat;
+    // v22.32: la misma respuesta, día por día (el cubo P1D empieza a la medianoche de Honduras)
+    kpisDiaUltimoPorDia = kpisDiaPorClave(periodRaw, b=> String(b.interval||"").slice(0, 10) || null, queuesById);
     kpisDiaRender(cont, periodo, rawByCat);
+    if(periodo.incluyeHoy) kpisDiaCargarCurva(mappedQueueIds, queuesById);   // no se espera: llega después y se vuelve a dibujar
   }catch(e){
     const msg = e.message==="NOT_SIGNED_IN"
       ? "Tu sesión de Genesys expiró — cierra este panel e inicia sesión de nuevo desde la pestaña Genesys."
@@ -11483,6 +11509,144 @@ function kpisDiaRerenderConEstadoActual(cont){
 // Ícono representativo por categoría — puramente decorativo (pedido de Oscar,
 // 2026-09-08: "ponle iconos"), no afecta ningún cálculo.
 const KPISDIA_CAT_ICON = { "Fijo":"🏠", "Móvil":"📱", "Helpdesk":"🎧", "Corporativo":"🏢", "Despacho":"🚨", "WhatsApp":"💬", "Redes Sociales":"📢", "Chat Web":"🌐", "Mail Clientes":"📧", "Mail Corporativo":"✉️", "WhatsApp Corporativo":"📲", "BackOffice Despacho":"🗂️", "Recuperación de equipos":"📦", "WhatsApp No Contactados":"📵", "Mail Despacho (Horario Hábil)":"📨", "Mail Despacho (Fuera de Horario)":"🌙" };
+/* ============================================================
+   v22.32 (Oscar, 2026-11-20): "agregar en este modal el pronóstico, lo
+   recibido y la desviación así como las bitácoras". Cada tarjeta de skill y
+   los KPIs Globales muestran Pronóstico · Recibido · Desviación, con la
+   fórmula y los colores de la BITÁCORA: Recibido ÷ Pronóstico − 1, roja si
+   entraron más llamadas de las pronosticadas y verde si entraron menos.
+   - Pronóstico: la columna FC del Sheet (genesysSheetForecastDiario), el mismo
+     de la BITÁCORA. Solo Fijo, Móvil, Despacho, Corporativo y WhatsApp tienen
+     skill en el Sheet; los demás dicen "Sin pronóstico en el Sheet".
+   - Recibido: la Oferta de Genesys (nOffered) de los días que tienen
+     pronóstico — igual que el total de la BITÁCORA (v22.30).
+   - HOY (día en curso), elegido por Oscar: se compara contra lo ESPERADO A
+     ESTA HORA = pronóstico del día × la parte del día que suele haber entrado
+     a esta hora, según cómo entraron las llamadas los mismos días de semana de
+     las 4 semanas anteriores (Genesys, franjas de 30 min, mismas colas y
+     canales que el resto). Así a media mañana no sale −60% solo porque el día
+     no ha terminado. La curva se calcula una vez por día (4 consultas) y llega
+     después del resto del panel, que no la espera.
+   ============================================================ */
+const KPISDIA_CURVA_SEMANAS = 4;
+const KPISDIA_MIN_COMPARAR = 20;   // con menos llamadas esperadas (madrugada) todavía no se compara
+let kpisDiaCurva = { clave:null, estado:null, porCat:null, error:null };   // curva del día de hoy por categoría (48 franjas)
+let kpisDiaUltimoPorDia = null;   // { "aaaa-mm-dd": { categoría: agg } } de la última carga
+let kpisDiaCargadoEn = null;      // momento de la última carga (el "corte" de hoy)
+// Acumulados por categoría y por lo que devuelva keyFn(bucket) (día, franja de 30 min…)
+function kpisDiaPorClave(apiResult, keyFn, queuesById){
+  const porCola = genesysRawStatsByQueueGrouped(apiResult, keyFn, queuesById);
+  const porClave = {};
+  Object.keys(porCola).forEach(q=> Object.keys(porCola[q]).forEach(k=>{ (porClave[k] = porClave[k] || {})[q] = porCola[q][k]; }));
+  const out = {};
+  Object.keys(porClave).forEach(k=>{ out[k] = genesysAggregateByCategoria(porClave[k], queuesById, new Set()); });
+  return out;
+}
+function kpisDiaMinutoHN(ms){ return Math.floor(((ms - 6*3600e3) % 864e5 + 864e5) % 864e5 / 60000); }
+function kpisDiaHoraCorte(){ const m = kpisDiaMinutoHN(kpisDiaCargadoEn || Date.now()), p = n=> String(n).padStart(2, "0"); return `${p(Math.floor(m/60))}:${p(m%60)}`; }
+// Parte del día (0 a 1) que suele haber entrado hasta el minuto `min` (hora Honduras)
+function kpisDiaParteHasta(franjas, min){
+  let tot = 0, hasta = 0;
+  franjas.forEach((v, s)=>{ tot += v; hasta += v * Math.max(0, Math.min(1, (min - s*30)/30)); });
+  return tot > 0 ? hasta/tot : null;
+}
+async function kpisDiaCargarCurva(mappedQueueIds, queuesById){
+  const hoy = genesysHondurasToday(), clave = kpisDiaIso(hoy);
+  if(kpisDiaCurva.clave===clave && (kpisDiaCurva.estado==="listo" || kpisDiaCurva.estado==="cargando")) return;
+  kpisDiaCurva = { clave, estado:"cargando", porCat:null, error:null };
+  try{
+    const porCat = {};
+    for(let w=1; w<=KPISDIA_CURVA_SEMANAS; w++){
+      const d = genesysShiftDate(hoy.year, hoy.month, hoy.day, -7*w);
+      const raw = await genesysQueryDayIntervals(d.year, d.month, d.day, mappedQueueIds, "PT30M");
+      const porFranja = kpisDiaPorClave(raw, b=>{
+        const t = Date.parse(String(b.interval||"").split("/")[0]);
+        return isNaN(t) ? null : "f" + Math.floor(kpisDiaMinutoHN(t)/30);
+      }, queuesById);
+      Object.keys(porFranja).forEach(k=>{
+        const f = Number(k.slice(1));
+        Object.keys(porFranja[k]).forEach(cat=>{ (porCat[cat] = porCat[cat] || new Array(48).fill(0))[f] += porFranja[k][cat].nOffered || 0; });
+      });
+    }
+    if(kpisDiaCurva.clave===clave) kpisDiaCurva = { clave, estado:"listo", porCat, error:null };
+  }catch(e){
+    if(kpisDiaCurva.clave===clave) kpisDiaCurva = { clave, estado:"error", porCat:null, error:(e && e.message) || String(e) };
+  }
+  const ov = document.getElementById("kpisdia-modal-overlay"), cont = document.getElementById("kpisdia-resultado");
+  if(cont && ov && ov.style.display!=="none" && kpisDiaTarget && kpisDiaTarget.incluyeHoy) kpisDiaRerenderConEstadoActual(cont);
+}
+// Pronóstico vs. Recibido de una o varias categorías (sumadas) en el período del panel
+function kpisDiaPronCalc(cats, periodo, porDia){
+  const hoyIso = kpisDiaIso(genesysHondurasToday()), hastaIso = kpisDiaIso(periodo.hasta);
+  const conSkill = cats.filter(c=> skillIndex(c) >= 0);
+  const r = { conSkill: conSkill.length > 0, hayPron:false, pronTotal:0, esperado:0, recibido:0, recibidoTodo:0, diasSinPron:0,
+              hoyPron:0, hoyRecibido:0, hoyEsperado:0, hoyEstado:null, desv:null, avance:null };
+  const curvaHoy = kpisDiaCurva.clave===hoyIso ? kpisDiaCurva : { estado:null };
+  for(let d = periodo.desde, i = 0; i < 400; i++, d = genesysShiftDate(d.year, d.month, d.day, 1)){
+    const iso = kpisDiaIso(d);
+    if(iso > hastaIso) break;
+    let falta = false;
+    cats.forEach(cat=>{
+      const of = (porDia && porDia[iso] && porDia[iso][cat]) ? (porDia[iso][cat].nOffered || 0) : 0;
+      r.recibidoTodo += of;
+      if(skillIndex(cat) < 0) return;
+      const fc = genesysSheetForecastDiario(iso, cat);
+      if(fc===null || fc===undefined || !(fc > 0)){ falta = true; if(fc===0) r.hayPron = true; return; }
+      r.hayPron = true; r.pronTotal += fc;
+      if(periodo.incluyeHoy && iso===hoyIso){   // día en curso: contra lo esperado a esta hora
+        r.hoyPron += fc; r.hoyRecibido += of;
+        const franjas = curvaHoy.estado==="listo" && curvaHoy.porCat ? curvaHoy.porCat[cat] : null;
+        const parte = franjas ? kpisDiaParteHasta(franjas, kpisDiaMinutoHN(kpisDiaCargadoEn || Date.now())) : null;
+        if(parte===null){ r.hoyEstado = (curvaHoy.estado==="error" || curvaHoy.estado==="listo") ? "sin" : "cargando"; return; }
+        r.hoyEsperado += fc * parte; r.esperado += fc * parte; r.recibido += of;
+        return;
+      }
+      r.esperado += fc; r.recibido += of;
+    });
+    if(falta && r.conSkill) r.diasSinPron++;
+  }
+  const soloHoy = periodo.unDia && periodo.incluyeHoy;
+  if(r.esperado >= (soloHoy ? KPISDIA_MIN_COMPARAR : 1)) r.desv = r.recibido/r.esperado - 1;
+  if(r.hoyPron > 0) r.avance = r.hoyRecibido/r.hoyPron;
+  return r;
+}
+function kpisDiaPronHtml(cats, periodo, global){
+  const r = kpisDiaPronCalc(cats, periodo, kpisDiaUltimoPorDia);
+  const soloHoy = periodo.unDia && periodo.incluyeHoy, hora = kpisDiaHoraCorte();
+  const cel = (k, v, color)=> `<div class="kpisdia-pron-cel"><span class="k">${k}</span><span class="v"${color ? ` style="color:${color};"` : ""}>${v}</span></div>`;
+  const celDesv = d=> d===null ? cel("Desviación", "—")
+    : Math.abs(d) < 0.0005 ? cel("Desviación", "0.0%")   // nada de "-0.0%"
+    : cel("Desviación", `${d>0 ? "+" : ""}${(d*100).toFixed(1)}%`, d>0 ? "var(--red)" : "var(--green)");
+  const corto = (largo, cortito)=> global ? largo : cortito;   // en las tarjetas de skill la casilla es angosta
+  let celdas, nota = "", sin = false;
+  if(!r.conSkill || !r.hayPron){
+    sin = true;
+    celdas = cel("Pronóstico", "—") + cel("Recibido", fmtNum(r.recibidoTodo)) + cel("Desviación", "—");
+    nota = !r.conSkill ? "Sin pronóstico en el Sheet para este skill" : "Sin pronóstico cargado en el Sheet para estas fechas";
+  } else if(soloHoy){
+    if(r.hoyEstado==="cargando"){
+      celdas = cel(corto(`Esperado a las ${hora}`, `Esperado ${hora}`), "…") + cel("Recibido", fmtNum(r.hoyRecibido)) + cel("Desviación", "…");
+      nota = `Pronóstico del día: ${fmtNum(r.hoyPron)} · calculando lo esperado a esta hora…`;
+    } else if(r.hoyEstado==="sin"){
+      celdas = cel(corto("Pronóstico del día", "Pron. del día"), fmtNum(r.hoyPron)) + cel("Recibido", fmtNum(r.hoyRecibido)) + cel("Avance", fmtPct(r.avance));
+      nota = corto("No se pudo calcular lo esperado a esta hora; se muestra el avance del día", "No se pudo calcular lo esperado a esta hora");
+    } else {
+      celdas = cel(corto(`Esperado a las ${hora}`, `Esperado ${hora}`), fmtNum(Math.round(r.esperado))) + cel("Recibido", fmtNum(r.recibido)) + celDesv(r.desv);
+      nota = `Pronóstico del día: ${fmtNum(r.hoyPron)} · van ${fmtPct(r.avance)}; a esta hora suele ir ${fmtPct(r.hoyEsperado/r.hoyPron)}`;
+      if(r.desv===null) nota += " · todavía son pocas llamadas para comparar";
+    }
+  } else if(periodo.incluyeHoy){   // varios días hasta hoy
+    celdas = cel(corto("Pronóstico al corte", "Pron. al corte"), fmtNum(Math.round(r.esperado))) + cel("Recibido", fmtNum(r.recibido)) + celDesv(r.desv);
+    nota = r.hoyEstado==="cargando" ? `Por ahora sin contar hoy (calculando lo esperado a las ${hora}…)`
+      : r.hoyEstado==="sin" ? "Sin contar hoy (no se pudo calcular lo esperado a esta hora)"
+      : `Hoy cuenta hasta las ${hora} · pronóstico del período completo: ${fmtNum(r.pronTotal)}`;
+  } else {
+    celdas = cel("Pronóstico", fmtNum(r.pronTotal)) + cel("Recibido", fmtNum(r.recibido)) + celDesv(r.desv);
+  }
+  if(r.hayPron && r.diasSinPron) nota = (nota ? nota + " · " : "") + `${r.diasSinPron} ${r.diasSinPron===1 ? "día sin pronóstico no cuenta" : "días sin pronóstico no cuentan"}`;
+  if(global && !nota) nota = "Desviación = Recibido ÷ Pronóstico − 1: roja si entraron más llamadas de las pronosticadas, verde si entraron menos";
+  return `<div class="kpisdia-pron${global ? " kpisdia-pron-global" : ""}${sin ? " sin" : ""}">${celdas}${nota ? `<div class="kpisdia-pron-nota">${nota}</div>` : ""}</div>`;
+}
 function kpisDiaRender(cont, periodo, rawByCat){
   // "today" = último día del período (el mes de referencia para FCR Global y
   // tNPS mensual). En modo Hoy/Ayer es el mismo día de siempre.
@@ -11543,6 +11707,7 @@ function kpisDiaRender(cont, periodo, rawByCat){
           <div class="ns" style="color:${nsColor};">${fmtPct(ns)}</div>
           <div class="ns-sub">Nivel de Servicio</div>
         </div>
+        ${kpisDiaPronHtml([cat], periodo, false)}
         <div class="kpisdia-skillcard-body">
           ${statHtml("Oferta", fmtNum(m.interacciones))}
           ${statHtml("Contestadas", fmtNum(m.respondidas))}
@@ -11652,6 +11817,7 @@ function kpisDiaRender(cont, periodo, rawByCat){
       </div>
       <div class="kpisdia-section-title big">📊 KPIs Globales <span style="color:var(--kd-text-dim);font-weight:700;text-transform:none;letter-spacing:0;margin-left:4px;">(Móvil · Fijo · Corporativo)</span></div>
       <div class="kpisdia-kpigrid">${kpiGlobalHtml}</div>
+      ${kpisDiaPronHtml(KPISDIA_GLOBAL_CATS, periodo, true)}
       <div class="kpisdia-section-title">🎯 Nivel de Servicio por Skill</div>
       <div class="kpisdia-skillgrid">${skillCardsHtml}</div>
       <div class="kpisdia-section-title">🧮 Ocupación por Skill</div>
