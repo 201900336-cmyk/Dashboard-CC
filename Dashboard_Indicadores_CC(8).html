@@ -10177,10 +10177,11 @@ function genesysTnpsForMonth(year, month, cats){
 // Interacciones, se pondera como siempre; si falta alguna, se usa el
 // promedio simple de los TNPS disponibles (con un solo Skill elegido, eso es
 // exactamente el valor que está en el Sheet).
-function genesysTnpsForMonths(periods, cats){
+function genesysTnpsForMonths(periods, cats, incluye){
   let wSum = 0, wCount = 0, sSum = 0, sCount = 0, faltaPeso = false;
   periods.forEach(({year, month})=>{
     cats.forEach(cat=>{
+      if(incluye && !incluye(cat, year, month)) return;   // v22.40: Despacho no tiene TNPS desde 2026 (ver tnpsHojaIncluye)
       const row = genesysSheetMonthlyRow(year, month, cat);
       if(row && row[10]!==null && row[10]!==undefined && !isNaN(row[10])){
         sSum += row[10]; sCount++;
@@ -10219,7 +10220,8 @@ const TNPS_QX_MAP = {
   "Mail Corporativo":     [{ enc:"empresas rrss", servicio:"correo clientes vip" }],
   "WhatsApp Corporativo": [{ enc:"empresas rrss", servicio:"whatsapp corporativo" }],
 };
-const TNPS_QX = { meses:null, estado:"", intentoEn:0, recargando:false };   // meses: [[yyyy-MM, encuesta, unidad, servicio, D, P, PR], ...]
+const TNPS_QX = { meses:null, estado:"", intentoEn:0, recargando:false,   // meses: [[yyyy-MM, encuesta, unidad, servicio, D, P, PR], ...]
+  cobertura:null, mensualPendiente:0, mensualManana:false, mensualDetenida:"" };   // v22.40 (Apps Script v22.28): desde qué mes el TNPS de Qualtrics está completo y la carga desde enero
 function tnpsQxNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }
 // v22.15: skill de llamadas ("Fijo" | "Móvil" | "") según la unidad de la encuesta: el texto mismo
 // ("Fijo", "Call Center Móvil") o el nombre de una cola de Genesys que el dashboard ya tiene clasificada.
@@ -10238,44 +10240,81 @@ function tnpsQxCoincide(cat, f){
     && (!r.skillUnidad || tnpsQxSkillDeUnidad(f[2])===r.skillUnidad)
     && (!r.servicio || tnpsQxNorm(f[3])===r.servicio));
 }
+/* v22.40 (Oscar, 2026-11-25: "el TNPS debería venir de Qualtrics"): todo 2026 sale de Qualtrics.
+   El Apps Script v22.28 baja de Qualtrics los meses desde enero 2026 y dice desde qué mes tiene el TNPS
+   completo (TNPS_QX.cobertura): esos meses salen de Qualtrics. Los anteriores (mientras se terminan de
+   bajar) y un mes en que Qualtrics no tiene encuestas de esos canales salen del reporte mensual. Con un
+   Apps Script anterior no hay cobertura y queda el corte de antes (TNPS_QX_DESDE, octubre 2026).
+   Despacho no tiene encuesta en Qualtrics: desde 2026 no tiene TNPS (el reporte lo traía en 0% y bajaba
+   el de "Todos los canales"). */
+const TNPS_QX_PISO = "2026-01";
+function tnpsMesTxt(year, month){ return `${year}-${String(month).padStart(2,"0")}`; }
+function tnpsQxInicio(){   // primer mes (yyyy-MM) que sale de Qualtrics
+  const c = TNPS_QX.cobertura;
+  if(!c) return TNPS_QX_DESDE;
+  const desde = c < TNPS_QX_PISO ? TNPS_QX_PISO : c;
+  return desde < TNPS_QX_DESDE ? desde : TNPS_QX_DESDE;
+}
+// Tiene TNPS en el reporte mensual pero no encuesta en Qualtrics (Despacho)
+function tnpsSinEncuesta(cat){ return skillIndex(cat) >= 0 && !TNPS_QX_MAP[cat]; }
+function tnpsHojaIncluye(cat, year, month){ return !(tnpsSinEncuesta(cat) && tnpsMesTxt(year, month) >= TNPS_QX_PISO); }
+// Encuestas de Qualtrics por mes, con los canales del dashboard a los que corresponde cada fila. Se arma
+// una sola vez cada vez que llegan los datos (tnpsQxCoincide es caro para repetirlo en cada cálculo).
+let tnpsQxIdx = { meses:null, porMes:{} };
+function tnpsQxPorMes(){
+  if(tnpsQxIdx.meses !== TNPS_QX.meses){
+    const porMes = {}, cats = Object.keys(TNPS_QX_MAP);
+    (TNPS_QX.meses||[]).forEach(f=>{
+      const quien = cats.filter(c=> tnpsQxCoincide(c, f));
+      if(quien.length) (porMes[f[0]] = porMes[f[0]] || []).push([quien, Number(f[4])||0, Number(f[5])||0, Number(f[6])||0]);
+    });
+    tnpsQxIdx = { meses: TNPS_QX.meses, porMes };
+  }
+  return tnpsQxIdx.porMes;
+}
+// Detractores, pasivos y promotores de esos meses (yyyy-MM) y canales; cada fila cuenta una sola vez
+function tnpsQxConteo(meses, cats){
+  const idx = tnpsQxPorMes();
+  let d = 0, p = 0, pr = 0;
+  Array.from(new Set(meses)).forEach(m=> (idx[m] || []).forEach(([quien, a, b, x])=>{
+    if(!quien.some(q=> cats.includes(q))) return;
+    d += a; p += b; pr += x;
+  }));
+  return { d, p, pr, n: d+p+pr };
+}
 // TNPS (0..1, igual que el Sheet) de un mes para varios skills; null si no hay encuestas
 function tnpsQxForMonth(year, month, cats){
   if(!TNPS_QX.meses) return null;
-  const mes = `${year}-${String(month).padStart(2,"0")}`;
-  let d = 0, p = 0, pr = 0;
-  TNPS_QX.meses.forEach(f=>{
-    if(f[0]!==mes || !cats.some(c=> tnpsQxCoincide(c, f))) return;   // cada fila cuenta una sola vez
-    d += Number(f[4])||0; p += Number(f[5])||0; pr += Number(f[6])||0;
-  });
-  const n = d+p+pr;
-  return n ? (pr-d)/n : null;
+  const k = tnpsQxConteo([tnpsMesTxt(year, month)], cats);
+  return k.n ? (k.pr-k.d)/k.n : null;
 }
-// v21.91: valor ÚNICO de TNPS para gráfica, tarjeta, "Mejor TNPS" y KPIs del
-// día. Meses desde TNPS_QX_DESDE con skills de la tabla → Qualtrics (sumando
-// encuestas); meses anteriores (o skills sin equivalencia) → Sheet, como antes.
-// Si el servidor todavía no mandó los datos de Qualtrics, todo sigue del Sheet.
+// v21.91: valor ÚNICO de TNPS para gráfica, tarjeta, "Mejor TNPS" y KPIs del día (y v22.39: el modal
+// "Indicadores del año"). v22.40: un mes sale de Qualtrics si allá ya está completo (tnpsQxInicio) y tiene
+// encuestas de esos canales; si no, del reporte mensual. Sin los datos de Qualtrics, todo del reporte.
 function tnpsMesUsaQx(year, month, catsQx){
-  return catsQx.length > 0 && TNPS_QX.estado==="ok" && `${year}-${String(month).padStart(2,"0")}` >= TNPS_QX_DESDE;
+  return catsQx.length > 0 && TNPS_QX.estado==="ok" && tnpsMesTxt(year, month) >= tnpsQxInicio();
+}
+function tnpsUsaQx(year, month, catsQx){ return tnpsMesUsaQx(year, month, catsQx) && tnpsQxForMonth(year, month, catsQx)!==null; }
+// De dónde sale el TNPS de ese mes: "qx" | "hoja" (reporte mensual) | null (no hay)
+function tnpsFuenteMes(year, month, sel){
+  if(tnpsUsaQx(year, month, sel.filter(c=> TNPS_QX_MAP[c]))) return "qx";
+  const cats = sel.filter(c=> skillIndex(c) >= 0);
+  return cats.length && genesysTnpsForMonths([{ year, month }], cats, tnpsHojaIncluye)!==null ? "hoja" : null;
 }
 function tnpsValorPeriodos(periods, sel){
   const cats = sel.filter(c => skillIndex(c) >= 0);
   const catsQx = sel.filter(c => TNPS_QX_MAP[c]);
-  const pre = periods.filter(p=> !tnpsMesUsaQx(p.year, p.month, catsQx));
-  const post = periods.filter(p=> tnpsMesUsaQx(p.year, p.month, catsQx));
-  const vPre = pre.length && cats.length ? genesysTnpsForMonths(pre, cats) : null;
+  const pre = periods.filter(p=> !tnpsUsaQx(p.year, p.month, catsQx));
+  const post = periods.filter(p=> tnpsUsaQx(p.year, p.month, catsQx));
+  const vPre = pre.length && cats.length ? genesysTnpsForMonths(pre, cats, tnpsHojaIncluye) : null;
   let vPost = null;
   if(post.length){
-    const meses = new Set(post.map(p=> `${p.year}-${String(p.month).padStart(2,"0")}`));
-    let d = 0, pa = 0, pr = 0;
-    (TNPS_QX.meses||[]).forEach(f=>{
-      if(!meses.has(f[0]) || !catsQx.some(c=> tnpsQxCoincide(c, f))) return;
-      d += Number(f[4])||0; pa += Number(f[5])||0; pr += Number(f[6])||0;
-    });
-    if(d+pa+pr) vPost = (pr-d)/(d+pa+pr);
+    const k = tnpsQxConteo(post.map(p=> tnpsMesTxt(p.year, p.month)), catsQx);
+    if(k.n) vPost = (k.pr-k.d)/k.n;
   }
   if(vPre===null) return vPost;
   if(vPost===null) return vPre;
-  return (vPre*pre.length + vPost*post.length)/(pre.length+post.length);   // período que cruza septiembre/octubre
+  return (vPre*pre.length + vPost*post.length)/(pre.length+post.length);   // período con meses de las dos fuentes
 }
 // v22.22: forzar = volver a pedirlo aunque ya esté cargado (después de traer lo último de Qualtrics);
 // mientras llega se sigue mostrando el que ya estaba.
@@ -10294,6 +10333,10 @@ function tnpsQxCargar(forzar){
     .then(r=> r.text()).then(t=> parseJsonUrlPayload(t))
     .then(d=>{
       if(!d || !d.ok || !Array.isArray(d.meses)) throw new Error((d && d.error) || "sin datos");
+      TNPS_QX.cobertura = /^\d{4}-\d{2}$/.test(String(d.cobertura || "")) ? d.cobertura : null;   // v22.40: Apps Script v22.28 (antes: null = corte de octubre)
+      TNPS_QX.mensualPendiente = Number(d.mensualPendiente) || 0;
+      TNPS_QX.mensualManana = !!d.mensualManana;   // por hoy la carga ya usó su tiempo: sigue mañana
+      TNPS_QX.mensualDetenida = d.mensualDetenida ? String(d.mensualDetenida) : "";
       TNPS_QX.meses = d.meses; TNPS_QX.estado = "ok"; TNPS_QX.recargando = false;
       if(state.tab==="genesys") renderGenesys();
       indAnioRefrescar();   // v22.39: el modal "Indicadores del año" también usa este TNPS
@@ -12454,8 +12497,9 @@ function genesysHerramientasHtml(){
      se usa para el año en curso) y, si falta, el promedio de los días (fcrDaily).
      Solo Fijo, Móvil, Despacho, Corporativo y WhatsApp tienen FCR. Bloques de varios
      canales y Total del año: promedio ponderado por llamadas contestadas.
-   - TNPS: tnpsValorPeriodos, lo mismo de la tarjeta TNPS (reporte mensual hasta
-     septiembre 2026; Qualtrics desde octubre 2026).
+   - TNPS: tnpsValorPeriodos, lo mismo de la tarjeta TNPS. v22.40: de Qualtrics desde enero 2026
+     (los meses que el servidor ya tiene completos; antes, o si Qualtrics no tiene encuestas de ese
+     canal en el mes, el reporte mensual). Despacho N1 no tiene encuesta en Qualtrics: sin TNPS en 2026.
    - Total del año ("siempre totalizar"): NS/Acc/TMO/ASA con los acumulados del año
      (no el promedio de los meses), FCR ponderado y TNPS de todas las encuestas.
    - Validación (preferencia de Oscar: "siempre validar primero la BD"): el modal y
@@ -12557,13 +12601,16 @@ function indAnioValidar(c){
   const aviso = (canal, indicador, detalle)=> av.push({ tipo:"aviso", canal, indicador, detalle });
   const info = (canal, indicador, detalle)=> av.push({ tipo:"info", canal, indicador, detalle });
   if(!c.ultimoMes){ info("Todos", "Todos", `${c.anio} todavía no empieza`); return av; }
-  const sinFcr = [], sinTnps = [], tnpsDesdeQx = [], qxOk = TNPS_QX.estado==="ok";
-  // ¿De dónde sale el TNPS de este canal en este mes? (la misma regla de tnpsValorPeriodos)
-  // Desde octubre 2026, los canales con encuesta en Qualtrics salen de ahí (si todavía no llegaron las
-  // encuestas no se marca cada canal: lo dice el aviso general de abajo). Antes, solo los 5 canales del reporte mensual.
+  const sinFcr = [], sinTnps = [], tnpsDesdeQx = [], sinEncuesta = [], qxOk = TNPS_QX.estado==="ok", inicioQx = tnpsQxInicio();
+  const ym = mo=> tnpsMesTxt(c.anio, mo);
+  const mesQx = m=> `${MESES[Number(m.slice(5))-1].toLowerCase()} ${m.slice(0,4)}`;
+  // ¿Este mes debería tener TNPS? (la misma regla de tnpsValorPeriodos, v22.40). En los meses que salen de
+  // Qualtrics, si todavía no llegaron las encuestas no se marca cada canal (lo dice el aviso general de abajo);
+  // si no, el reporte mensual (Despacho: sin TNPS desde 2026).
   const tnpsEsperado = (cat, mo)=>{
-    if(`${c.anio}-${String(mo).padStart(2,"0")}` >= TNPS_QX_DESDE && TNPS_QX_MAP[cat]) return qxOk;
-    return skillIndex(cat) >= 0;
+    if(TNPS_QX_MAP[cat] && ym(mo) >= inicioQx) return qxOk;
+    if(skillIndex(cat) < 0) return false;
+    return tnpsHojaIncluye(cat, c.anio, mo);
   };
   c.bloques.filter(b=> b.cats.length===1).forEach(b=>{
     const cat = b.cats[0], nombre = b.nombre;
@@ -12601,15 +12648,19 @@ function indAnioValidar(c){
     if(sIdx < 0 && !TNPS_QX_MAP[cat]) sinTnps.push(nombre);
     else {
       if(sIdx < 0) tnpsDesdeQx.push(nombre);
-      const conDato = b.filas.filter(f=> f.tnps!==null);
+      if(tnpsSinEncuesta(cat) && ym(c.ultimoMes) >= TNPS_QX_PISO) sinEncuesta.push(nombre);
+      const fuente = b.filas.map(f=> f.tnps===null ? null : tnpsFuenteMes(c.anio, f.mes, b.cats));
+      const deHoja = b.filas.filter((f, i)=> fuente[i]==="hoja");
       const faltan = b.filas.filter(f=> f.tnps===null && f.mes!==enCurso && tnpsEsperado(cat, f.mes)).map(f=> f.mes);
-      if(conDato.length > 1 && conDato.every(f=> f.tnps===0)) aviso(nombre, "TNPS", `TNPS en 0% todos los meses: parece que no se mide (así también baja el TNPS de «Todos los canales»)`);
+      if(deHoja.length > 1 && deHoja.every(f=> f.tnps===0)) aviso(nombre, "TNPS", `TNPS en 0% todos los meses: parece que no se mide (así también baja el TNPS de «Todos los canales»)`);
       if(faltan.length) aviso(nombre, "TNPS", `Sin TNPS en: ${indAnioListaMeses(faltan)}`);
+      // v22.40: meses que ya salen de Qualtrics pero sin encuestas de este canal → reporte mensual
+      const sinEnc = b.filas.filter((f, i)=> fuente[i]==="hoja" && TNPS_QX_MAP[cat] && qxOk && ym(f.mes) >= inicioQx).map(f=> f.mes);
+      if(sinEnc.length) info(nombre, "TNPS", `${indAnioListaMeses(sinEnc)}: Qualtrics no tiene encuestas de este canal; sale del reporte mensual`);
       // El reporte mensual se llena a mano: el mismo TNPS dos meses seguidos suele ser un dato copiado
       b.filas.forEach((f, i)=>{
         const a = i ? b.filas[i-1] : null;
-        if(!a || !f.tnps || !a.tnps || Math.abs(f.tnps - a.tnps) > 1e-9) return;
-        if(TNPS_QX_MAP[cat] && qxOk && `${c.anio}-${String(f.mes).padStart(2,"0")}` >= TNPS_QX_DESDE) return;   // Qualtrics: sale de contar encuestas
+        if(!a || fuente[i]!=="hoja" || fuente[i-1]!=="hoja" || !f.tnps || !a.tnps || Math.abs(f.tnps - a.tnps) > 1e-9) return;
         aviso(nombre, "TNPS", `${IND_ANIO_MES[f.mes-1]}: el mismo TNPS que ${IND_ANIO_MES[a.mes-1]} (${fmtPct(f.tnps)}): revisar si se copió`);
       });
     }
@@ -12620,15 +12671,27 @@ function indAnioValidar(c){
     const acc100 = c.waHistorico.filter(mo=> { const f = wa && wa.filas[mo-1]; return f && f.acc!==null && f.acc >= 0.9995; });
     if(acc100.length) info("WhatsApp", "Accesibilidad", `${indAnioListaMeses(acc100)}: Accesibilidad 100% en el histórico (no trae abandonadas)`);
   }
-  if(TNPS_QX.estado!=="ok" && `${c.anio}-${String(c.ultimoMes).padStart(2,"0")}` >= TNPS_QX_DESDE)
+  if(TNPS_QX.estado!=="ok" && ym(c.ultimoMes) >= inicioQx)
     (TNPS_QX.estado==="error" ? aviso : info)("Varios", "TNPS", TNPS_QX.estado==="error"
-      ? "No se pudieron traer las encuestas de Qualtrics: el TNPS desde octubre puede no estar completo"
-      : "Todavía se están trayendo las encuestas de Qualtrics (TNPS desde octubre)");
+      ? `No se pudieron traer las encuestas de Qualtrics: el TNPS desde ${mesQx(inicioQx)} puede no estar completo`
+      : `Todavía se están trayendo las encuestas de Qualtrics (TNPS desde ${mesQx(inicioQx)})`);
+  // v22.40: meses de 2026 que Qualtrics todavía no tiene completos → reporte mensual
+  const pendQx = [];
+  for(let mo=1; mo<=c.ultimoMes; mo++) if(ym(mo) >= TNPS_QX_PISO && ym(mo) < inicioQx) pendQx.push(mo);
+  if(qxOk && pendQx.length){
+    const n = TNPS_QX.mensualPendiente;
+    info("Varios", "TNPS", `${indAnioListaMeses(pendQx)}: del reporte mensual; Qualtrics todavía no tiene esos meses completos${n ? ` (se están bajando: faltan ${n} ${n===1 ? "tramo" : "tramos"} de medio mes${TNPS_QX.mensualManana ? "; sigue mañana" : ""})` : ""}`);
+    if(TNPS_QX.mensualDetenida) aviso("Varios", "TNPS", `Se detuvo la carga de esos meses desde Qualtrics: ${TNPS_QX.mensualDetenida}`);
+  }
   // Notas de varios canales: la lista va en el detalle (así la columna "Canal" del Excel no se corta)
   const lista = l=> l.length > 1 ? `${l.slice(0, -1).join(", ")} y ${l[l.length-1]}` : l[0];
   if(sinFcr.length) info("Otros canales", "FCR", `${lista(sinFcr)} no ${sinFcr.length > 1 ? "tienen" : "tiene"} FCR`);
-  if(tnpsDesdeQx.length && `${c.anio}-01` < TNPS_QX_DESDE)
-    info("Otros canales", "TNPS", `${lista(tnpsDesdeQx)} solo ${tnpsDesdeQx.length > 1 ? "tienen" : "tiene"} TNPS desde ${MESES[Number(TNPS_QX_DESDE.slice(5))-1].toLowerCase()} ${TNPS_QX_DESDE.slice(0,4)} (encuestas de Qualtrics)`);
+  // Canales que solo tienen encuesta en Qualtrics: antes de 2026 no tienen TNPS; con un Apps Script anterior a v22.28,
+  // solo desde octubre 2026. (Mientras se bajan los meses de 2026 lo dice la nota de "Varios".)
+  const desdeQxOtros = ym(1) < TNPS_QX_PISO ? TNPS_QX_PISO : !TNPS_QX.cobertura && ym(1) < inicioQx ? inicioQx : null;
+  if(tnpsDesdeQx.length && desdeQxOtros)
+    info("Otros canales", "TNPS", `${lista(tnpsDesdeQx)} solo ${tnpsDesdeQx.length > 1 ? "tienen" : "tiene"} TNPS desde ${mesQx(desdeQxOtros)} (encuestas de Qualtrics)`);
+  if(sinEncuesta.length) info(lista(sinEncuesta), "TNPS", `No ${sinEncuesta.length > 1 ? "tienen" : "tiene"} encuesta en Qualtrics: sin TNPS desde ${mesQx(TNPS_QX_PISO)}`);
   if(sinTnps.length) info("Otros canales", "TNPS", `${lista(sinTnps)} no ${sinTnps.length > 1 ? "tienen" : "tiene"} TNPS`);
   return av;
 }
@@ -12655,7 +12718,7 @@ function indAnioAsegurarModal(){
   document.body.appendChild(ov);
   ov.addEventListener("click", e=>{ if(e.target===ov) closeIndAnioModal(); });
   document.getElementById("indanio-cerrar").addEventListener("click", closeIndAnioModal);
-  document.getElementById("indanio-actualizar").addEventListener("click", ()=> indAnioCargar(indAnio.anio, true));
+  document.getElementById("indanio-actualizar").addEventListener("click", ()=>{ tnpsQxCargar(true); indAnioCargar(indAnio.anio, true); });   // v22.40: también el TNPS de Qualtrics
   document.getElementById("indanio-excel").addEventListener("click", indAnioExcel);
   document.getElementById("indanio-anio").addEventListener("change", e=>{ indAnio.anio = Number(e.target.value); indAnioCargar(indAnio.anio, false); });
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && ov.style.display==="flex") closeIndAnioModal(); });
@@ -12666,7 +12729,7 @@ function openIndAnioModal(){
   indAnio.anio = indAnio.anio || hoy.year;
   document.getElementById("indanio-anio").innerHTML = [hoy.year, hoy.year-1].map(y=> `<option value="${y}"${y===indAnio.anio ? " selected" : ""}>${y}</option>`).join("");
   document.getElementById("indanio-modal-overlay").style.display = "flex";
-  tnpsQxCargar();   // el TNPS desde octubre 2026 sale de Qualtrics
+  tnpsQxCargar(TNPS_QX.estado==="ok" && TNPS_QX.mensualPendiente > 0);   // v22.40: el TNPS de 2026 sale de Qualtrics (si se está bajando, se vuelve a pedir)
   indAnioCargar(indAnio.anio, true);
 }
 function closeIndAnioModal(){
@@ -12772,11 +12835,23 @@ function indAnioXlsAnchos(nBloques){
   for(let i=0; i<nBloques; i++){ out.push(...IND_ANIO_ANCHOS); if(i < nBloques-1) out.push(2.5); }
   return out;
 }
+// v22.40: de dónde sale el TNPS en ese año (nota del Excel)
+function indAnioNotaTnps(c){
+  const ini = tnpsQxInicio(), y = String(c.anio);
+  const mesTxt = m=> `${MESES[Number(m.slice(5))-1].toLowerCase()} ${m.slice(0,4)}`;
+  let t;
+  if(TNPS_QX.estado!=="ok" || `${y}-12` < ini) t = "TNPS: del reporte mensual.";
+  else if(`${y}-01` >= ini) t = "TNPS: encuestas de Qualtrics (un mes sin encuestas de un canal sale del reporte mensual).";
+  else t = `TNPS: encuestas de Qualtrics desde ${mesTxt(ini)}; los meses anteriores, del reporte mensual.`;
+  if(`${y}-12` >= TNPS_QX_PISO) t += ` Despacho N1 no tiene encuesta en Qualtrics: sin TNPS desde ${mesTxt(TNPS_QX_PISO)}.`;
+  return t;
+}
 function indAnioXlsNotas(h, r, c){
   const notas = [];
   if(c.enCurso) notas.push(`* ${MESES[c.enCurso.month-1]} en curso: datos de Genesys al ${indAnioFecha(c.en)} (hora Honduras).`);
   notas.push("TMO y ASA en segundos. Total = acumulado del año (no el promedio de los meses). NS: verde ≥ 85%, ámbar 80–84.9%, rojo < 80%.");
   notas.push("FCR de varios canales y del total: ponderado por llamadas contestadas. TNPS de varios canales: con todas las encuestas.");
+  notas.push(indAnioNotaTnps(c));   // v22.40
   const nAv = c.avisos.filter(a=> a.tipo==="aviso").length;
   notas.push(nAv ? `Validación de los datos: ${nAv} ${nAv===1 ? "aviso" : "avisos"}, el detalle está en la hoja «Validación».` : "Validación de los datos: sin avisos.");
   notas.forEach((t, i)=> h.set(r + i, 0, t, "iaNota"));
