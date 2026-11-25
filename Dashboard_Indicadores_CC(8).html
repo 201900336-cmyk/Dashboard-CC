@@ -991,7 +991,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
      (eligió la "Opción B" entre 3 diseños): ícono rojo en círculo rosado como el de las tarjetas de
      indicadores, nombre, para qué sirve y flecha. 4 por fila; 2 en pantallas medianas y en el celular. */
   .gherr-sec{margin:2px 0 8px;}
-  .gherr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px;}
+  .gherr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px;}   /* v22.39: 9 herramientas = 3 x 3 */
   .gherr-card{display:flex;align-items:center;gap:12px;min-height:64px;padding:11px 12px 11px 13px;background:#fff;border:1px solid var(--border);border-radius:12px;font-family:inherit;color:var(--black);text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;}
   .gherr-card:hover{border-color:var(--red);box-shadow:0 6px 16px rgba(228,3,46,.10);transform:translateY(-1px);}
   .gherr-card:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
@@ -1002,7 +1002,57 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .gherr-txt small{font-size:11.5px;color:var(--gray);line-height:1.25;}
   .gherr-fl{display:flex;color:#C4C4C4;flex-shrink:0;transition:color .15s,transform .15s;}
   .gherr-card:hover .gherr-fl{color:var(--red);transform:translateX(2px);}
-  @media (max-width:1100px){ .gherr{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:820px){ .gherr{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  /* v22.39: modal "Indicadores del año" (plantilla de Oscar, de todos los canales) */
+  #indanio-modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:110;align-items:center;justify-content:center;}
+  #indanio-modal{background:#F4F5F7;padding:22px 24px;width:1240px;max-width:97vw;max-height:94vh;overflow-y:auto;}
+  #indanio-modal .modal2-hero{background:#fff;position:sticky;top:-22px;z-index:6;}   /* la cabecera (año, Actualizar, Excel) queda fija al bajar */
+  .ia-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ia-ctrl select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-weight:700;font-family:inherit;background:#fff;}
+  .ia-ctrl .btn-outline{padding:6px 12px;font-size:12px;}
+  .ia-ctrl .ia-xls{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:12px;}
+  .ia-ctrl .ia-xls svg{width:13px;height:13px;}
+  .ia-ctrl .ia-xls:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .ia-estado{font-size:12px;color:var(--gray);margin:0 0 10px;line-height:1.5;}
+  .ia-estado b{color:var(--black);}
+  .ia-error{color:var(--red);font-weight:700;}
+  .ia-valid{background:#FFFAEB;border:1px solid #F1E2B8;border-left:3px solid #C98A00;border-radius:12px;padding:8px 14px;margin:0 0 14px;font-size:12px;}
+  .ia-valid.ok{background:#fff;border-color:var(--border);border-left-color:var(--green);}
+  .ia-valid summary{cursor:pointer;font-weight:800;color:var(--black);list-style:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .ia-valid summary::-webkit-details-marker{display:none;}
+  .ia-valid-n{font-weight:600;color:var(--gray);}
+  .ia-valid-ver{margin-left:auto;font-weight:700;color:var(--red);white-space:nowrap;}
+  .ia-valid-ver::after{content:"Ver detalle ▾";}
+  .ia-valid[open] .ia-valid-ver::after{content:"Ocultar ▴";}
+  .ia-valid ul{margin:8px 0 2px;padding-left:18px;max-height:230px;overflow-y:auto;}
+  .ia-valid li{margin:3px 0;line-height:1.4;}
+  .ia-valid li.info{color:var(--gray);}
+  .ia-sec{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--black);margin:4px 0 8px;}
+  .ia-sec::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--red);}
+  .ia-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 16px;}
+  .ia-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .ia-card.principal{border-top:3px solid var(--red);}
+  .ia-card-tit{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;font-size:13px;font-weight:800;color:var(--black);}
+  .ia-card-vol{font-size:10.5px;font-weight:600;color:var(--gray);white-space:nowrap;}
+  .ia-card-nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ia-tabla{width:100%;border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums;}
+  .ia-tabla th{background:var(--red);color:#fff;font-weight:700;padding:5px 6px;text-align:right;white-space:nowrap;}
+  .ia-tabla td{padding:4px 6px;text-align:right;border-bottom:1px solid #F0F0F0;white-space:nowrap;}
+  .ia-tabla th:first-child,.ia-tabla td:first-child{text-align:left;padding-left:12px;}
+  .ia-tabla th:last-child,.ia-tabla td:last-child{padding-right:12px;}
+  .ia-tabla tbody tr:nth-child(even) td{background:#FAFAFA;}
+  .ia-tabla tbody tr.encurso td{background:#FFF8E6;}
+  .ia-tabla tfoot td{background:#EFEFEF;font-weight:800;border-top:2px solid var(--red);border-bottom:0;}
+  .ia-tabla .g{color:#A3A8AE;font-weight:400;}
+  @media (max-width:1100px){ .ia-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:700px){
+    .ia-grid{grid-template-columns:1fr;}
+    #indanio-modal{padding:16px 14px;}
+    #indanio-modal .modal2-hero{flex-wrap:wrap;gap:10px;margin:-16px -14px 14px;padding:12px 14px;top:-16px;}
+    #indanio-modal .modal2-sub{display:none;}
+    #indanio-modal .ia-ctrl{order:1;width:100%;}
+    .ia-ctrl .ia-xls{margin-left:auto;}
+  }
   @media (max-width:560px){
     .gherr{gap:8px;}
     .gherr-card{gap:9px;min-height:58px;padding:9px 10px;}
@@ -8374,6 +8424,14 @@ const XLS_FUENTES = {
   dRoja: '<b/><sz val="11"/><color rgb="FFE4032E"/><name val="Calibri"/><family val="2"/>',
   dGris: '<sz val="11"/><color rgb="FF6B6B6B"/><name val="Calibri"/><family val="2"/>',
   dGrisItal: '<i/><sz val="11"/><color rgb="FF6B6B6B"/><name val="Calibri"/><family val="2"/>',
+  // v22.39: la plantilla "Indicadores 2026" de Oscar usa Century Gothic 8
+  cg: '<sz val="8"/><color rgb="FF000000"/><name val="Century Gothic"/><family val="2"/>',
+  cgB: '<b/><sz val="8"/><color rgb="FF000000"/><name val="Century Gothic"/><family val="2"/>',
+  cgVerde: '<b/><sz val="8"/><color rgb="FF1E9E4B"/><name val="Century Gothic"/><family val="2"/>',
+  cgAmbar: '<b/><sz val="8"/><color rgb="FFC98A00"/><name val="Century Gothic"/><family val="2"/>',
+  cgRoja: '<b/><sz val="8"/><color rgb="FFE4032E"/><name val="Century Gothic"/><family val="2"/>',
+  cgGris: '<sz val="8"/><color rgb="FF8A8F95"/><name val="Century Gothic"/><family val="2"/>',
+  cgNota: '<i/><sz val="8"/><color rgb="FF6B6B6B"/><name val="Century Gothic"/><family val="2"/>',
   // v22.36: conversación escrita de Calidad (quién habló)
   cAzul: '<b/><sz val="11"/><color rgb="FF1D4ED8"/><name val="Calibri"/><family val="2"/>',
   cGris: '<b/><sz val="11"/><color rgb="FF5B6472"/><name val="Calibri"/><family val="2"/>',
@@ -8383,7 +8441,8 @@ const XLS_FORMATOS = { tmo:"[m]:ss", num:"#,##0", dec:"0.0", pct:"0.0%", fecha:"
   pctSigno:"+0.0%;-0.0%;0.0%", seg:'0"s"' };   // v22.30: Desviación con signo (+4.1%) y segundos como en pantalla (312s)
 const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2",
   dPar:"FFFAFAFA", dTot:"FFEFEFEF", dSub:"FFF7F7F7",   // v22.30: cebra y pie de la tabla del dashboard
-  cCli:"FFEAF1FE", cAse:"FFFDEBEC" };   // v22.36: conversación de Calidad (cliente / asesor)
+  cCli:"FFEAF1FE", cAse:"FFFDEBEC",   // v22.36: conversación de Calidad (cliente / asesor)
+  tplVerde:"FF4EA72E" };   // v22.39: verde de los títulos de la plantilla "Indicadores 2026" (tema Énfasis 6)
 const XLS_ESTILOS = (()=>{
   const e = {
     titulo:{ f:"titulo" }, sub:{ f:"sub" }, seccion:{ f:"seccion" },
@@ -8415,6 +8474,17 @@ const XLS_ESTILOS = (()=>{
   // con letra blanca, filas con una línea gris abajo (b:2) y cebra (las que terminan en Z), y el pie gris con
   // la línea roja arriba (b:3). Todo alineado a la izquierda, como en pantalla.
   e.gEnc = { f:"blanca", r:"rojo", a:"i" };
+  // v22.39: "Indicadores del año" con el formato de la plantilla de Oscar (centrado, borde fino, total en gris)
+  e.iaTit = { f:"cgB", r:"tplVerde", b:4, a:"c" };
+  e.iaEnc = { f:"cgB", b:4, a:"cw" };
+  e.iaMes = { f:"cg", b:4, a:"c" };
+  e.iaNota = { f:"cgNota" };
+  const ia = { Pct:{ f:"cg", n:"pct" }, Seg:{ f:"cg", n:"seg" }, NsV:{ f:"cgVerde", n:"pct" }, NsA:{ f:"cgAmbar", n:"pct" }, NsR:{ f:"cgRoja", n:"pct" }, Guion:{ f:"cgGris" } };
+  Object.keys(ia).forEach(k=>{
+    e["ia"+k] = Object.assign({ b:4, a:"c" }, ia[k]);
+    e["iaTot"+k] = Object.assign({ b:4, a:"c", r:"dTot" }, ia[k], ia[k].f==="cg" ? { f:"cgB" } : {});
+  });
+  e.iaTotTxt = { f:"cgB", r:"dTot", b:4, a:"c" };
   const fila = {
     gTxtB:{ f:"negrita" }, gTxt:{ f:"dNormal" }, gGuion:{ f:"dGris" },
     gFecha:{ f:"dNormal", n:"fecha" }, gFechaB:{ f:"negrita", n:"fecha" },
@@ -8451,10 +8521,12 @@ function xlsEstilosXml(){
     + `<numFmts count="${claveFmt.length}">${claveFmt.map(k=> `<numFmt numFmtId="${FMT[k]}" formatCode="${XLS_FORMATOS[k].replace(/"/g, "&quot;")}"/>`).join("")}</numFmts>`
     + `<fonts count="${fuentes.length}">${fuentes.map(k=> `<font>${XLS_FUENTES[k]}</font>`).join("")}</fonts>`
     + `<fills count="${rellenos.length+2}"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${rellenos.map(k=> `<fill><patternFill patternType="solid"><fgColor rgb="${XLS_RELLENOS[k]}"/><bgColor indexed="64"/></patternFill></fill>`).join("")}</fills>`
-    + `<borders count="4"><border><left/><right/><top/><bottom/><diagonal/></border><border>${lado("left")}${lado("right")}${lado("top")}${lado("bottom")}<diagonal/></border>`
+    + `<borders count="5"><border><left/><right/><top/><bottom/><diagonal/></border><border>${lado("left")}${lado("right")}${lado("top")}${lado("bottom")}<diagonal/></border>`
     // v22.30: 2 = solo la línea gris de abajo (filas de la tabla del dashboard); 3 = línea roja arriba (pie)
     + '<border><left/><right/><top/><bottom style="thin"><color rgb="FFE5E5E5"/></bottom><diagonal/></border>'
-    + '<border><left/><right/><top style="medium"><color rgb="FFE4032E"/></top><bottom style="thin"><color rgb="FFE5E5E5"/></bottom><diagonal/></border></borders>'
+    + '<border><left/><right/><top style="medium"><color rgb="FFE4032E"/></top><bottom style="thin"><color rgb="FFE5E5E5"/></bottom><diagonal/></border>'
+    // v22.39: 4 = borde fino negro en los 4 lados (la plantilla "Indicadores 2026")
+    + '<border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders>'
     + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
     + `<cellXfs count="${claves.length+1}"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>${claves.map(xf).join("")}</cellXfs>`
     + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
@@ -10224,6 +10296,7 @@ function tnpsQxCargar(forzar){
       if(!d || !d.ok || !Array.isArray(d.meses)) throw new Error((d && d.error) || "sin datos");
       TNPS_QX.meses = d.meses; TNPS_QX.estado = "ok"; TNPS_QX.recargando = false;
       if(state.tab==="genesys") renderGenesys();
+      indAnioRefrescar();   // v22.39: el modal "Indicadores del año" también usa este TNPS
     })
     .catch(e=>{
       console.error("Detalle técnico (TNPS mensual de Qualtrics):", e);
@@ -12327,6 +12400,9 @@ function genesysCategoriasExcel(){
    Cada tarjeta abre lo mismo que el botón de antes; "Tarjetas en Excel" sigue usando
    data-dl="kpi" (downloadKpiGridAsExcel de las 8 tarjetas de indicadores). */
 const GENESYS_HERRAMIENTAS = [
+  { titulo:"Indicadores del año", sub:"NS, TMO, FCR y TNPS por mes", accion:"openIndAnioModal()",   // v22.39
+    ayuda:"Nivel de Servicio, Accesibilidad, TMO, ASA, FCR y TNPS de cada mes del año, de todos los canales, con el total del año y en Excel.",
+    ico:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>' },
   { titulo:"Calculadora de Agentes", sub:"Cuántos agentes necesitás", accion:"openErlangModal()",
     ayuda:"Con el volumen y el TMO reales de Genesys, calcula cuántos agentes se necesitan para cumplir el Nivel de Servicio (Erlang C).",
     ico:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M16 14v4"/><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>' },
@@ -12359,6 +12435,387 @@ function genesysHerramientasHtml(){
   return `<div class="fb-sec-title gherr-sec">${svg(llave, 15)}Herramientas</div>
       <div class="gherr">${GENESYS_HERRAMIENTAS.map(h=> `<button type="button" class="gherr-card" ${h.descarga
         ? 'data-dl="kpi" data-grid="kpi-grid-genesys" data-name="genesys-tarjetas"' : `onclick="${h.accion}"`} title="${h.ayuda}"><span class="gherr-ico">${svg(h.ico, 18)}</span><span class="gherr-txt"><b>${h.titulo}</b><small>${h.sub}</small></span><span class="gherr-fl">${svg(h.descarga ? h.ico : flecha, 16)}</span></button>`).join("")}</div>`;
+}
+
+/* ============================================================
+   v22.39 (Oscar, 2026-11-25): "Indicadores del año" (pestaña Genesys → Herramientas)
+   ============================================================
+   Oscar mandó su plantilla "Indicadores 2026" (bloques FIJO, Movil, Corporativo,
+   WhatsApp y "Fijo - Movil - Corporativo": Mes, Nivel de Servicio, Accesibilidad,
+   TMO, ASA, FCR y TNPS) y pidió un modal con esa información "pero de todos los
+   canales, y que pueda descargarlo en excel… siempre en el botón de genesys".
+   Fuentes — las mismas del resto de la pestaña, para que nunca digan distinto:
+   - NS, Accesibilidad, TMO y ASA: Genesys, el año en P1M por cola+canal
+     (genesysQueryYear → genesysRawStatsByQueueMonthly → genesysMonthlyAggByCategoria
+     → genesysDeriveMetrics). WhatsApp: los meses sin nada en Genesys se completan con
+     el histórico mensual, igual que la gráfica de la pestaña
+     (genesysFillCanalesDigitalesFromSheet; aquí se repite para saber qué meses).
+   - FCR: el "FCR Global del mes" (fcrMonthly, el oficial; no trae año, así que solo
+     se usa para el año en curso) y, si falta, el promedio de los días (fcrDaily).
+     Solo Fijo, Móvil, Despacho, Corporativo y WhatsApp tienen FCR. Bloques de varios
+     canales y Total del año: promedio ponderado por llamadas contestadas.
+   - TNPS: tnpsValorPeriodos, lo mismo de la tarjeta TNPS (reporte mensual hasta
+     septiembre 2026; Qualtrics desde octubre 2026).
+   - Total del año ("siempre totalizar"): NS/Acc/TMO/ASA con los acumulados del año
+     (no el promedio de los meses), FCR ponderado y TNPS de todas las encuestas.
+   - Validación (preferencia de Oscar: "siempre validar primero la BD"): el modal y
+     el Excel listan lo que no cuadra (meses sin datos o repetidos, FCR del mes que no
+     cuadra con sus días, días repetidos, TNPS que falta, en 0 o igual al mes anterior…).
+     El TNPS solo se pide en los meses que tienen de dónde salir (Redes Sociales, Mail
+     Corporativo y WhatsApp Corporativo: desde octubre 2026). En pantalla no se nombra
+     el Sheet (pedido de Oscar, 2026-11-20).
+   ============================================================ */
+const IND_ANIO_PRINCIPALES = [
+  { id:"Fijo", nombre:"Fijo", cats:["Fijo"], xls:"FIJO" },
+  { id:"Móvil", nombre:"Móvil", cats:["Móvil"], xls:"Movil" },
+  { id:"Corporativo", nombre:"Corporativo", cats:["Corporativo"], xls:"Corporativo" },
+  { id:"WhatsApp", nombre:"WhatsApp", cats:["WhatsApp"], xls:"WhatsApp" },
+  { id:"__global", nombre:"Fijo · Móvil · Corporativo", cats:["Fijo","Móvil","Corporativo"], xls:"Fijo - Movil - Corporativo", icono:"📊" },
+  { id:"__todos", nombre:"Todos los canales", cats:null, xls:"Todos los canales", icono:"🌐" },
+];
+const IND_ANIO_PLANTILLA = ["Fijo","Móvil","Corporativo","WhatsApp","__global"];   // los 5 bloques de la plantilla de Oscar
+const IND_ANIO_MES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+let indAnio = { anio:null, datos:{}, cargando:false, error:null, validAbierta:false };   // datos[año] = { raw, queuesById, en }
+
+function indAnioBloques(){
+  const usados = new Set(["Fijo","Móvil","Corporativo","WhatsApp"]);
+  return IND_ANIO_PRINCIPALES.map(b=> ({ ...b, cats: b.cats || GENESYS_CATEGORIAS.slice(), principal:true }))
+    .concat(GENESYS_CATEGORIAS.filter(c=> !usados.has(c)).map(c=> ({ id:c, nombre: KPISDIA_CAT_LABEL[c] || c, cats:[c], xls: KPISDIA_CAT_LABEL[c] || c, principal:false })));
+}
+function indAnioIcono(b){ return b.icono || KPISDIA_CAT_ICON[b.cats[0]] || "📊"; }
+// FCR de un skill en un mes: el del mes (oficial) y si falta, el promedio de los días
+function indAnioFcrDias(sIdx, anio, mo){
+  const pref = `${anio}-${String(mo).padStart(2,"0")}`;
+  const filas = fcrDaily.filter(r=> r[1]===sIdx && String(r[0]).startsWith(pref) && r[2]!==null && r[2]!==undefined && !isNaN(r[2]));
+  return { prom: filas.length ? filas.reduce((a, r)=> a + r[2], 0)/filas.length : null, filas: filas.length, dias: new Set(filas.map(r=> r[0])).size };
+}
+function indAnioFcrMes(sIdx, anio, mo){
+  if(anio !== genesysHondurasToday().year) return null;   // FCR_Mensual no trae año: solo vale para el año en curso
+  const v = fcrMonthlyBySkill(mo)[sIdx];
+  return (v===undefined || v===null || isNaN(v)) ? null : v;
+}
+function indAnioFcrSkill(cat, anio, mo){
+  const sIdx = skillIndex(cat);
+  if(sIdx < 0) return null;
+  const m = indAnioFcrMes(sIdx, anio, mo);
+  return m!==null ? m : indAnioFcrDias(sIdx, anio, mo).prom;
+}
+// FCR de un bloque en un mes: ponderado por contestadas (si no hay contestadas, promedio simple)
+function indAnioFcr(cats, anio, mo, aggsMes){
+  let suma = 0, peso = 0, simple = 0, n = 0;
+  cats.forEach(c=>{
+    const v = indAnioFcrSkill(c, anio, mo);
+    if(v===null) return;
+    const w = (aggsMes && aggsMes[c] && aggsMes[c].nAnswered) || 0;
+    n++; simple += v; suma += v*w; peso += w;
+  });
+  if(!n) return { v:null, peso:0 };
+  return peso ? { v: suma/peso, peso } : { v: simple/n, peso:0 };
+}
+function indAnioCalcular(anio){
+  const d = indAnio.datos[anio];
+  if(!d) return null;
+  const hoy = genesysHondurasToday();
+  const ultimoMes = anio < hoy.year ? 12 : anio === hoy.year ? hoy.month : 0;
+  const porMes = genesysMonthlyAggByCategoria(genesysRawStatsByQueueMonthly(d.raw, d.queuesById), d.queuesById, new Set());
+  const waHistorico = [];
+  for(let mo=1; mo<=ultimoMes; mo++){   // WhatsApp: meses sin datos de Genesys → histórico mensual (igual que la pestaña)
+    const g = porMes[mo] && porMes[mo]["WhatsApp"];
+    if(g && g.nOffered) continue;
+    const sint = genesysSyntheticAggFromSheetRow(genesysSheetMonthlyRow(anio, mo, "Canales Digitales"));
+    if(sint){ porMes[mo]["WhatsApp"] = sint; waHistorico.push(mo); }
+  }
+  const bloques = indAnioBloques().map(b=>{
+    const filas = [], total = genesysEmptyAgg(), mesesTnps = [];
+    let fcrSuma = 0, fcrPeso = 0, fcrSimple = 0, fcrN = 0;
+    for(let mo=1; mo<=ultimoMes; mo++){
+      const agg = genesysEmptyAgg();
+      b.cats.forEach(c=>{ if(porMes[mo] && porMes[mo][c]) genesysAddAgg(agg, porMes[mo][c]); });
+      genesysAddAgg(total, agg);
+      const m = agg.nOffered ? genesysDeriveMetrics(agg) : null;
+      const fcr = indAnioFcr(b.cats, anio, mo, porMes[mo]);
+      if(fcr.v!==null){ fcrSuma += fcr.v*fcr.peso; fcrPeso += fcr.peso; fcrSimple += fcr.v; fcrN++; }
+      const tnps = tnpsValorPeriodos([{ year:anio, month:mo }], b.cats);
+      if(tnps!==null) mesesTnps.push({ year:anio, month:mo });
+      filas.push({ mes:mo, ns: m ? m.nivelServicio : null, acc: m ? m.accesibilidad : null, tmo: m ? m.tmo : null, asa: m ? m.asa : null,
+                   fcr: fcr.v, tnps, interacciones: agg.nOffered || 0, contestadas: agg.nAnswered || 0 });
+    }
+    const mt = total.nOffered ? genesysDeriveMetrics(total) : null;
+    return { ...b, filas, total: {
+      ns: mt ? mt.nivelServicio : null, acc: mt ? mt.accesibilidad : null, tmo: mt ? mt.tmo : null, asa: mt ? mt.asa : null,
+      fcr: fcrPeso ? fcrSuma/fcrPeso : (fcrN ? fcrSimple/fcrN : null),
+      tnps: mesesTnps.length ? tnpsValorPeriodos(mesesTnps, b.cats) : null, interacciones: total.nOffered || 0 } };
+  });
+  const c = { anio, ultimoMes, enCurso: anio === hoy.year ? hoy : null, bloques, waHistorico, en: d.en };
+  c.avisos = indAnioValidar(c);
+  return c;
+}
+function indAnioListaMeses(meses){ return meses.map(m=> IND_ANIO_MES[m-1]).join(", "); }
+// Validación de los datos ("siempre validar primero la BD")
+function indAnioValidar(c){
+  const av = [], enCurso = c.enCurso ? c.enCurso.month : null;
+  const aviso = (canal, indicador, detalle)=> av.push({ tipo:"aviso", canal, indicador, detalle });
+  const info = (canal, indicador, detalle)=> av.push({ tipo:"info", canal, indicador, detalle });
+  if(!c.ultimoMes){ info("Todos", "Todos", `${c.anio} todavía no empieza`); return av; }
+  const sinFcr = [], sinTnps = [], tnpsDesdeQx = [], qxOk = TNPS_QX.estado==="ok";
+  // ¿De dónde sale el TNPS de este canal en este mes? (la misma regla de tnpsValorPeriodos)
+  // Desde octubre 2026, los canales con encuesta en Qualtrics salen de ahí (si todavía no llegaron las
+  // encuestas no se marca cada canal: lo dice el aviso general de abajo). Antes, solo los 5 canales del reporte mensual.
+  const tnpsEsperado = (cat, mo)=>{
+    if(`${c.anio}-${String(mo).padStart(2,"0")}` >= TNPS_QX_DESDE && TNPS_QX_MAP[cat]) return qxOk;
+    return skillIndex(cat) >= 0;
+  };
+  c.bloques.filter(b=> b.cats.length===1).forEach(b=>{
+    const cat = b.cats[0], nombre = b.nombre;
+    // Genesys: meses sin llamadas
+    const vacios = b.filas.filter(f=> !f.interacciones).map(f=> f.mes);
+    if(vacios.length===c.ultimoMes) info(nombre, "Llamadas", `Sin llamadas en Genesys en ${c.anio}`);
+    else if(vacios.length){
+      const primero = b.filas.find(f=> f.interacciones).mes;
+      const antes = vacios.filter(m=> m < primero), despues = vacios.filter(m=> m > primero);
+      if(antes.length) info(nombre, "Llamadas", `Sin llamadas antes de ${IND_ANIO_MES[primero-1]} (el canal empezó después)`);
+      if(despues.length) aviso(nombre, "Llamadas", `Sin llamadas en Genesys en: ${indAnioListaMeses(despues)}`);
+    }
+    b.filas.forEach((f, i)=>{
+      if(f.ns!==null && (f.ns < 0 || f.ns > 1)) aviso(nombre, "Nivel de Servicio", `${IND_ANIO_MES[f.mes-1]}: NS fuera de rango (${fmtPct(f.ns)})`);
+      const a = i ? b.filas[i-1] : null;   // un mes con los mismos números que el anterior casi siempre es una fila copiada
+      if(a && f.interacciones && a.interacciones===f.interacciones && a.ns===f.ns && a.tmo===f.tmo && a.asa===f.asa)
+        aviso(nombre, "Llamadas", `${IND_ANIO_MES[f.mes-1]}: mismos números que ${IND_ANIO_MES[a.mes-1]} (interacciones, NS, TMO y ASA): parece repetido`);
+    });
+    // FCR
+    const sIdx = skillIndex(cat);
+    if(sIdx < 0) sinFcr.push(nombre);
+    else {
+      const faltan = [];
+      for(let mo=1; mo<=c.ultimoMes; mo++){
+        const mes = indAnioFcrMes(sIdx, c.anio, mo), dias = indAnioFcrDias(sIdx, c.anio, mo);
+        if(mes===null && dias.prom===null){ if(mo!==enCurso) faltan.push(mo); continue; }
+        if(mes!==null && dias.prom!==null && Math.abs(mes - dias.prom) > 0.03)
+          aviso(nombre, "FCR", `${IND_ANIO_MES[mo-1]}: el FCR del mes (${fmtPct(mes)}) no cuadra con el promedio de sus días (${fmtPct(dias.prom)})`);
+        if(dias.filas > dias.dias) aviso(nombre, "FCR", `${IND_ANIO_MES[mo-1]}: días repetidos (${dias.filas} filas para ${dias.dias} días)`);
+      }
+      if(faltan.length===c.ultimoMes - (enCurso ? 1 : 0) && faltan.length) aviso(nombre, "FCR", `Sin FCR en todo ${c.anio}`);
+      else if(faltan.length) aviso(nombre, "FCR", `Sin FCR en: ${indAnioListaMeses(faltan)}`);
+    }
+    // TNPS
+    if(sIdx < 0 && !TNPS_QX_MAP[cat]) sinTnps.push(nombre);
+    else {
+      if(sIdx < 0) tnpsDesdeQx.push(nombre);
+      const conDato = b.filas.filter(f=> f.tnps!==null);
+      const faltan = b.filas.filter(f=> f.tnps===null && f.mes!==enCurso && tnpsEsperado(cat, f.mes)).map(f=> f.mes);
+      if(conDato.length > 1 && conDato.every(f=> f.tnps===0)) aviso(nombre, "TNPS", `TNPS en 0% todos los meses: parece que no se mide (así también baja el TNPS de «Todos los canales»)`);
+      if(faltan.length) aviso(nombre, "TNPS", `Sin TNPS en: ${indAnioListaMeses(faltan)}`);
+      // El reporte mensual se llena a mano: el mismo TNPS dos meses seguidos suele ser un dato copiado
+      b.filas.forEach((f, i)=>{
+        const a = i ? b.filas[i-1] : null;
+        if(!a || !f.tnps || !a.tnps || Math.abs(f.tnps - a.tnps) > 1e-9) return;
+        if(TNPS_QX_MAP[cat] && qxOk && `${c.anio}-${String(f.mes).padStart(2,"0")}` >= TNPS_QX_DESDE) return;   // Qualtrics: sale de contar encuestas
+        aviso(nombre, "TNPS", `${IND_ANIO_MES[f.mes-1]}: el mismo TNPS que ${IND_ANIO_MES[a.mes-1]} (${fmtPct(f.tnps)}): revisar si se copió`);
+      });
+    }
+  });
+  if(c.waHistorico.length){
+    info("WhatsApp", "NS, Accesibilidad, TMO y ASA", `${indAnioListaMeses(c.waHistorico)}: con el histórico mensual (Genesys no trae esos meses)`);
+    const wa = c.bloques.find(b=> b.id==="WhatsApp");
+    const acc100 = c.waHistorico.filter(mo=> { const f = wa && wa.filas[mo-1]; return f && f.acc!==null && f.acc >= 0.9995; });
+    if(acc100.length) info("WhatsApp", "Accesibilidad", `${indAnioListaMeses(acc100)}: Accesibilidad 100% en el histórico (no trae abandonadas)`);
+  }
+  if(TNPS_QX.estado!=="ok" && `${c.anio}-${String(c.ultimoMes).padStart(2,"0")}` >= TNPS_QX_DESDE)
+    (TNPS_QX.estado==="error" ? aviso : info)("Varios", "TNPS", TNPS_QX.estado==="error"
+      ? "No se pudieron traer las encuestas de Qualtrics: el TNPS desde octubre puede no estar completo"
+      : "Todavía se están trayendo las encuestas de Qualtrics (TNPS desde octubre)");
+  // Notas de varios canales: la lista va en el detalle (así la columna "Canal" del Excel no se corta)
+  const lista = l=> l.length > 1 ? `${l.slice(0, -1).join(", ")} y ${l[l.length-1]}` : l[0];
+  if(sinFcr.length) info("Otros canales", "FCR", `${lista(sinFcr)} no ${sinFcr.length > 1 ? "tienen" : "tiene"} FCR`);
+  if(tnpsDesdeQx.length && `${c.anio}-01` < TNPS_QX_DESDE)
+    info("Otros canales", "TNPS", `${lista(tnpsDesdeQx)} solo ${tnpsDesdeQx.length > 1 ? "tienen" : "tiene"} TNPS desde ${MESES[Number(TNPS_QX_DESDE.slice(5))-1].toLowerCase()} ${TNPS_QX_DESDE.slice(0,4)} (encuestas de Qualtrics)`);
+  if(sinTnps.length) info("Otros canales", "TNPS", `${lista(sinTnps)} no ${sinTnps.length > 1 ? "tienen" : "tiene"} TNPS`);
+  return av;
+}
+function indAnioAsegurarModal(){
+  if(document.getElementById("indanio-modal-overlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "indanio-modal-overlay";
+  ov.innerHTML = `<div id="indanio-modal" class="modal2-shadow" role="dialog" aria-modal="true" aria-labelledby="indanio-titulo">
+    <div class="modal2-hero">
+      <div class="modal2-bar"></div>
+      <div class="modal2-titlewrap">
+        <h3 id="indanio-titulo">📊 Indicadores del año</h3>
+        <div class="modal2-sub">Nivel de Servicio, Accesibilidad, TMO, ASA, FCR y TNPS de cada mes, de todos los canales, con el total del año</div>
+      </div>
+      <div class="ia-ctrl">
+        <select id="indanio-anio" aria-label="Año"></select>
+        <button type="button" class="btn-outline" id="indanio-actualizar" title="Volver a traer los datos de Genesys">Actualizar</button>
+        <button type="button" class="btn-update ia-xls" id="indanio-excel" title="Descargar en Excel: tu plantilla con los 5 bloques, todos los canales y la validación">${DL_ICON_SVG} Descargar Excel</button>
+      </div>
+      <button class="modal2-close" type="button" id="indanio-cerrar" title="Cerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="indanio-cuerpo"></div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click", e=>{ if(e.target===ov) closeIndAnioModal(); });
+  document.getElementById("indanio-cerrar").addEventListener("click", closeIndAnioModal);
+  document.getElementById("indanio-actualizar").addEventListener("click", ()=> indAnioCargar(indAnio.anio, true));
+  document.getElementById("indanio-excel").addEventListener("click", indAnioExcel);
+  document.getElementById("indanio-anio").addEventListener("change", e=>{ indAnio.anio = Number(e.target.value); indAnioCargar(indAnio.anio, false); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && ov.style.display==="flex") closeIndAnioModal(); });
+}
+function openIndAnioModal(){
+  indAnioAsegurarModal();
+  const hoy = genesysHondurasToday();
+  indAnio.anio = indAnio.anio || hoy.year;
+  document.getElementById("indanio-anio").innerHTML = [hoy.year, hoy.year-1].map(y=> `<option value="${y}"${y===indAnio.anio ? " selected" : ""}>${y}</option>`).join("");
+  document.getElementById("indanio-modal-overlay").style.display = "flex";
+  tnpsQxCargar();   // el TNPS desde octubre 2026 sale de Qualtrics
+  indAnioCargar(indAnio.anio, true);
+}
+function closeIndAnioModal(){
+  const ov = document.getElementById("indanio-modal-overlay");
+  if(ov) ov.style.display = "none";
+}
+function indAnioRefrescar(){
+  const ov = document.getElementById("indanio-modal-overlay");
+  if(ov && ov.style.display==="flex") indAnioDibujar();
+}
+async function indAnioCargar(anio, forzar){
+  if(indAnio.datos[anio] && !forzar){ indAnioDibujar(); return; }
+  indAnio.cargando = true; indAnio.error = null; indAnioDibujar();
+  try{
+    await genesysEnsureQueuesLoaded();
+    const queuesById = {}; genesysState.queues.forEach(q=>{ queuesById[q.id] = q; });
+    const ids = genesysState.queues.filter(q=> genesysCategoriaDeCola(q.id, q.name)).map(q=> q.id);
+    const raw = await genesysQueryYear(anio, ids);
+    indAnio.datos[anio] = { raw, queuesById, en: Date.now() };
+  }catch(e){
+    indAnio.error = e && e.message==="NOT_SIGNED_IN" ? "Tu sesión de Genesys expiró — iniciá sesión de nuevo en la pestaña Genesys."
+      : ("No se pudo consultar Genesys: " + ((e && e.message) || e));
+    if(e && e.message==="NOT_SIGNED_IN") sessionStorage.removeItem(GENESYS_TOKEN_KEY);
+  }
+  indAnio.cargando = false;
+  if(indAnio.anio===anio) indAnioDibujar();
+}
+function indAnioFecha(ms){
+  const t = new Date(ms - 6*3600e3), p = n=> String(n).padStart(2, "0");
+  return `${p(t.getUTCDate())}/${p(t.getUTCMonth()+1)}/${t.getUTCFullYear()} ${p(t.getUTCHours())}:${p(t.getUTCMinutes())}`;
+}
+function indAnioCeldas(f, total){
+  const g = '<span class="g">—</span>';
+  const pct = v=> v===null || v===undefined || isNaN(v) ? g : fmtPct(v);
+  const seg = v=> v===null || v===undefined || isNaN(v) ? g : `${v}s`;
+  const nsCol = f.ns===null ? "" : f.ns>=0.85 ? "var(--green)" : f.ns>=0.80 ? "#C98A00" : "var(--red)";
+  return `<td${nsCol ? ` style="color:${nsCol};font-weight:800;"` : ""}>${pct(f.ns)}</td><td>${pct(f.acc)}</td><td>${seg(f.tmo)}</td><td>${seg(f.asa)}</td><td>${pct(f.fcr)}</td><td>${pct(f.tnps)}</td>`;
+}
+function indAnioTarjeta(b, c){
+  const enc = `<tr><th>Mes</th><th title="Nivel de Servicio">NS</th><th title="Accesibilidad">Acc.</th><th title="Tiempo medio de operación (segundos)">TMO</th><th title="Tiempo medio de respuesta (segundos)">ASA</th><th>FCR</th><th>TNPS</th></tr>`;
+  const filas = b.filas.map(f=> `<tr${c.enCurso && f.mes===c.enCurso.month ? ' class="encurso" title="Mes en curso"' : ""}><td>${IND_ANIO_MES[f.mes-1]}${c.enCurso && f.mes===c.enCurso.month ? "*" : ""}</td>${indAnioCeldas(f)}</tr>`).join("");
+  return `<div class="ia-card${b.principal ? " principal" : ""}">
+      <div class="ia-card-tit"><span class="ia-card-nom" title="${b.nombre}">${indAnioIcono(b)} ${b.nombre}</span><span class="ia-card-vol" title="Interacciones del año en Genesys">${fmtNum(b.total.interacciones)} interacciones</span></div>
+      <table class="ia-tabla"><thead>${enc}</thead><tbody>${filas}</tbody>
+        <tfoot><tr><td>Total</td>${indAnioCeldas(b.total, true)}</tr></tfoot></table>
+    </div>`;
+}
+function indAnioDibujar(){
+  const cuerpo = document.getElementById("indanio-cuerpo");
+  if(!cuerpo) return;
+  const btnXls = document.getElementById("indanio-excel");
+  if(indAnio.cargando && !indAnio.datos[indAnio.anio]){
+    cuerpo.innerHTML = `<div class="ia-estado">Trayendo de Genesys los indicadores de ${indAnio.anio}…</div>`;
+    btnXls.disabled = true; return;
+  }
+  if(indAnio.error && !indAnio.datos[indAnio.anio]){
+    cuerpo.innerHTML = `<div class="ia-estado ia-error">${indAnio.error}</div>`;
+    btnXls.disabled = true; return;
+  }
+  const c = indAnioCalcular(indAnio.anio);
+  if(!c){ cuerpo.innerHTML = ""; btnXls.disabled = true; return; }
+  btnXls.disabled = !c.ultimoMes;
+  const avisos = c.avisos.filter(a=> a.tipo==="aviso"), infos = c.avisos.filter(a=> a.tipo==="info");
+  const li = a=> `<li class="${a.tipo}"><b>${a.canal}</b> · ${a.indicador}: ${a.detalle}</li>`;
+  const abierto = indAnio.validAbierta ? " open" : "";
+  const valid = `<details class="ia-valid${avisos.length ? "" : " ok"}"${abierto}>
+      <summary>${avisos.length ? `⚠ ${avisos.length} ${avisos.length===1 ? "aviso" : "avisos"} sobre los datos — revisalos antes de usar el reporte` : "✓ Datos validados: no hay avisos"}${infos.length ? ` <span class="ia-valid-n">(${infos.length} ${infos.length===1 ? "nota" : "notas"})</span>` : ""}<span class="ia-valid-ver"></span></summary>
+      <ul>${avisos.map(li).join("")}${infos.map(li).join("")}</ul></details>`;
+  const enCurso = c.enCurso ? ` · <b>* ${MESES[c.enCurso.month-1]} en curso</b>` : "";
+  cuerpo.innerHTML = `
+    <div class="ia-estado">Genesys al ${indAnioFecha(c.en)}${enCurso} · TMO y ASA en segundos · NS: verde ≥ 85%, ámbar 80–84.9%, rojo &lt; 80%${indAnio.cargando ? " · actualizando…" : ""}</div>
+    ${valid}
+    ${c.ultimoMes ? `<div class="ia-sec">Principales</div>
+    <div class="ia-grid">${c.bloques.filter(b=> b.principal).map(b=> indAnioTarjeta(b, c)).join("")}</div>
+    <div class="ia-sec">Otros canales</div>
+    <div class="ia-grid">${c.bloques.filter(b=> !b.principal).map(b=> indAnioTarjeta(b, c)).join("")}</div>` : ""}`;
+  const det = cuerpo.querySelector(".ia-valid");   // se queda como el usuario la dejó (abierta o cerrada) al redibujar
+  if(det) det.addEventListener("toggle", ()=>{ indAnio.validAbierta = det.open; });
+}
+// ---------- Excel ----------
+function indAnioXlsValores(h, r, c0, f, pre){
+  const poner = (k, v, est)=> (v===null || v===undefined || isNaN(v)) ? h.set(r, c0+k, "—", pre + "Guion") : h.set(r, c0+k, v, pre + est);
+  poner(1, f.ns, f.ns>=0.85 ? "NsV" : f.ns>=0.80 ? "NsA" : "NsR");
+  poner(2, f.acc, "Pct"); poner(3, f.tmo, "Seg"); poner(4, f.asa, "Seg"); poner(5, f.fcr, "Pct"); poner(6, f.tnps, "Pct");
+}
+function indAnioXlsBloque(h, r0, c0, b, c){
+  h.set(r0, c0, b.xls, "iaTit");
+  for(let k=1; k<7; k++) h.set(r0, c0+k, "", "iaTit");
+  h.unir(r0, c0, r0, c0+6);
+  ["Mes","Nivel de Servicio","Accesibilidad","TMO","ASA","FCR","TNPS"].forEach((t, k)=> h.set(r0+1, c0+k, t, "iaEnc"));
+  b.filas.forEach((f, i)=>{
+    h.set(r0+2+i, c0, IND_ANIO_MES[f.mes-1] + (c.enCurso && f.mes===c.enCurso.month ? "*" : ""), "iaMes");
+    indAnioXlsValores(h, r0+2+i, c0, f, "ia");
+  });
+  const rt = r0 + 2 + b.filas.length;
+  h.set(rt, c0, `Total ${c.anio}`, "iaTotTxt");
+  indAnioXlsValores(h, rt, c0, b.total, "iaTot");
+  return rt;
+}
+const IND_ANIO_ANCHOS = [9, 16.5, 13.5, 7.5, 6.5, 7.5, 7.5];   // "Total 2026" cabe en la columna Mes
+function indAnioXlsAnchos(nBloques){
+  const out = [];
+  for(let i=0; i<nBloques; i++){ out.push(...IND_ANIO_ANCHOS); if(i < nBloques-1) out.push(2.5); }
+  return out;
+}
+function indAnioXlsNotas(h, r, c){
+  const notas = [];
+  if(c.enCurso) notas.push(`* ${MESES[c.enCurso.month-1]} en curso: datos de Genesys al ${indAnioFecha(c.en)} (hora Honduras).`);
+  notas.push("TMO y ASA en segundos. Total = acumulado del año (no el promedio de los meses). NS: verde ≥ 85%, ámbar 80–84.9%, rojo < 80%.");
+  notas.push("FCR de varios canales y del total: ponderado por llamadas contestadas. TNPS de varios canales: con todas las encuestas.");
+  const nAv = c.avisos.filter(a=> a.tipo==="aviso").length;
+  notas.push(nAv ? `Validación de los datos: ${nAv} ${nAv===1 ? "aviso" : "avisos"}, el detalle está en la hoja «Validación».` : "Validación de los datos: sin avisos.");
+  notas.forEach((t, i)=> h.set(r + i, 0, t, "iaNota"));
+  return r + notas.length;
+}
+function indAnioExcel(){
+  const c = indAnioCalcular(indAnio.anio);
+  if(!c || !c.ultimoMes) return;
+  const wb = XLSX.utils.book_new(), hojas = {};
+  // 1) La plantilla de Oscar: sus 5 bloques, uno al lado del otro
+  const h1 = new XlsHoja();
+  let ult = 0;
+  IND_ANIO_PLANTILLA.forEach((id, i)=>{ ult = indAnioXlsBloque(h1, 0, i*8, c.bloques.find(b=> b.id===id), c); });
+  indAnioXlsNotas(h1, ult + 2, c);
+  h1.cols = indAnioXlsAnchos(IND_ANIO_PLANTILLA.length);
+  const n1 = `Indicadores ${c.anio}`;
+  XLSX.utils.book_append_sheet(wb, h1.hoja(), n1); hojas[n1] = h1;
+  // 2) Todos los canales, en el mismo formato: 3 bloques por franja
+  const h2 = new XlsHoja(), alto = c.ultimoMes + 4;
+  c.bloques.forEach((b, i)=>{ ult = indAnioXlsBloque(h2, Math.floor(i/3)*alto, (i%3)*8, b, c); });
+  indAnioXlsNotas(h2, ult + 2, c);
+  h2.cols = indAnioXlsAnchos(3);
+  XLSX.utils.book_append_sheet(wb, h2.hoja(), "Todos los canales"); hojas["Todos los canales"] = h2;
+  // 3) Validación de los datos
+  const h3 = new XlsHoja();
+  h3.set(0, 0, `VALIDACIÓN DE LOS DATOS — INDICADORES ${c.anio}`, "titulo"); h3.filas[0] = { hpt:24 };
+  h3.set(1, 0, `Genesys al ${indAnioFecha(c.en)} · Avisos: lo que conviene revisar antes de usar el reporte · Notas: información`, "sub");
+  h3.fila(3, 0, ["Tipo","Canal","Indicador","Detalle"], "gEnc"); h3.filas[3] = { hpt:20 };
+  const ordenados = c.avisos.filter(a=> a.tipo==="aviso").concat(c.avisos.filter(a=> a.tipo==="info"));
+  if(!ordenados.length) h3.fila(4, 0, ["OK","Todos","Todos","No hay avisos"], "gTxt");
+  ordenados.forEach((a, i)=>{
+    const z = i%2 ? "Z" : "";
+    h3.set(4+i, 0, a.tipo==="aviso" ? "Aviso" : "Nota", (a.tipo==="aviso" ? "gNsA" : "gGuion") + z);
+    h3.set(4+i, 1, a.canal, "gTxtB" + z); h3.set(4+i, 2, a.indicador, "gTxt" + z); h3.set(4+i, 3, a.detalle, "gJusG" + z);
+  });
+  h3.cols = [9, 28, 26, 95];
+  h3.panel = { x:0, y:4 };
+  XLSX.utils.book_append_sheet(wb, h3.hoja(), "Validación"); hojas["Validación"] = h3;
+  xlsDescargarConEstilo(wb, hojas, `Indicadores ${c.anio} - todos los canales.xlsx`);
 }
 
 function renderGenesys(){
