@@ -1066,6 +1066,76 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     .pres-atajos{margin-left:0;}
     .pres-lam{padding:9px 10px;gap:9px;}
   }
+  /* v22.43: "Auditoría de código" (Códigos de conclusión › Por código, solo WhatsApp) — estilo KPIs del día */
+  #aud-modal-overlay{
+    --kd-bg:#EEF1F5; --kd-text:#1F2937; --kd-text-dim:#5B6472; --kd-text-faint:#7C8592;
+    --kd-card-bg:#FFFFFF; --kd-card-border:#DCE2EA; --kd-divider:#E6EAF0; --kd-chip-bg:#E4E9F0; --kd-scrollbar:#C7D0DB;
+    --kd-live-color:var(--red-dark); --kd-live-cierre-color:#5B6472;
+    display:none;position:fixed;inset:0;background:rgba(20,24,30,.55);z-index:110;align-items:center;justify-content:center;
+  }
+  #aud-modal{background:var(--kd-bg);border-radius:16px;padding:0;width:1280px;max-width:97vw;max-height:95vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.28),0 0 0 1px rgba(228,3,46,.18);color:var(--kd-text);}
+  #aud-modal::-webkit-scrollbar{width:10px;}
+  #aud-modal::-webkit-scrollbar-thumb{background:var(--kd-scrollbar);border-radius:8px;}
+  #aud-modal .kpisdia-inner{padding:0 22px 10px;}
+  #aud-modal .modal-actions{padding:0 22px 16px;}
+  #aud-modal .mini-banner{margin:4px 0 14px;}
+  #aud-hero{position:sticky;top:0;z-index:4;margin:0 -22px 12px;padding:12px 22px 10px;background:#fff;border-bottom:2px solid var(--red);}
+  #aud-hero-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  #aud-hero .kpisdia-title{display:flex;align-items:center;gap:10px;}
+  #aud-hero .kpisdia-title-bar{width:5px;height:26px;background:var(--red);border-radius:3px;box-shadow:0 0 12px rgba(228,3,46,.45);}
+  #aud-hero h2{margin:0;font-size:18px;font-weight:800;color:var(--kd-text);letter-spacing:-.01em;}
+  #aud-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  #aud-hero .kpisdia-btn-refresh:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .aud-canal{background:#E8F5E9;color:#1E6B2A;border:1px solid #B7DFBA;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+  .aud-ruta{margin-top:8px;font-size:12px;color:var(--kd-text-dim);font-weight:600;line-height:1.4;}
+  .aud-ruta span{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--kd-text-faint);margin-right:6px;}
+  .aud-ruta b{color:var(--kd-text);}
+  .aud-prog{background:#fff;border:1px solid var(--kd-card-border);border-radius:12px;padding:10px 14px;margin:0 0 14px;}
+  .aud-prog-l{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--kd-text);}
+  .aud-prog-l .btn-outline{margin-left:auto;}
+  .aud-barra{height:6px;background:var(--kd-chip-bg);border-radius:4px;margin-top:8px;overflow:hidden;}
+  .aud-barra i{display:block;height:100%;background:var(--red);border-radius:4px;transition:width .4s;}
+  .aud-chico{padding:5px 12px !important;font-size:11.5px !important;}
+  .aud-aviso{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .aud-dos{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;margin:0 0 14px;}
+  .aud-scroll{max-height:360px;overflow:auto;border:1px solid var(--kd-card-border);border-radius:10px;background:#fff;position:relative;z-index:0;}
+  table.aud-t{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+  .aud-t th{position:sticky;top:0;z-index:1;background:#C00000;color:#fff;font-weight:700;font-size:11px;padding:6px 8px;text-align:right;white-space:nowrap;}
+  .aud-t td{padding:5px 8px;border-bottom:1px solid var(--kd-divider);text-align:right;white-space:nowrap;color:#1F2937;}
+  .aud-t th.l,.aud-t td.l{text-align:left;}
+  .aud-t tr[data-auduid],.aud-t tr[data-audcat]{cursor:pointer;}
+  .aud-t tr[data-auduid]:hover td,.aud-t tr[data-audcat]:hover td{background:#F7F8FA;}
+  .aud-t tr.sel td{background:#FDECEF;}
+  .aud-t td.ok{color:#1E9E4B;font-weight:800;} .aud-t td.no{color:#E4032E;font-weight:800;} .aud-t td.rev{color:#B07800;font-weight:800;}
+  .aud-t tfoot td{position:sticky;bottom:0;background:#E5E7EB;font-weight:800;border-top:2px solid var(--red);}
+  .aud-pbar{display:inline-block;width:64px;height:7px;background:var(--kd-chip-bg);border-radius:4px;vertical-align:middle;margin-right:6px;overflow:hidden;}
+  .aud-pbar i{display:block;height:100%;background:var(--red);}
+  .aud-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+  .aud-pill.ok{background:#E8F5E9;color:#1E6B2A;} .aud-pill.no{background:#FDECEF;color:#B4021F;} .aud-pill.rev{background:#FFF4D6;color:#7A5600;} .aud-pill.sin{background:#EEF0F3;color:#5B6472;}
+  .aud-filtros{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px;}
+  .aud-filtros label{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--kd-text-dim);text-transform:uppercase;letter-spacing:.04em;}
+  .aud-filtros select,.aud-filtros input{background:var(--kd-chip-bg);border:1px solid var(--kd-card-border);color:var(--kd-text);font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:12px;font-family:inherit;max-width:240px;}
+  .aud-filtros input{min-width:220px;font-weight:600;}
+  .aud-n{opacity:.7;font-weight:700;margin-left:2px;}
+  .kpisdia-kpi-value.aud-kpi-txt{font-size:14px;line-height:1.2;}
+  .aud-lista-wrap{max-height:70vh;}
+  table.aud-lista td{vertical-align:top;}
+  .aud-lista td.f{text-align:left;white-space:nowrap;}
+  .aud-lista td.txt{white-space:normal;text-align:left;min-width:180px;max-width:330px;line-height:1.35;}
+  .aud-lista td.com{min-width:240px;max-width:400px;color:#3B4350;}
+  .aud-lista .mut{color:#8A96A3;}
+  .aud-ver{background:#fff;border:1px solid var(--kd-card-border);border-radius:14px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;color:#1F2937;}
+  .aud-ver:hover{border-color:var(--red);color:var(--red);}
+  .aud-vacio{background:#fff;border:1px dashed var(--kd-card-border);border-radius:12px;padding:26px;text-align:center;color:var(--kd-text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;}
+  .aud-notas{line-height:1.6;}
+  .aud-dos > section{min-width:0;}
+  @media (max-width:980px){ .aud-dos{grid-template-columns:minmax(0,1fr);} }
+  @media (max-width:700px){
+    #aud-modal .kpisdia-inner{padding:0 12px 10px;}
+    #aud-hero{margin:0 -12px 12px;padding:10px 12px 8px;}
+    #aud-hero h2{font-size:16px;}
+    .aud-filtros input{min-width:0;flex:1 1 160px;}
+  }
   /* v22.41: "Recibido por intervalo" (estilo KPIs del día) */
   #rint-modal-overlay{
     --kd-bg:#EEF1F5; --kd-text:#1F2937; --kd-text-dim:#5B6472; --kd-text-faint:#7C8592;
@@ -8640,7 +8710,7 @@ const XLS_ESTILOS = (()=>{
   const fila = {
     gTxtB:{ f:"negrita" }, gTxt:{ f:"dNormal" }, gGuion:{ f:"dGris" },
     gFecha:{ f:"dNormal", n:"fecha" }, gFechaB:{ f:"negrita", n:"fecha" },
-    gNum:{ f:"dNormal", n:"num" }, gPct:{ f:"dNormal", n:"pct" }, gSeg:{ f:"dNormal", n:"seg" },
+    gNum:{ f:"dNormal", n:"num" }, gPct:{ f:"dNormal", n:"pct" }, gSeg:{ f:"dNormal", n:"seg" }, gTmo:{ f:"dNormal", n:"tmo" },   // v22.43: gTmo
     gNsV:{ f:"dVerde", n:"pct" }, gNsA:{ f:"dAmbar", n:"pct" }, gNsR:{ f:"dRoja", n:"pct" },
     gDesvR:{ f:"dRoja", n:"pctSigno" }, gDesvV:{ f:"dVerde", n:"pctSigno" }, gDesvN:{ f:"negrita", n:"pctSigno" },
     gJusV:{ f:"dVerde", a:"iw" }, gJusG:{ f:"dGris", a:"iw" },
@@ -8649,7 +8719,7 @@ const XLS_ESTILOS = (()=>{
     e[k] = Object.assign({ b:2, a:"i" }, fila[k]);
     e[k+"Z"] = Object.assign({}, e[k], { r:"dPar" });
   });
-  const pie = { Txt:{}, Num:{ n:"num" }, Pct:{ n:"pct" }, Seg:{ n:"seg" }, DesvR:{ f:"dRoja", n:"pctSigno" }, DesvV:{ f:"dVerde", n:"pctSigno" }, DesvN:{ n:"pctSigno" } };
+  const pie = { Txt:{}, Num:{ n:"num" }, Pct:{ n:"pct" }, Seg:{ n:"seg" }, Tmo:{ n:"tmo" }, DesvR:{ f:"dRoja", n:"pctSigno" }, DesvV:{ f:"dVerde", n:"pctSigno" }, DesvN:{ n:"pctSigno" } };
   Object.keys(pie).forEach(k=>{
     e["gTot"+k] = Object.assign({ f:"negrita", r:"dTot", b:3, a:"i" }, pie[k]);    // Total / Promedio
     e["gSub"+k] = Object.assign({ f:"negrita", r:"dSub", b:2, a:"i" }, pie[k]);    // total de una categoría
@@ -20686,6 +20756,7 @@ function ccHtmlCodigo(){
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
       <label style="font-size:12.5px;font-weight:700;color:#3B4350;">Cambiar <select id="cc-nodo" style="height:34px;max-width:300px;border:1px solid #C9CDD3;border-radius:8px;padding:0 8px;font:inherit;font-size:13px;">${ccOpcionesNodo(clave, false)}</select></label>
       <button type="button" class="btn-update" data-ccllnodo="${qaEsc(clave)}" data-ccll="">🎧 Escuchar estas llamadas</button>
+      ${d.cat==="WhatsApp" && audEsNodoObjetivo(nodo) ? `<button type="button" class="btn-update" data-ccaccion="auditar" title="Lee cada chat y dice si el código aplicaba (v22.43)">🔎 Auditar este código</button>` : ""}
     </div>
   </section>
   <div class="cc-kpis">
@@ -21112,6 +21183,7 @@ function ccClick(e){
     else if(a==="solorevisar"){ CC.soloRevisar = !CC.soloRevisar; ccRender(); }
     else if(a==="versinruta"){ CC.verSinRuta = !CC.verSinRuta; ccRender(); }
     else if(a==="buscarll") ccBuscarLlamadas();
+    else if(a==="auditar") openAudModal();                                          // v22.43
   }
 }
 function ccChange(e){
@@ -21129,6 +21201,1203 @@ function ccInput(e){
   if(t.id!=="cc-buscar") return;
   clearTimeout(ccBuscarT);
   ccBuscarT = setTimeout(()=>{ CC.buscar = t.value; const pos = t.selectionStart; ccRender(); const n = document.getElementById("cc-buscar"); if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(err){} } }, 250);
+}
+
+/* ============================================================
+   v22.43 (Oscar, 2026-11-26): "Auditoría de código" (Códigos de conclusión › Por código)
+   ============================================================
+   Oscar pidió auditar el código "Trámites Cortos › Información › Información › Llamada no
+   Efectiva › Cliente abandona interacción - R", SOLO en WhatsApp: con el ID de cada
+   conversación leer el chat, saber por qué escribió el cliente, decir si el código aplicaba o
+   no, con un comentario corto, y bajar un Excel "sumamente completo" (asesor, hora, todo),
+   en un modal con el estilo de KPIs del día.
+
+   Reglas que confirmó Oscar (2026-11-26):
+   · Si el cliente dijo cuál era su inconveniente, NO aplicaba, aunque después haya dejado de
+     responder (por ejemplo, cuando el asesor le pidió el contrato).
+   · Si el cliente no dijo nada (solo "hola", "buenas tardes", "quiero que me ayuden"), el
+     asesor le ofreció ayuda y el cliente dejó de responder, SÍ aplicaba.
+   · Solo este código, y solo WhatsApp.
+   Lo que decide el sistema (se explica en el modal y en el Excel):
+   · Cuenta lo que el cliente escribió con sus palabras, al bot o al asesor. Lo que eligió en el
+     menú del bot ("1", "Soporte"), su número o su nombre no cuentan como decir el motivo.
+   · Si el asesor cerró sin escribirle, o el cliente volvió a escribir y el asesor cerró sin
+     responderle, el cliente no abandonó: no aplicaba.
+   · Si el cliente mandó solo un audio o una imagen, o escribió algo que el sistema no reconoce,
+     o Genesys no entregó el chat: "Revisar" (lo tiene que ver una persona).
+   De dónde sale cada cosa:
+   · Conversaciones: la consulta de detalle de Genesys (la de "Llamadas") con las colas de
+     WhatsApp y el código. Cuenta el día en que el asesor la cerró, como los conteos de Códigos
+     de conclusión (se busca desde 3 días antes porque un chat pudo empezar antes).
+   · Chat: GET /conversations/{id}/recordings (messagingTranscript), lo mismo que usa QA. Se leen
+     4 a la vez y como mucho 4 por segundo (el límite de Genesys es 300 por minuto), alternando
+     asesores: si se detiene antes, lo leído sirve como muestra.
+   · Motivo: reglas de palabras (AUD_MOTIVOS). No es inteligencia artificial y el texto no sale
+     del navegador. Las frases que no reconoce van en la hoja Validación del Excel para ajustar.
+   ============================================================ */
+const AUD_RUTA = ["Trámites Cortos","Información","Información","Llamada no Efectiva","Cliente abandona interacción - R"];
+const AUD_MAX_DIAS = 31;
+const AUD_DIAS_ANTES = 3;
+const AUD_CFG = { paralelo:4, porSeg:4, esperaReintento:2500 };   // objeto (no constantes) para que las pruebas puedan acelerarlo
+const AUD_DICT = {
+  aplica:   { nom:"Aplicaba",    color:"#1E9E4B", cls:"ok",  xl:"dpro" },
+  noaplica: { nom:"No aplicaba", color:"#E4032E", cls:"no",  xl:"ddet" },
+  revisar:  { nom:"Revisar",     color:"#C98A00", cls:"rev", xl:"dpas" },
+  sinleer:  { nom:"Sin leer",    color:"#8D95A0", cls:"sin", xl:"vacio" },
+};
+const AUD_ORDEN = ["noaplica","revisar","aplica","sinleer"];
+const AUD_SESION = "Se venció la sesión de Genesys. Iniciá sesión otra vez y volvé a abrir la auditoría (lo leído hasta ahora se pierde al recargar).";
+const AUD_CAT = {
+  noEscribio:"Sin motivo: el cliente no escribió",
+  saludo:"Sin motivo: solo saludó, pidió ayuda o dio datos",
+  menu:"Sin motivo: solo usó el menú del bot",
+  asesorNo:"El asesor no le escribió al cliente",
+  sinRespuesta:"El asesor no le respondió al cliente",
+  adjunto:"Solo audio o imagen",
+  texto:"Texto que el sistema no reconoció",
+  chat:"No se pudo leer el chat",
+  sinleer:"Sin leer",
+};
+const AUD = {
+  rango:"7d", desde:null, hasta:null, picker:false,
+  ids:[],
+  fase:"",            // "" | "buscando" | "leyendo" | "detenido" | "listo" | "error"
+  error:"", progreso:"",
+  token:0, detener:false, pausas:0,
+  per:null,           // período de lo que está en pantalla { desde, hasta }
+  filas:null,         // una por asesor y conversación (el asesor que cerró con el código)
+  ccN:null,           // cuántas cuenta Códigos de conclusión con este código en el mismo período
+  chats:new Map(),    // id de conversación -> { estado, msgs, err }
+  leyendo:{ hechos:0, total:0, t0:0 },
+  f:{ dict:"", uid:"", cat:"", buscar:"" },
+  validAbierta:false, pintarT:null, ultimo:null,
+};
+
+/* ---------- ¿es el código que se audita? ---------- */
+function audEsRutaObjetivo(path){ return Array.isArray(path) && path.length===AUD_RUTA.length && path.every((p, i)=> ccNorm(p)===ccNorm(AUD_RUTA[i])); }
+function audEsNodoObjetivo(nodo){ return !!nodo && nodo.tipo==="ruta" && audEsRutaObjetivo(nodo.path); }
+function audIdsDe(d){ return Array.from(new Set([].concat(...((d && d.cods) || []).filter(c=> audEsRutaObjetivo(c.path)).map(c=> c.ids)))).filter(id=> id && CC_RE_UUID.test(id)); }
+
+/* ---------- texto: normalizar y reconocer el motivo ---------- */
+// minúsculas, sin tildes (la ñ queda como n), sin signos ni emojis; "holaaa" -> "hola"
+function audNorm(t){
+  return String(t==null ? "" : t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/([a-z])\1{2,}/g, "$1").replace(/[^a-z0-9@\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+const AUD_RE = {
+  internet: /\b(internet|interne|intenet|internt|wifi|wi fi|wify|wiffi|wifii|wiifi|modem|router|ruter|fibra|navegar|navega|navego|navegando|conexion)\b/,
+  lento: /\b(lento|lenta|lentisimo|lentisima|lentitud|velocidad|intermitente|intermitencia|va y viene|se cae|se corta|se desconecta|inestable|a ratos|ratos|poca senal)\b/,
+  clave: /\b(contrasena|clave|password|nombre de la red|cambiar la red)\b|\b(reiniciar|resetear|reset|configurar)\b.{0,24}\b(modem|router|ruter)\b/,
+  falla: /\b(no (tengo|hay|me|sirve|funciona|jala|agarra|carga|conecta|entra|navega|puedo|esta|da|llega|abre)|sin (internet|wifi|servicio|senal|conexion|red)|nada|falla|fallas|fallando|problema|problemas|inconveniente|caido|caida|se cayo|se fue|se corto|cortado|cortaron|dejo de|desconectado|desconectada|malo|mala|pesimo|pesima|danado|danada|dano|averia|luz roja|luces rojas|parpadea|apagado|apagada)\b/,
+  venta: /\b(contratar|contrato nuevo|adquirir|instalar|instalacion|instalen|nuevo servicio|servicio nuevo|plan|planes|promocion|promociones|promo|oferta|ofertas|precio|precios|cuanto cuesta|cuanto vale|cuanto sale|costo|costos|tarifa|tarifas|cotizar|cotizacion|comprar|equipo nuevo|celular nuevo|telefono nuevo|renovar|renovacion|combo|combos|doble pack|triple pack|ventas|vendedor|aumentar la velocidad|subir la velocidad|mas velocidad|mas megas)\b/,
+  hogar: /\b(casa|hogar|residencia|residencial|fijo|modem|router|ruter|wifi|wi fi|cable|tv|television|decodificador|fibra|instalacion|colonia|barrio|apartamento)\b/,
+  movil: /\b(celular|cel|movil|telefono movil|chip|sim|saldo|recarga|recargas|recargue|paquete|paquetes|datos moviles|datos|megas|prepago|pospago|linea movil|4g|5g|lte)\b/,
+  aviso: /\b(no (hemos |he )?(recibido|obtenido|tenido|recibimos|obtuvimos) (su |tu |una )?respuesta|falta de respuesta|sin respuesta|inactividad|al no (recibir|obtener|tener) respuesta|no (nos )?(responde|contesta)|(procedemos|procedere|procederemos|vamos) a (cerrar|finalizar)|(cerrar|finalizar|cerraremos|finalizaremos|cerrare|finalizare|cerramos|finalizamos) (la |esta |el |este )?(conversacion|chat|interaccion|atencion|gestion|sesion|caso)|daremos por (finalizada|terminada|cerrada)|doy por (finalizada|terminada|cerrada)|vuelva a escribirnos|puede volver a escribirnos)\b/,
+};
+// Motivos: gana el primero que coincide (el orden importa). serv: servicio cuando el motivo lo dice solo.
+const AUD_MOTIVOS = [
+  { k:"pago", nom:"Factura, cobros o pagos", serv:"", re:/\b(cancelar (la |mi |el |una )?(factura|saldo|deuda|cuenta|recibo|mora|pago)|saldo pendiente|saldo a pagar|saldo de (mi |la )?factura)\b/ },
+  { k:"baja", nom:"Cancelación o baja del servicio", serv:"", re:/\b(dar de baja|darme de baja|dar baja|de baja|retirar (el|mi) servicio|retiro (del|de) servicio|ya no quiero (el|mi|este|ese) servicio|terminar (el|mi) contrato|finalizar (el|mi) contrato|cancelar (el|mi|este|ese) (servicio|contrato|plan|internet|cable|linea)|cancelacion|desconectar (el|mi) servicio|desinstalar)\b/ },
+  { k:"porta", nom:"Portabilidad", serv:"Móvil", re:/\b(portabilidad|portar|portarme|portacion|cambiarme a claro|pasarme a claro|traer mi numero|pasar mi numero|cambiar de compania)\b/ },
+  { k:"tramite", nom:"Titular, traslado o datos de la cuenta", serv:"", re:/\b(actualizar (mis |los )?datos|datos personales|cambiar (mis |los )?datos)\b/ },
+  { k:"internet", fn: n=>{
+      const m = n.match(AUD_RE.internet);
+      if(!m) return null;
+      const movil = AUD_RE.movil.test(n), hogar = AUD_RE.hogar.test(n);
+      if(movil && !hogar) return { k:"datos", nom:"Datos móviles o internet del celular", serv:"Móvil", kw:m[0] };
+      if(AUD_RE.lento.test(n)) return { k:"lento", nom:"Internet lento o intermitente", serv:"Hogar", kw:m[0] };
+      if(AUD_RE.clave.test(n)) return { k:"wifi", nom:"WiFi, módem o contraseña", serv:"Hogar", kw:m[0] };
+      if(AUD_RE.falla.test(n)) return { k:"internet", nom:"Sin internet o con fallas", serv:"Hogar", kw:m[0] };
+      if(AUD_RE.venta.test(n)) return { k:"venta", nom:"Planes, compras o contratar", serv:"Hogar", kw:m[0] };
+      return { k:"internet2", nom:"Internet (otra consulta)", serv:"Hogar", kw:m[0] };
+    } },
+  { k:"tv", nom:"TV / cable", serv:"Hogar", re:/\b(cable|tv|tele|television|televisor|canal|canales|decodificador|deco|control remoto|claro tv|claro video|cablevision)\b/ },
+  { k:"fijo", nom:"Teléfono fijo", serv:"Hogar", re:/\b(telefono fijo|tel fijo|linea fija|el fijo|mi fijo|numero fijo|no tengo tono|sin tono|no da tono|telefono de casa|telefono de la casa|linea de casa|linea telefonica)\b/ },
+  { k:"llamadas", nom:"Llamadas o señal del celular", serv:"Móvil", re:/\b(llamada|llamadas|llamar|llaman|llamen|marcar|recibir llamadas|hacer llamadas|no entran|no salen|no me entran|no me salen|no puedo hablar|se escucha mal|no se escucha|buzon|buzon de voz|mensajes de texto|sms|mensajitos|senal|cobertura|solo emergencia|solo emergencias|llamadas de emergencia|antena)\b/ },
+  { k:"datos", nom:"Datos móviles o internet del celular", serv:"Móvil", re:/\b(datos|datos moviles|megas|gigas|4g|5g|lte|hotspot|compartir datos)\b/ },
+  { k:"recarga", nom:"Recargas, paquetes o saldo", serv:"Móvil", re:/\b(recarga|recargas|recargue|recargo|recargar|recargaron|paquete|paquetes|paquetito|superpaquete|super paquete|superpack|super pack|saldo|bono|bonos|me descontaron|me quitaron (el )?saldo|se me fue el saldo|se me acabo|prepago|tarjeta de recarga)\b/ },
+  { k:"pago", nom:"Factura, cobros o pagos", serv:"", re:/\b(factura|facturas|facturacion|recibo|recibos|cobro|cobros|cobraron|cobrando|cobran|cobrar|cargo|cargos|cuanto debo|cuanto pago|cuanto tengo que pagar|deuda|debo|mora|pagar|pago|pague|pagos|pagado|abono|abonar|estado de cuenta|vencimiento|fecha de pago|fecha de corte|monto|claro pay|mi pago claro|debito|reembolso|devolucion)\b/ },
+  { k:"susp", nom:"Servicio suspendido o reconexión", serv:"", re:/\b(me cortaron|cortaron (el|mi) servicio|corte (del|de) servicio|suspendido|suspendida|suspendieron|suspension|reconexion|reconectar|reconecten|reactivar|reactivacion|desactivado|desactivada|desactivaron|bloqueado|bloqueada|bloquearon)\b/ },
+  { k:"equipo", nom:"Equipo, chip o línea", serv:"Móvil", re:/\b(chip|sim|simcard|esim|duplicado|reposicion|robo|robaron|me robaron|perdi (mi|el) (celular|telefono|cel)|extravie|bloquear (mi |la |el )?(linea|numero|celular|telefono|cel|chip|equipo)|desbloquear|desbloqueo|imei|liberar|liberacion|equipo|celular malo|celular danado|telefono danado|pantalla|bateria|garantia|taller|reparacion)\b/ },
+  { k:"roaming", nom:"Roaming o viajes", serv:"Móvil", re:/\b(roaming|viajar|viaje|viajo|viajando|extranjero|internacional|fuera del pais|estados unidos|eeuu)\b/ },
+  { k:"app", nom:"Mi Claro o Claro Pay", serv:"", re:/\b(mi claro|app|aplicacion|pagina web|portal|claro pay|no puedo (entrar|ingresar) a)\b/ },
+  { k:"tramite", nom:"Titular, traslado o datos de la cuenta", serv:"", re:/\b(titular|cambio de nombre|cambiar (el )?nombre|traslado|trasladar|mudanza|me mudo|me voy a mudar|mudarme|cambio de direccion|cambiar (la )?direccion|correo electronico|constancia|certificado|historial|copia del contrato|cual es mi (numero de )?contrato|no se mi (numero de )?contrato|saber mi (numero de )?contrato|horario|horarios|agencia|agencias|tienda|tiendas|sucursal|sucursales)\b/ },
+  { k:"visita", nom:"Reporte o visita técnica", serv:"Hogar", re:/\b(tecnico|tecnicos|visita|visitar|reporte|reportar|reporto|reportado|ticket|numero de caso|mi caso|orden de trabajo|orden de servicio|averia|averias|cable caido|poste|no vinieron|no han venido|no ha venido|cuando vienen|cuando llegan|instalaron mal)\b/ },
+  { k:"venta", nom:"Planes, compras o contratar", serv:"", re: AUD_RE.venta },
+  { k:"queja", nom:"Queja por la atención", serv:"", re:/\b(queja|quejas|quejarme|reclamo|reclamos|reclamar|denuncia|mal servicio|pesimo servicio|pesima atencion|mala atencion|nadie (me )?(ayuda|responde|atiende|contesta)|ya (llame|escribi|reporte)|varias veces|me colgaron|me dejaron esperando|proteccion al consumidor|conatel)\b/ },
+  { k:"sinserv", nom:"Sin servicio (sin decir cuál)", serv:"", re:/\b(no tengo (servicio|nada)|sin servicio|no hay servicio|se fue el servicio|se cayo el servicio|no funciona nada|no sirve nada|toda la colonia|en la colonia|en mi zona|en el sector|apagon)\b/ },
+];
+// Lo que NO dice el motivo: saludos, cortesía, "quiero que me ayuden", pedir un asesor, esperar, decir que hay
+// "un problema" sin decir cuál, su nombre, número o contrato. Se quita y, si casi no queda nada, no dijo nada.
+const AUD_RELLENO = [
+  /\b(soy|me llamo|mi nombre es|a nombre de|le saluda|le escribe|habla)( [a-z]+){1,4}/g,
+  /\b(hola+|ola+|holi+|hello|helo|hi|hey|alo+|q tal|que tal|como (esta|estan|estas)|saludos?|bendiciones|dios (le|les|te|los) bendiga)\b/g,
+  /\b(muy )?buen(a|o)s?( (dias?|tardes?|noches?))?\b/g,
+  /\b(feliz|lindo|linda|bonito|bonita) (dia|tarde|noche)\b/g,
+  /\b(muchas |mil )?gracias+\b/g,
+  /\b(ok+|okay|oki+s?|vale|va|vaya|dale|listo|perfecto|excelente|entendido|de acuerdo|esta bien|bien|si+|no|claro|simon|aja|exacto|correcto|bye|adios|chao|hasta luego)\b/g,
+  /\b(quiero|quisiera|necesito|ocupo|deseo|podria|podrian|puede|pueden|me (puede|pueden|podria|podrian)|favor de|me)?\s*(que me )?(ayud(a|e|en|ar|arme|enme|ame|eme)|asistencia|apoyo|informacion|info|una consulta|consulta|consultar|hacer una consulta|una pregunta|preguntar|hacer una pregunta|una duda|atencion|atiend(an|a|ame|anme|en)|soporte|soporte tecnico|servicio al cliente|atencion al cliente)\b/g,
+  /\b(hablar|comunicarme|comunicar|chatear|platicar)( con)?\b/g,
+  /\b(un|una|algun|alguna|el|la)?\s*(asesor|asesora|asesores|agente|agentes|operador|operadora|persona|humano|representante|ejecutivo|ejecutiva|alguien|nadie)\b/g,
+  /\b(estoy esperando|sigo esperando|esperando|espero|hay alguien|estan ahi|esta ahi|siguen ahi|me atienden|me van a atender|atiendanme|urgente|es urgente|rapido|pronto|por favor|porfa+|porfavor|xfa|plis|pls|please)\b/g,
+  /\b(tengo|tenemos|tiene|presento|presenta|hay|con)\s+(un|una|unos|unas)?\s*(problema|problemas|problemita|inconveniente|inconvenientes|situacion|duda|dudas|consulta|consultas|pregunta|preguntas)\b/g,
+  /\b(no (me )?(funciona|sirve)|dejo de funcionar|no esta funcionando|falla|fallas|problema|problemas|inconveniente|inconvenientes)\b/g,
+  /\b(mi|el|la) (numero|nombre|contrato|identidad|dni|cuenta|correo|telefono|celular|cel|linea) (es|seria|son)\b/g,
+  /\b(numero de (contrato|cuenta|identidad|telefono|celular)|contrato|identidad|dni|cuenta|numero|nombre|telefono|celular|cel|hogar|movil|residencial)\b/g,
+  // dirección o lugar (lo piden para una visita): "colonia Kennedy bloque 5", "San Pedro Sula"
+  /\b(col|colonia|barrio|bo|res|bloque|casa|calle|avenida|ave|sector|aldea|caserio|municipio|departamento|frente a|contiguo a|cerca de|a la par de|por el|por la)( [a-z0-9]+){0,2}/g,
+  /\b(tegucigalpa|tegus|comayaguela|san pedro sula|sps|la ceiba|choluteca|comayagua|el progreso|danli|juticalpa|siguatepeque|puerto cortes|tela|roatan|santa rosa de copan|copan|olancho|cortes|atlantida|yoro|francisco morazan|valle|intibuca|la paz|lempira|ocotepeque|gracias a dios|islas de la bahia|el paraiso|santa barbara|honduras)\b/g,
+  /\S+@\S+/g,
+  /\b\d[\d ]*\b/g,
+];
+const AUD_VACIAS = new Set("de del la el los las lo le les un una unos unas y e o u a al en con por para que q k me mi mis se su sus es son esta estoy este eso esa ese esto ya tu usted ustedes yo nos nosotros mucho muy mas pero como cuando donde aqui ahi alli hay ser sea fue tengo tiene tienen quiero quisiera necesito ocupo puedo pueden puede algo todo nada solo favor sobre tema caso fijese mire oiga disculpe disculpa perdon".split(" "));
+function audMotivoDe(n){
+  for(const m of AUD_MOTIVOS){
+    if(m.fn){ const r = m.fn(n); if(r) return r; continue; }
+    const x = n.match(m.re);
+    if(x) return { k:m.k, nom:m.nom, serv:m.serv, kw:x[0] };
+  }
+  return null;
+}
+// ¿Copió una opción del menú del bot? ("1", "opción 2", o un texto corto que está en el mensaje del bot)
+function audEsMenu(n, prevBot){
+  if(/^(opcion )?\d{1,2}$/.test(n)) return true;
+  if(!prevBot) return false;
+  const pb = " " + audNorm(prevBot) + " ";
+  return n.length >= 2 && n.split(" ").length <= 6 && pb.includes(" " + n + " ");
+}
+// Un mensaje del cliente: "vacio" | "menu" | "motivo" (con cuál) | "texto" (dijo algo que no se reconoce) | "relleno" (no dijo nada)
+function audAnalizarTexto(x, prevBot, esBoton){
+  const n = audNorm(x);
+  if(!n) return { tipo:"vacio" };
+  if(esBoton || audEsMenu(n, prevBot)) return { tipo:"menu" };
+  const mot = audMotivoDe(n);
+  if(mot) return { tipo:"motivo", motivo:mot };
+  // solo un nombre ("María Fernanda López"): lo piden para validar, no es el motivo
+  if(/^\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñü]+\.?\s+){1,4}[A-ZÁÉÍÓÚÑ][a-záéíóúñü]+\.?\s*$/.test(String(x))) return { tipo:"relleno" };
+  let r = " " + n + " ";
+  AUD_RELLENO.forEach(re=>{ r = r.replace(re, " "); });
+  const quedan = r.split(/\s+/).filter(w=> w.length > 1 && !AUD_VACIAS.has(w));
+  return quedan.length >= 3 ? { tipo:"texto", resto: quedan.join(" ") } : { tipo:"relleno" };
+}
+function audServicioDe(mot, n, todo, servCola){
+  if(mot && mot.serv) return mot.serv;
+  const h = AUD_RE.hogar.test(n), m = AUD_RE.movil.test(n);
+  if(h && !m) return "Hogar";
+  if(m && !h) return "Móvil";
+  const H = AUD_RE.hogar.test(todo), M = AUD_RE.movil.test(todo);
+  if(H && !M) return "Hogar";
+  if(M && !H) return "Móvil";
+  return servCola || "Sin precisar";
+}
+function audServicioDeCola(nombre){ const s = audNorm(nombre); return /\bfijo\b|_fijo|fijo/.test(s) ? "Hogar" : /movil/.test(s) ? "Móvil" : ""; }
+function audCorto(t, max){ const s = String(t==null ? "" : t).replace(/\s+/g, " ").trim(); return s.length > max ? s.slice(0, max-1).trimEnd() + "…" : s; }
+function audCita(t){ return audCorto(t, 90); }
+function audMinTxt(seg){
+  if(seg==null || isNaN(seg)) return "—";
+  if(seg < 60) return "menos de 1 min";
+  const m = Math.round(seg/60);
+  if(m < 60) return `${m} min`;
+  const h = Math.floor(m/60), r = m % 60;
+  return r ? `${h} h ${r} min` : `${h} h`;
+}
+function audTipoAdj(a){
+  const s = `${(a && a.mediaType) || ""} ${(a && a.name) || ""} ${(a && a.url) || ""} ${(a && (a.mime || a.contentType)) || ""}`.toLowerCase();
+  if(/audio|voice|\.ogg|\.opus|\.mp3|\.m4a|\.amr|\.aac|\.wav/.test(s)) return "audio";
+  if(/sticker/.test(s)) return "sticker";
+  if(/image|\.jpe?g|\.png|\.webp|\.gif|\.heic/.test(s)) return "imagen";
+  if(/video|\.mp4|\.3gp|\.mov|\.avi/.test(s)) return "video";
+  return "archivo";
+}
+function audListaAdj(tipos){
+  const n = {}; tipos.forEach(t=>{ if(t!=="sticker") n[t] = (n[t]||0) + 1; });
+  const nom = { audio:["un audio","audios"], imagen:["una imagen","imágenes"], video:["un video","videos"], archivo:["un archivo","archivos"] };
+  return Object.keys(n).map(k=> n[k]===1 ? nom[k][0] : `${n[k]} ${nom[k][1]}`).join(" y ") || "un adjunto";
+}
+
+/* ---------- los mensajes del chat ---------- */
+// Cada uno: { t, q:"c" (cliente) | "a" (asesor) | "b" (bot o Genesys), u: id del asesor, n: nombre, x: texto, boton, ops: opciones, adj: [{ tipo, nombre }] }
+function audMensajes(recs, ani){
+  const tel = String(ani||"").replace(/\D/g, "").slice(-8);
+  const out = [], vistos = new Set();
+  (recs||[]).forEach(r=>{
+    (r.messagingTranscript||[]).forEach(m=>{
+      const pur = String(m.purpose||"").toLowerCase(), desde = String(m.from||"").replace(/\D/g, "").slice(-8);
+      let q = "b", u = "", n = "Bot / sistema";
+      if(m.fromUser && (m.fromUser.id || m.fromUser.name)){ q = "a"; u = m.fromUser.id || ""; n = m.fromUser.name || qaUserName(u); }
+      else if(pur==="agent" || pur==="user"){ q = "a"; n = "Asesor"; }
+      else if(m.fromExternalContact || pur==="customer" || pur==="external" || (tel.length >= 7 && desde===tel)){ q = "c"; n = "Cliente"; }
+      let x = String(m.messageText || ""), boton = false;
+      const br = m.buttonResponse;
+      if(!x.trim() && br && (br.text || br.payload)){ x = String(br.text || br.payload); boton = true; }
+      const nt = m.notificationTemplate;
+      if(!x.trim() && nt){ const b = nt.body || {}; x = String(b.text || nt.text || ""); }
+      const ops = [];
+      (m.quickReplies||[]).forEach(o=>{ if(o && (o.text || o.payload)) ops.push(String(o.text || o.payload)); });
+      (m.cards||[]).forEach(cd=>{ if(cd && cd.title) ops.push(String(cd.title)); ((cd && cd.actions) || []).forEach(a=>{ if(a && a.text) ops.push(String(a.text)); }); });
+      const adj = (m.messageMediaAttachments||[]).map(a=> ({ tipo: audTipoAdj(a), nombre: String((a && (a.name || a.mediaType)) || "adjunto") }))
+        .concat((m.messageStickerAttachments||[]).map(()=> ({ tipo:"sticker", nombre:"sticker" })));
+      const clave = m.id ? "id:" + m.id : `${m.timestamp}|${q}|${x}`;
+      if(vistos.has(clave)) return;
+      vistos.add(clave);
+      const msg = { t: m.timestamp || "", q, u, n, x, adj };
+      if(boton) msg.boton = true;
+      if(ops.length) msg.ops = ops;
+      out.push(msg);
+    });
+    (r.transcript||[]).forEach(m=>{   // chat web (por si acaso)
+      const p = String(m.participantPurpose||"").toLowerCase();
+      const q = p==="customer" || p==="external" ? "c" : (p==="agent" || p==="user") ? "a" : "b";
+      out.push({ t: m.utc || m.timestamp || "", q, u:"", n: q==="c" ? "Cliente" : q==="a" ? ((m.user && m.user.name) || "Asesor") : "Bot / sistema", x: String(m.body || m.message || ""), adj:[] });
+    });
+  });
+  const ms = m=>{ const v = Date.parse(m.t); return isNaN(v) ? 0 : v; };
+  return out.sort((a, b)=> ms(a) - ms(b));
+}
+
+/* ---------- el dictamen de una conversación ---------- */
+function audRes(f){
+  const ch = AUD.chats.get(f.cid);
+  if(f._res && f._resDe===ch) return f._res;
+  f._resDe = ch;
+  return f._res = audClasificar(f, ch);
+}
+function audClasificar(f, ch){
+  const r = { dict:"sinleer", cat:AUD_CAT.sinleer, motivo:null, kw:"", cita:"", serv: f.servCola || "Sin precisar", com:"",
+    nCli:0, nAse:0, nBot:0, adjCli:[], menu:[], primero:"", todo:"", ultimo:"", ofrecio:null, aviso:false, espera:null, despues:false,
+    estadoChat:"Sin leer", raro:"" };
+  if(!ch){ r.com = "No se leyó el chat (la lectura se detuvo antes de llegar a esta conversación)."; return r; }
+  if(ch.estado!=="ok"){
+    r.dict = "revisar"; r.cat = AUD_CAT.chat; r.estadoChat = ch.err || "No se pudo leer";
+    r.com = `No se pudo leer el chat en Genesys (${String(ch.err || "sin detalle").replace(/\.$/, "")}). Revisalo en Genesys.`;
+    return r;
+  }
+  r.estadoChat = "Leído";
+  const finMs = Date.parse(f.finAt || f.cierre), tope = isNaN(finMs) ? Infinity : finMs + 60000;
+  const msgs = (ch.msgs||[]).filter(m=>{ const t = Date.parse(m.t); return isNaN(t) || t <= tope; });
+  r.despues = (ch.msgs||[]).some(m=> m.q==="c" && Date.parse(m.t) > tope);
+  let prevBot = "";
+  const cli = [];
+  msgs.forEach(m=>{
+    if(m.q==="b"){ r.nBot++; prevBot = [m.x].concat(m.ops || []).join(" \n "); }
+    else if(m.q==="a"){ r.nAse++; prevBot = ""; }
+    else { r.nCli++; cli.push({ m, a: audAnalizarTexto(m.x, prevBot, m.boton) }); (m.adj||[]).forEach(j=> r.adjCli.push(j.tipo)); }
+  });
+  const conTexto = cli.filter(x=> String(x.m.x||"").trim());
+  r.primero = conTexto.length ? conTexto[0].m.x.trim() : "";
+  r.todo = cli.map(x=> String(x.m.x||"").trim() || ((x.m.adj||[]).length ? `[${x.m.adj.map(j=> j.tipo).join(", ")}]` : "")).filter(Boolean).join(" | ");
+  r.menu = cli.filter(x=> x.a.tipo==="menu").map(x=> String(x.m.x||"").trim()).filter(Boolean);
+  // los mensajes del asesor que cerró, en su turno (si la pasaron de otro asesor, lo que escribió el otro no cuenta)
+  const iniMs = Date.parse(f.tomo);
+  const ases = msgs.filter(m=>{ if(m.q!=="a" || (m.u && f.uid && m.u!==f.uid)) return false; const t = Date.parse(m.t); return isNaN(t) || isNaN(iniMs) || t >= iniMs - 60000; });
+  const ultA = ases.length ? ases[ases.length-1] : null;
+  r.ofrecio = ases.length > 0;
+  r.aviso = ases.some(m=> AUD_RE.aviso.test(audNorm(m.x)));
+  const ult = msgs.length ? msgs[msgs.length-1] : null;
+  r.ultimo = !ult ? "" : ult.q==="c" ? "Cliente" : ult.q==="a" ? "Asesor" : "Bot";
+  if(ultA){ const t = Date.parse(ultA.t); if(!isNaN(t) && !isNaN(finMs)) r.espera = Math.max(0, (finMs - t)/1000); }
+  const todoN = audNorm(cli.map(x=> x.m.x).join(" "));
+  const motivos = cli.filter(x=> x.a.tipo==="motivo");
+  const conAdj = cli.filter(x=> (x.m.adj||[]).some(j=> j.tipo!=="sticker"));
+  const raros = cli.filter(x=> x.a.tipo==="texto");
+  // ¿el cliente volvió a escribir después del último mensaje del asesor? (un "ok", "gracias" o un sticker no cuentan)
+  const tA = ultA ? Date.parse(ultA.t) : NaN;
+  const respondio = ultA ? cli.filter(x=>{ const t = Date.parse(x.m.t); return !isNaN(t) && !isNaN(tA) && t > tA && (x.a.tipo!=="relleno" || !audSoloCortesia(x.m.x)) && (x.a.tipo!=="vacio" || (x.m.adj||[]).some(j=> j.tipo!=="sticker")); }) : [];
+  const horaA = ultA && ultA.t ? qaHora(ultA.t) : "";
+  if(motivos.length){
+    const x = motivos[0];
+    r.dict = "noaplica"; r.motivo = x.a.motivo; r.cat = r.motivo.nom; r.kw = r.motivo.kw || ""; r.cita = audCita(x.m.x);
+    r.serv = audServicioDe(r.motivo, audNorm(x.m.x), todoN, f.servCola);
+    r.com = `El cliente dijo su motivo: ${r.motivo.nom}${r.serv && r.serv!=="Sin precisar" ? ` (${r.serv})` : ""}, «${r.cita}». Como se supo el motivo, no aplicaba el abandono.`;
+    return r;
+  }
+  r.serv = audServicioDe(null, "", todoN, f.servCola);
+  if(conAdj.length){
+    r.dict = "revisar"; r.cat = AUD_CAT.adjunto;
+    r.com = `El cliente mandó ${audListaAdj([].concat(...conAdj.map(x=> x.m.adj.map(j=> j.tipo))))} y no escribió el motivo. Revisá el chat para saber qué pidió.`;
+    return r;
+  }
+  if(raros.length){
+    r.dict = "revisar"; r.cat = AUD_CAT.texto; r.cita = audCita(raros[0].m.x); r.raro = raros[0].m.x;
+    r.com = `El cliente escribió «${r.cita}» y el sistema no reconoció el motivo. Revisalo.`;
+    return r;
+  }
+  const queEscribio = audQueEscribio(cli);
+  if(!ases.length){
+    r.dict = "noaplica"; r.cat = AUD_CAT.asesorNo;
+    r.com = `${queEscribio} El asesor cerró sin escribirle, así que el cliente no abandonó: no aplicaba.`;
+    return r;
+  }
+  if(respondio.length){
+    const x = respondio[respondio.length-1];
+    r.dict = "noaplica"; r.cat = AUD_CAT.sinRespuesta; r.cita = audCita(x.m.x || (x.m.adj||[]).map(j=> j.tipo).join(", "));
+    r.com = `El asesor le escribió, pero el cliente volvió a escribir («${r.cita}») y el asesor cerró sin responderle: no aplicaba.`;
+    return r;
+  }
+  r.dict = "aplica";
+  r.cat = !cli.length || !cli.some(x=> String(x.m.x||"").trim()) ? AUD_CAT.noEscribio : cli.every(x=> x.a.tipo==="menu" || x.a.tipo==="vacio") ? AUD_CAT.menu : AUD_CAT.saludo;
+  r.com = `${queEscribio} El asesor le ofreció ayuda${horaA ? ` a las ${horaA}` : ""} y el cliente no volvió a responder${r.espera!=null ? ` (cerró ${audMinTxt(r.espera)} después)` : ""}. Sí aplicaba.`;
+  return r;
+}
+function audSoloCortesia(x){
+  const n = audNorm(x);
+  return !n || /^((muchas |mil )?gracias+|ok+|okay|oki+s?|vale|va|vaya|dale|listo|perfecto|excelente|entendido|de acuerdo|esta bien|bien|si+|no|bye|adios|chao|hasta luego|feliz (dia|tarde|noche)|bendiciones|dios (le|les|te|los) bendiga|igualmente|amen)( (muchas |mil )?(gracias+|ok+|si+|bendiciones|igualmente|amen))*$/.test(n);
+}
+function audQueEscribio(cli){
+  const txt = cli.map(x=> String(x.m.x||"").trim()).filter(Boolean);
+  if(!txt.length) return cli.length ? "El cliente solo mandó un sticker." : "El cliente no escribió nada.";
+  if(cli.every(x=> x.a.tipo==="menu" || x.a.tipo==="vacio")) return `El cliente solo eligió opciones del menú del bot (${txt.slice(0, 3).map(t=> `«${audCorto(t, 30)}»`).join(", ")}).`;
+  return `El cliente solo escribió «${audCorto(txt.join(" / "), 80)}».`;
+}
+
+/* ---------- buscar las conversaciones en Genesys ---------- */
+function audFilasDeConv(c, idSet, qById, wrapSet, desdeMs, hastaMs){
+  const parts = c.participants || [];
+  const cust = parts.find(p=> p.purpose==="customer" || p.purpose==="external");
+  const cs = cust && cust.sessions && cust.sessions[0];
+  const dir = (cs && cs.direction) || c.originatingDirection || "";
+  const ani = cs ? ((dir==="outbound" ? cs.dnis : cs.ani) || "") : "";
+  let espera = 0;
+  parts.filter(p=> p.purpose==="acd").forEach(p=> qaSegs(p).forEach(s=>{ espera += qaSegDur(s); }));
+  const agentes = parts.filter(p=> (p.purpose==="agent" || p.purpose==="user") && p.userId);
+  const out = [];
+  agentes.forEach(p=>{
+    let wrap = "", tomo = "", finAt = "", cierre = "", t = 0, acw = 0, cola = "", media = "", nota = "";
+    (p.sessions||[]).forEach(se=>{ if(!media && se.mediaType) media = se.mediaType; });
+    qaSegs(p).forEach(sg=>{
+      const dur = qaSegDur(sg);
+      if(sg.segmentType==="interact" || sg.segmentType==="hold"){
+        t += dur;
+        if(sg.segmentType==="interact" && (!tomo || sg.segmentStart < tomo)) tomo = sg.segmentStart;
+        if(sg.segmentEnd && (!finAt || sg.segmentEnd > finAt)) finAt = sg.segmentEnd;
+      } else if(sg.segmentType==="wrapup"){ t += dur; acw += dur; if(sg.segmentEnd && (!cierre || sg.segmentEnd > cierre)) cierre = sg.segmentEnd; }
+      if(sg.wrapUpCode) wrap = sg.wrapUpCode;
+      if(sg.wrapUpNote) nota = sg.wrapUpNote;
+      if(sg.queueId && !cola) cola = sg.queueId;
+    });
+    if(!wrapSet.has(wrap) || !tomo) return;
+    if(!idSet.has(cola) || !genesysMediaAllowedForQueue(cola, media || undefined, qById)) return;
+    const fin = cierre || (c.conversationEnd ? (finAt || c.conversationEnd) : "");
+    if(!fin) return;                                   // todavía abierta
+    const ms = Date.parse(fin);
+    if(isNaN(ms) || ms < desdeMs || ms > hastaMs) return;
+    out.push({ key: `${c.conversationId}:${p.participantId || p.userId}`, cid: c.conversationId, uid: p.userId, queueId: cola,
+      inicio: c.conversationStart || "", tomo, finAt: finAt || fin, cierre: fin, fin: c.conversationEnd || "",
+      espera, t, acw, ani, aniTxt: qaLimpiarTel(ani), nombreWa: (cust && cust.participantName) || "", dir, nota,
+      asesores: new Set(agentes.map(x=> x.userId)).size, conv: c });
+  });
+  return out;
+}
+async function audCorreos(uids){
+  const correos = genesysState.usersEmailById = genesysState.usersEmailById || {};
+  const faltan = uids.filter(id=> !(id in correos));
+  for(let i=0; i<faltan.length; i+=100){
+    const chunk = faltan.slice(i, i+100);
+    try{
+      const res = await genesysFetch(`/api/v2/users?${chunk.map(id=> `id=${encodeURIComponent(id)}`).join("&")}&pageSize=100`);
+      (res.entities||[]).forEach(u=>{ correos[u.id] = String(u.email || u.username || "").toLowerCase(); if(u.name) genesysState.usersById[u.id] = u.name; });
+    }catch(e){ if(e.message==="NOT_SIGNED_IN") throw e; console.error(e); }
+    chunk.forEach(id=>{ if(!(id in correos)) correos[id] = ""; });
+  }
+}
+async function audBuscar(a, z, tok){
+  await genesysEnsureQueuesLoaded();
+  const qIds = qaQueueIdsDeCategoria("WhatsApp");
+  if(!qIds.length) throw new Error("No encontré colas de WhatsApp en Genesys.");
+  const idSet = new Set(qIds), qById = genesysState.queuesById || {}, wrapSet = new Set(AUD.ids);
+  const filtros = [qaFiltroOr("queueId", qIds), qaFiltroOr("wrapUpCode", AUD.ids)];
+  const desdeMs = Date.parse(`${a}T00:00:00.000-06:00`), hastaMs = Date.parse(`${z}T23:59:59.999-06:00`);
+  const dias = [];
+  for(let d = qaSumarDias(a, -AUD_DIAS_ANTES); d <= z; d = qaSumarDias(d, 1)) dias.push(d);
+  dias.reverse();
+  const filas = [], vistas = new Set();
+  let i = 0;
+  const unDia = async dia=>{
+    const startISO = new Date(`${dia}T00:00:00.000-06:00`).toISOString(), endISO = new Date(`${dia}T23:59:59.999-06:00`).toISOString();
+    for(let page=1; page<=500; page++){
+      if(tok!==AUD.token) return;
+      const r = await qaFetch("/api/v2/analytics/conversations/details/query", { method:"POST", body: JSON.stringify({ interval:`${startISO}/${endISO}`, order:"asc", orderBy:"conversationStart", paging:{ pageSize:100, pageNumber:page }, segmentFilters: filtros }) });
+      const convs = (r && r.conversations) || [];
+      convs.forEach(c=>{
+        if(!c || vistas.has(c.conversationId)) return;
+        vistas.add(c.conversationId);
+        audFilasDeConv(c, idSet, qById, wrapSet, desdeMs, hastaMs).forEach(x=> filas.push(x));
+      });
+      AUD.progreso = `Buscando las conversaciones en Genesys… ${fmtNum(filas.length)} con este código`;
+      audPintarProgreso();
+      if(convs.length < 100) break;
+    }
+  };
+  const trabajar = async ()=>{ while(i < dias.length && tok===AUD.token) await unDia(dias[i++]); };
+  await Promise.all([trabajar(), trabajar(), trabajar()]);
+  if(tok!==AUD.token) return [];
+  const uids = Array.from(new Set(filas.map(f=> f.uid)));
+  AUD.progreso = "Buscando el nombre y el usuario de los asesores…"; audPintarProgreso();
+  await genesysEnsureUsersLoaded(uids);
+  await audCorreos(uids);
+  let wrap = {};
+  try{ wrap = await qaCompletarWrapups(filas.map(f=> f.conv)); }catch(e){ if(e.message==="NOT_SIGNED_IN") throw e; }
+  filas.forEach(f=>{
+    f.asesor = ccNombre(f.uid); f.usuario = ccUsuarioDe(f.uid); f.cola = qaQueueName(f.queueId); f.servCola = audServicioDeCola(f.cola);
+    if(!QA.convCache.has(f.cid)) QA.convCache.set(f.cid, qaResumen(f.conv, wrap));   // para "Ver chat" (la ficha de QA)
+    delete f.conv;
+  });
+  filas.sort((x, y)=> Date.parse(y.cierre) - Date.parse(x.cierre));
+  return filas;
+}
+// Cuántas cuenta Códigos de conclusión con este código en el mismo período (para validar)
+async function audConteoCC(a, z){
+  const d = CC.datos;
+  if(d && d.cat==="WhatsApp" && d.desde===a && d.hasta===z) return d.cods.filter(c=> audEsRutaObjetivo(c.path)).reduce((s, c)=> s + c.n, 0);
+  const qIds = qaQueueIdsDeCategoria("WhatsApp"), wrapSet = new Set(AUD.ids);
+  let n = 0;
+  for(const [x, y] of ccTramos(a, z, 31)){
+    (await ccAgg(x, y, qIds, ["wrapUpCode","queueId","mediaType"])).forEach(en=>{ if(wrapSet.has((en.group||{}).wrapUpCode)) n += ccSumaCubos(en)[0]; });
+  }
+  return n;
+}
+
+/* ---------- leer los chats ---------- */
+let audUltimosPedidos = [];
+async function audTurno(){   // como mucho AUD_CFG.porSeg pedidos por segundo
+  for(;;){
+    const ahora = Date.now();
+    audUltimosPedidos = audUltimosPedidos.filter(t=> ahora - t < 1000);
+    if(audUltimosPedidos.length < AUD_CFG.porSeg){ audUltimosPedidos.push(ahora); return; }
+    await new Promise(r=> setTimeout(r, Math.max(5, 1000 - (ahora - audUltimosPedidos[0]) + 5)));
+  }
+}
+async function audTraerChat(cid, ani){
+  const esperar = ms=> new Promise(r=> setTimeout(r, ms));
+  for(let i=0; i<6; i++){
+    await audTurno();
+    let r;
+    try{ r = await qaFetchRaw(`/api/v2/conversations/${encodeURIComponent(cid)}/recordings?formatId=MP3&maxWaitMs=5000`); }
+    catch(e){
+      const m = (e && e.message) || "";
+      if(m==="NOT_SIGNED_IN") throw e;
+      if(/HTTP 429/.test(m)){ AUD.pausas++; await esperar(AUD_CFG.esperaReintento * (2 + i)); continue; }
+      if(/HTTP 403/.test(m)) return { estado:"sinpermiso", err:"Genesys no dio permiso para leer este chat" };
+      if(/HTTP 404/.test(m)) return { estado:"nodisponible", err:"Genesys no tiene el chat de esta conversación" };
+      if(/HTTP 5\d\d|Failed to fetch|NetworkError|network/i.test(m)){ await esperar(AUD_CFG.esperaReintento); continue; }
+      return { estado:"error", err: qaMensajeError(e) };
+    }
+    const lista = Array.isArray(r.data) ? r.data : (r.data && r.data.entities) || null;
+    if(r.status===202 || lista===null){ await esperar(AUD_CFG.esperaReintento); continue; }
+    const conTexto = lista.filter(x=> qaEsTranscripcionTexto(x));
+    if(conTexto.length) return { estado:"ok", msgs: audMensajes(conTexto, ani) };
+    if(!lista.length) return { estado:"vacio", err:"Genesys no tiene el texto de este chat" };
+    await esperar(AUD_CFG.esperaReintento);
+  }
+  return { estado:"preparando", err:"Genesys todavía estaba preparando el chat" };
+}
+function audChatListo(ch){ return !!ch && ["ok","vacio","nodisponible","sinpermiso"].includes(ch.estado); }
+// Orden de lectura: alternando asesores (y, dentro de cada uno, en un orden fijo pero revuelto), para que si se
+// detiene antes lo leído sea una muestra pareja de todos.
+function audOrdenLectura(filas){
+  const hash = s=>{ let h = 2166136261; for(let i=0; i<s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const porU = new Map();
+  filas.forEach(f=>{ const l = porU.get(f.uid) || []; l.push(f); porU.set(f.uid, l); });
+  const colas = Array.from(porU.values()).map(l=> l.slice().sort((a, b)=> hash(a.cid) - hash(b.cid)));
+  const out = [], vistos = new Set();
+  for(let k=0; colas.some(l=> k < l.length); k++) colas.forEach(l=>{ const f = l[k]; if(f && !vistos.has(f.cid)){ vistos.add(f.cid); out.push(f); } });
+  return out;
+}
+async function audLeerTodo(tok){
+  const pend = audOrdenLectura(AUD.filas || []).filter(f=> !audChatListo(AUD.chats.get(f.cid)));
+  AUD.leyendo = { hechos:0, total: pend.length, t0: Date.now() };
+  AUD.detener = false;
+  AUD.fase = pend.length ? "leyendo" : "listo";
+  audDibujar();
+  if(!pend.length) return;
+  let fatal = null, ok = 0, prohibidos = 0;
+  const vuelta = async (lista, cuenta)=>{
+    let i = 0;
+    const uno = async ()=>{
+      while(i < lista.length && tok===AUD.token && !AUD.detener && !fatal){
+        const f = lista[i++];
+        let r;
+        try{ r = await audTraerChat(f.cid, f.ani); }
+        catch(e){ if(e.message==="NOT_SIGNED_IN"){ fatal = e; break; } r = { estado:"error", err: qaMensajeError(e) }; }
+        if(tok!==AUD.token) return;
+        const antes = AUD.chats.get(f.cid);
+        if(!(antes && antes.estado==="ok")) AUD.chats.set(f.cid, r);
+        if(r.estado==="ok") ok++;
+        else if(r.estado==="sinpermiso" && ++prohibidos >= 3 && !ok) fatal = new Error("SIN_PERMISO");
+        if(cuenta) AUD.leyendo.hechos++;
+        audProgramarPintado();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.max(1, AUD_CFG.paralelo) }, uno));
+  };
+  await vuelta(pend, true);
+  if(tok!==AUD.token) return;
+  // segunda vuelta, una sola vez, para los que Genesys todavía estaba preparando o dieron error
+  if(!fatal && !AUD.detener){
+    const otra = pend.filter(f=>{ const ch = AUD.chats.get(f.cid); return ch && (ch.estado==="preparando" || ch.estado==="error"); });
+    if(otra.length) await vuelta(otra, false);
+    if(tok!==AUD.token) return;
+  }
+  if(fatal){
+    AUD.fase = "error";
+    AUD.error = fatal.message==="SIN_PERMISO" ? "Genesys no deja leer los chats con tu usuario. Pedile a tu administrador de Genesys el permiso para ver las conversaciones (grabaciones)."
+      : fatal.message==="NOT_SIGNED_IN" ? AUD_SESION : qaMensajeError(fatal);
+    AUD.errorSesion = fatal.message==="NOT_SIGNED_IN";
+  } else AUD.fase = AUD.detener ? "detenido" : "listo";
+  AUD.detener = false;
+  clearTimeout(AUD.pintarT); AUD.pintarT = null;
+  audDibujar();
+}
+
+/* ---------- abrir, cerrar y consultar ---------- */
+function audAsegurarModal(){
+  if(document.getElementById("aud-modal-overlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "aud-modal-overlay";
+  ov.innerHTML = `<div id="aud-modal" role="dialog" aria-modal="true" aria-label="Auditoría de código"><div id="aud-cuerpo"></div>
+    <div class="modal-actions"><button class="btn-outline" type="button" data-audacc="cerrar">Cerrar</button></div></div>`;
+  ov.addEventListener("click", e=>{ if(e.target===ov) closeAudModal(); else audClick(e); });
+  ov.addEventListener("change", audChange);
+  ov.addEventListener("input", audInput);
+  document.body.appendChild(ov);
+  // en captura: así, si la ficha de un chat está abierta encima, Escape cierra solo la ficha
+  document.addEventListener("keydown", e=>{
+    if(e.key!=="Escape" || ov.style.display!=="flex") return;
+    const dw = document.getElementById("qa-drawer");
+    if(dw && dw.classList.contains("abierto")) return;
+    closeAudModal();
+  }, true);
+}
+function openAudModal(){
+  const d = CC.datos;
+  if(!d || d.cat!=="WhatsApp") return;
+  const ids = audIdsDe(d);
+  if(!ids.length) return;
+  const mismo = AUD.ids.length && AUD.ids.join(",")===ids.join(",");
+  AUD.ids = ids;
+  audAsegurarModal();
+  document.getElementById("aud-modal-overlay").style.display = "flex";
+  if(mismo && AUD.filas) return audDibujar();
+  const dias = Math.round((Date.parse(d.hasta) - Date.parse(d.desde))/86400000) + 1;
+  if(dias > AUD_MAX_DIAS){ AUD.rango = "7d"; AUD.desde = AUD.hasta = null; }
+  else {
+    const [a, z] = qaRangoFechas(CC.rango, CC.desde, CC.hasta);
+    if(CC.rango!=="rango" && a===d.desde && z===d.hasta){ AUD.rango = CC.rango; AUD.desde = AUD.hasta = null; }
+    else { AUD.rango = "rango"; AUD.desde = d.desde; AUD.hasta = d.hasta; }
+  }
+  audIniciar();
+}
+function closeAudModal(){
+  const ov = document.getElementById("aud-modal-overlay");
+  if(ov) ov.style.display = "none";
+  destroyChart("aud-chart");
+}
+async function audIniciar(){
+  const [a, z] = qaRangoFechas(AUD.rango, AUD.desde, AUD.hasta);
+  AUD.error = "";
+  if(a > z){ AUD.fase = "error"; AUD.error = "La fecha Desde no puede ser posterior a Hasta."; return audDibujar(); }
+  const dias = Math.round((Date.parse(z) - Date.parse(a))/86400000) + 1;
+  if(dias > AUD_MAX_DIAS){ AUD.fase = "error"; AUD.error = `Como mucho ${AUD_MAX_DIAS} días por auditoría. Elegí un período más corto.`; return audDibujar(); }
+  const tok = ++AUD.token;
+  AUD.detener = false; AUD.pausas = 0; AUD.errorSesion = false;
+  AUD.fase = "buscando"; AUD.filas = null; AUD.ccN = null; AUD.per = { desde:a, hasta:z }; AUD.ultimo = null;
+  AUD.progreso = "Buscando las conversaciones en Genesys…";
+  AUD.f.uid = ""; AUD.f.cat = "";
+  audDibujar();
+  try{
+    const filas = await audBuscar(a, z, tok);
+    if(tok!==AUD.token) return;
+    AUD.filas = filas;
+    try{ AUD.ccN = await audConteoCC(a, z); }catch(e){ if(e.message==="NOT_SIGNED_IN") throw e; AUD.ccN = null; }
+    if(tok!==AUD.token) return;
+    await audLeerTodo(tok);
+  }catch(e){
+    if(tok!==AUD.token) return;
+    AUD.fase = "error";
+    AUD.error = e && e.message==="NOT_SIGNED_IN" ? AUD_SESION : qaMensajeError(e);
+    AUD.errorSesion = !!e && e.message==="NOT_SIGNED_IN";
+    audDibujar();
+  }
+}
+function audContinuar(){
+  if(!AUD.filas || AUD.fase==="leyendo" || AUD.fase==="buscando") return;
+  AUD.errorSesion = false;
+  audLeerTodo(++AUD.token);
+}
+function audAplicarRango(){
+  const a = kpisDiaParseIso((document.getElementById("aud-desde")||{}).value), b = kpisDiaParseIso((document.getElementById("aud-hasta")||{}).value);
+  const err = document.getElementById("aud-rango-error"), hoy = qaHoyIso();
+  const msg = t=>{ if(err) err.textContent = t; };
+  if(!a || !b) return msg("Elegí las dos fechas.");
+  const ia = kpisDiaIso(a), ib = kpisDiaIso(b);
+  if(ia > ib) return msg("«Desde» tiene que ser antes de «Hasta».");
+  if(ib > hoy) return msg("«Hasta» no puede ser después de hoy.");
+  if(Math.round((Date.parse(ib) - Date.parse(ia))/86400000) + 1 > AUD_MAX_DIAS) return msg(`Como mucho ${AUD_MAX_DIAS} días por auditoría.`);
+  AUD.rango = "rango"; AUD.desde = ia; AUD.hasta = ib; AUD.picker = false;
+  audIniciar();
+}
+
+/* ---------- cuentas ---------- */
+function audCalcular(){
+  const filas = AUD.filas || [];
+  const res = filas.map(f=> ({ f, r: audRes(f) }));
+  const cuenta = { aplica:0, noaplica:0, revisar:0, sinleer:0 };
+  res.forEach(x=> cuenta[x.r.dict]++);
+  const leidas = res.length - cuenta.sinleer;
+  const porU = new Map();
+  res.forEach(x=>{
+    let a = porU.get(x.f.uid);
+    if(!a){ a = { uid:x.f.uid, nombre:x.f.asesor, usuario:x.f.usuario, n:0, aplica:0, noaplica:0, revisar:0, sinleer:0, mot:new Map(), esp:[] }; porU.set(x.f.uid, a); }
+    a.n++; a[x.r.dict]++;
+    if(x.r.dict==="noaplica") a.mot.set(x.r.cat, (a.mot.get(x.r.cat)||0) + 1);
+    if(x.r.dict==="aplica" && x.r.espera!=null) a.esp.push(x.r.espera);
+  });
+  const asesores = Array.from(porU.values()).sort((a, b)=> (b.noaplica - a.noaplica) || (b.n - a.n) || a.nombre.localeCompare(b.nombre, "es"));
+  asesores.forEach(a=>{ const top = Array.from(a.mot.entries()).sort((x, y)=> y[1]-x[1])[0]; a.motTop = top ? top[0] : ""; a.espProm = a.esp.length ? a.esp.reduce((s, v)=> s+v, 0)/a.esp.length : null; });
+  const porCat = new Map();
+  res.forEach(x=>{
+    const k = x.r.dict + "|" + x.r.cat;
+    let o = porCat.get(k);
+    if(!o){ o = { dict:x.r.dict, cat:x.r.cat, motivo: !!x.r.motivo, n:0, Hogar:0, "Móvil":0, "Sin precisar":0 }; porCat.set(k, o); }
+    o.n++; o[x.r.serv==="Hogar" || x.r.serv==="Móvil" ? x.r.serv : "Sin precisar"]++;
+  });
+  const cats = Array.from(porCat.values()).sort((a, b)=> (AUD_ORDEN.indexOf(a.dict) - AUD_ORDEN.indexOf(b.dict)) || (b.n - a.n));
+  const vacio = ()=> ({ n:0, aplica:0, noaplica:0, revisar:0, sinleer:0 });
+  const dias = [];
+  for(let d = AUD.per.desde; d <= AUD.per.hasta; d = qaSumarDias(d, 1)) dias.push(Object.assign({ iso:d }, vacio()));
+  const idxD = new Map(dias.map((x, i)=> [x.iso, i]));
+  const horas = Array.from({ length:24 }, (_, h)=> Object.assign({ h }, vacio()));
+  const serv = { Hogar:vacio(), "Móvil":vacio(), "Sin precisar":vacio() };
+  res.forEach(x=>{
+    const t = qaHn(x.f.cierre);
+    if(t){ const i = idxD.get(qaIsoDia(t.y, t.mo, t.d)); if(i!==undefined){ dias[i].n++; dias[i][x.r.dict]++; } horas[t.h].n++; horas[t.h][x.r.dict]++; }
+    const s = serv[x.r.serv] || serv["Sin precisar"]; s.n++; s[x.r.dict]++;
+  });
+  const mot = new Map();
+  res.forEach(x=>{ if(x.r.motivo) mot.set(x.r.motivo.nom, (mot.get(x.r.motivo.nom)||0) + 1); });
+  const motivos = Array.from(mot.entries()).sort((a, b)=> b[1]-a[1]);
+  const esperas = res.filter(x=> x.r.dict==="aplica" && x.r.espera!=null).map(x=> x.r.espera);
+  return { res, n: res.length, cuenta, leidas, asesores, cats, dias, horas, serv, motivos, nAses: porU.size,
+    espProm: esperas.length ? esperas.reduce((a, b)=> a+b, 0)/esperas.length : null };
+}
+function audTendencia(vals){
+  const pts = vals.map((v, i)=> v===null || v===undefined || isNaN(v) ? null : [i, v]).filter(Boolean);
+  if(pts.length < 3) return null;
+  const n = pts.length, sx = pts.reduce((a, p)=> a + p[0], 0), sy = pts.reduce((a, p)=> a + p[1], 0);
+  const sxx = pts.reduce((a, p)=> a + p[0]*p[0], 0), sxy = pts.reduce((a, p)=> a + p[0]*p[1], 0);
+  const den = n*sxx - sx*sx;
+  if(!den) return null;
+  const b = (n*sxy - sx*sy)/den, a = (sy - b*sx)/n;
+  return { a, b, serie: vals.map((v, i)=> a + b*i) };
+}
+// Validación de los datos (preferencia de Oscar: "siempre validar primero la BD")
+function audValidar(c){
+  const avisos = [], infos = [];
+  const n = c.n;
+  if(AUD.ccN===null || AUD.ccN===undefined) infos.push(["Códigos de conclusión", "No se pudo comparar con lo que cuenta Códigos de conclusión."]);
+  else if(AUD.ccN===n) infos.push(["Códigos de conclusión", `Cuadra: ${fmtNum(n)} conversaciones, las mismas que cuenta Códigos de conclusión con este código en el mismo período.`]);
+  else {
+    const dif = n - AUD.ccN, tol = Math.max(2, Math.round(AUD.ccN*0.01));
+    (Math.abs(dif) <= tol ? infos : avisos).push(["Códigos de conclusión", `Se encontraron ${fmtNum(n)} conversaciones y Códigos de conclusión cuenta ${fmtNum(AUD.ccN)} (${dif > 0 ? "+" : ""}${fmtNum(dif)}). ${Math.abs(dif) <= tol ? "La diferencia es chica: son chats que se cerraron justo en el cambio de día o que se estaban cerrando al consultar." : "Revisá el período, y si se repite avisá para revisarlo: puede haber chats que Genesys no entregó en el detalle."}`]);
+  }
+  const est = {};
+  c.res.forEach(x=>{ const ch = AUD.chats.get(x.f.cid), k = !ch ? "sinleer" : ch.estado; est[k] = (est[k]||0) + 1; });
+  const malos = n - (est.ok||0) - (est.sinleer||0);
+  if(malos) avisos.push(["Chats", `${fmtNum(malos)} ${malos===1 ? "chat no se pudo leer" : "chats no se pudieron leer"} en Genesys (${[["nodisponible","no disponibles"],["vacio","sin texto"],["sinpermiso","sin permiso"],["preparando","todavía preparándose"],["error","con error"]].filter(([k])=> est[k]).map(([k, t])=> `${fmtNum(est[k])} ${t}`).join(", ")}). Van como «Revisar».`]);
+  else if(est.ok) infos.push(["Chats", `Se leyeron ${est.ok===1 ? "el chat" : `los ${fmtNum(est.ok)} chats`}.`]);
+  if(est.sinleer) avisos.push(["Lectura", `Faltan ${fmtNum(est.sinleer)} chats por leer${AUD.fase==="leyendo" ? " (se están leyendo)" : " (se detuvo la lectura)"}: van como «Sin leer» y los porcentajes son de lo leído.`]);
+  const ok = c.res.filter(x=>{ const ch = AUD.chats.get(x.f.cid); return ch && ch.estado==="ok"; });
+  if(ok.length){
+    const sinCli = ok.filter(x=> !x.r.nCli).length, sinAse = ok.filter(x=> !x.r.nAse).length, conBot = ok.filter(x=> x.r.nBot).length;
+    const pCli = sinCli/ok.length*100, pAse = sinAse/ok.length*100;
+    (pCli >= 30 ? avisos : infos).push(["Mensajes del cliente", `${fmtNum(sinCli)} de ${fmtNum(ok.length)} chats (${pCli.toFixed(0)}%) no tienen ningún mensaje del cliente.${pCli >= 30 ? " Es mucho: puede que Genesys no esté marcando bien al cliente. Abrí algunas con «Ver chat» para confirmarlo." : ""}`]);
+    (pAse >= 30 ? avisos : infos).push(["Mensajes del asesor", `${fmtNum(sinAse)} de ${fmtNum(ok.length)} chats (${pAse.toFixed(0)}%) no tienen mensajes del asesor; esos salen «No aplicaba» porque el asesor cerró sin escribirle.${pAse >= 30 ? " Es mucho: confirmá con «Ver chat» que de verdad el asesor no escribió." : ""}`]);
+    infos.push(["Bot", `${fmtNum(conBot)} de ${fmtNum(ok.length)} chats (${(conBot/ok.length*100).toFixed(0)}%) tienen mensajes del bot o de Genesys.`]);
+    const adj = c.res.filter(x=> x.r.cat===AUD_CAT.adjunto).length, raro = c.res.filter(x=> x.r.cat===AUD_CAT.texto).length;
+    if(adj || raro) infos.push(["Revisar", `${fmtNum(adj)} con solo audio o imagen y ${fmtNum(raro)} con texto que el sistema no reconoció. Esas frases van en la hoja Validación del Excel para ajustar las palabras que busca el sistema.`]);
+  }
+  if(AUD.pausas) infos.push(["Genesys", `Pidió ${AUD.pausas===1 ? "una pausa" : fmtNum(AUD.pausas) + " pausas"} por su límite de consultas; se esperó y se siguió.`]);
+  return { avisos, infos };
+}
+
+/* ---------- pintar ---------- */
+function audPintarProgreso(){
+  const el = document.getElementById("aud-prog-txt");
+  if(el) el.textContent = AUD.fase==="leyendo" ? audTextoLectura() : (AUD.progreso || "");
+  const bar = document.getElementById("aud-prog-bar");
+  if(bar && AUD.leyendo.total) bar.style.width = (AUD.leyendo.hechos/AUD.leyendo.total*100).toFixed(1) + "%";
+}
+function audProgramarPintado(){
+  audPintarProgreso();
+  if(AUD.pintarT) return;
+  AUD.pintarT = setTimeout(()=>{
+    AUD.pintarT = null;
+    const ae = document.activeElement, ov = document.getElementById("aud-modal-overlay");
+    if(ae && ov && ov.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return audProgramarPintado();   // no cortarle al que está escribiendo
+    audDibujar();
+  }, 1500);
+}
+function audTextoLectura(){
+  const L = AUD.leyendo, s = (Date.now() - L.t0)/1000, v = L.hechos / Math.max(1, s);
+  const eta = L.hechos >= 8 && v > 0 ? (L.total - L.hechos)/v : null;
+  return `Leyendo los chats en Genesys… ${fmtNum(L.hechos)} de ${fmtNum(L.total)}${eta!==null ? ` · faltan ≈ ${audMinTxt(eta)}` : ""}${AUD.pausas ? ` · Genesys pidió ${AUD.pausas===1 ? "una pausa" : fmtNum(AUD.pausas) + " pausas"} por su límite` : ""}`;
+}
+function audDibujar(){
+  const cuerpo = document.getElementById("aud-cuerpo"), ov = document.getElementById("aud-modal-overlay");
+  if(!cuerpo || !ov || ov.style.display!=="flex") return;
+  clearTimeout(AUD.pintarT); AUD.pintarT = null;
+  const scroll = document.getElementById("aud-modal").scrollTop;
+  let html = "";
+  if(!AUD.filas){
+    html = AUD.fase==="error" ? `<div class="mini-banner error">⚠️ ${qaEsc(AUD.error)}</div>`
+      : `<div class="mini-banner loading"><span id="aud-prog-txt">⏳ ${qaEsc(AUD.progreso || "Buscando las conversaciones en Genesys…")}</span></div>`;
+    destroyChart("aud-chart");
+  } else {
+    const c = audCalcular();
+    AUD.ultimo = c;
+    html = audHtmlEstado(c) + audHtmlValid(c) + (c.n ? audHtmlKpis(c) + audHtmlGrafica() + audHtmlTablas(c) + audHtmlLista(c)
+      : `<div class="aud-vacio"><b>No hay conversaciones de WhatsApp cerradas con este código en ${qaFmtRango(AUD.per.desde, AUD.per.hasta)}.</b><br>Probá con otro período.</div>`) + audHtmlNotas();
+  }
+  cuerpo.innerHTML = `<div class="kpisdia-inner">${audHtmlHero()}${html}</div>`;
+  document.getElementById("aud-modal").scrollTop = scroll;
+  const det = cuerpo.querySelector(".ia-valid");
+  if(det) det.addEventListener("toggle", ()=>{ AUD.validAbierta = det.open; });
+  if(AUD.ultimo && AUD.filas && AUD.filas.length) audGrafica(AUD.ultimo);
+}
+function audHtmlHero(){
+  const [a, z] = AUD.per ? [AUD.per.desde, AUD.per.hasta] : qaRangoFechas(AUD.rango, AUD.desde, AUD.hasta);
+  const ocupado = AUD.fase==="buscando" || AUD.fase==="leyendo";
+  const chip = (k, t)=> `<button type="button" class="${AUD.rango===k && !AUD.picker ? "active" : ""}" data-audrango="${k}">${t}</button>`;
+  const hoy = qaHoyIso(), ini = AUD.rango==="rango" && AUD.desde ? [AUD.desde, AUD.hasta] : [a, z];
+  const picker = AUD.picker ? `
+      <div class="kpisdia-rango-picker">
+        <label>Desde <input type="date" id="aud-desde" value="${ini[0]}" max="${hoy}"></label>
+        <label>Hasta <input type="date" id="aud-hasta" value="${ini[1]}" max="${hoy}"></label>
+        <button type="button" class="kpisdia-btn-refresh" data-audacc="aplicar">Aplicar</button>
+        <button type="button" class="btn-outline" style="padding:6px 12px;font-size:11.5px;" data-audacc="cancelarrango">Cancelar</button>
+        <span id="aud-rango-error" class="kpisdia-rango-error"></span>
+      </div>` : "";
+  const listo = AUD.filas && AUD.filas.length && AUD.fase!=="buscando";
+  return `<div id="aud-hero">
+      <div id="aud-hero-top">
+        <div class="kpisdia-title"><span class="kpisdia-title-bar"></span><h2>🔎 Auditoría de código</h2><span class="aud-canal">WhatsApp</span></div>
+        <div id="aud-hero-actions">
+          <div class="kpisdia-modo-toggle">${chip("hoy","Hoy")}${chip("ayer","Ayer")}${chip("7d","7 días")}${chip("estemes","Este mes")}${chip("mesanterior","Mes anterior")}<button type="button" class="${AUD.rango==="rango" || AUD.picker ? "active" : ""}" data-audacc="picker">📅 Rango</button></div>
+          <span class="kpisdia-fecha-badge">📅 ${qaFmtRango(a, z)} · Honduras</span>
+          <button type="button" class="kpisdia-btn-refresh" data-audacc="actualizar"${ocupado ? " disabled" : ""}>🔄 Actualizar</button>
+          <button type="button" class="kpisdia-btn-refresh rint-xls" data-audacc="excel"${listo ? "" : " disabled"} title="Todas las conversaciones con el chat, el motivo, el dictamen y el comentario">${DL_ICON_SVG} Excel</button>
+        </div>
+      </div>${picker}
+      <div class="aud-ruta"><span>Código</span>${qaEsc(AUD_RUTA.slice(0, -1).join(" › "))} › <b>${qaEsc(AUD_RUTA[AUD_RUTA.length-1])}</b></div>
+    </div>`;
+}
+function audHtmlEstado(c){
+  if(AUD.fase==="leyendo"){
+    const L = AUD.leyendo, pct = L.total ? L.hechos/L.total*100 : 0;
+    return `<div class="aud-prog" role="status"><div class="aud-prog-l"><span class="qa-spin"></span><span id="aud-prog-txt">${qaEsc(audTextoLectura())}</span>
+      <button type="button" class="btn-outline aud-chico" data-audacc="detener">Detener</button></div><div class="aud-barra"><i id="aud-prog-bar" style="width:${pct.toFixed(1)}%"></i></div></div>`;
+  }
+  if(AUD.fase==="detenido") return `<div class="mini-banner beta aud-aviso">⏸️ Se detuvo la lectura: faltan ${fmtNum(c.cuenta.sinleer)} chats. Lo ya leído sirve como muestra, porque se lee alternando asesores. <button type="button" class="btn-outline aud-chico" data-audacc="continuar">Continuar</button></div>`;
+  if(AUD.fase==="error") return `<div class="mini-banner error aud-aviso">⚠️ ${qaEsc(AUD.error)}${AUD.filas && AUD.filas.length && !AUD.errorSesion ? ` <button type="button" class="btn-outline aud-chico" data-audacc="continuar">Continuar</button>` : ""}</div>`;
+  return "";
+}
+function audHtmlValid(c){
+  if(!c.n) return "";
+  const v = audValidar(c);
+  const li = (cls, x)=> `<li class="${cls}"><b>${qaEsc(x[0])}</b> · ${qaEsc(x[1])}</li>`;
+  return `<details class="ia-valid${v.avisos.length ? "" : " ok"}"${AUD.validAbierta ? " open" : ""}>
+      <summary>${v.avisos.length ? `⚠ ${v.avisos.length} ${v.avisos.length===1 ? "aviso" : "avisos"} sobre los datos` : "✓ Datos validados"}${v.infos.length ? ` <span class="ia-valid-n">(${v.infos.length} ${v.infos.length===1 ? "nota" : "notas"})</span>` : ""}<span class="ia-valid-ver"></span></summary>
+      <ul>${v.avisos.map(x=> li("aviso", x)).join("")}${v.infos.map(x=> li("info", x)).join("")}</ul></details>`;
+}
+function audHtmlKpis(c){
+  const base = c.leidas;
+  const pct = k=> base ? `${(c.cuenta[k]/base*100).toFixed(1)}% de las leídas` : "falta leer los chats";
+  const kpi = (icono, valor, etiqueta, sub, color, texto)=> `<div class="kpisdia-kpi"${color ? ` style="border-top-color:${color};"` : ""}><div class="kpisdia-kpi-text"><span class="kpisdia-kpi-value${texto ? " aud-kpi-txt" : String(valor).length > 9 ? " rint-kpi-largo" : ""}"${color ? ` style="color:${color};"` : ""}>${valor}</span><span class="kpisdia-kpi-label">${etiqueta}</span>${sub ? `<span class="rint-kpi-sub">${sub}</span>` : ""}</div><span class="kpisdia-kpi-icon">${icono}</span></div>`;
+  const top = c.motivos[0];
+  return `<div class="kpisdia-kpigrid rint-kpis aud-kpis">
+      ${kpi("💬", fmtNum(c.n), "Conversaciones", `${fmtNum(c.nAses)} ${c.nAses===1 ? "asesor" : "asesores"}${c.cuenta.sinleer ? ` · ${fmtNum(c.leidas)} leídas` : ""}`)}
+      ${kpi("✅", fmtNum(c.cuenta.aplica), "Aplicaba", pct("aplica"), AUD_DICT.aplica.color)}
+      ${kpi("❌", fmtNum(c.cuenta.noaplica), "No aplicaba", pct("noaplica"), AUD_DICT.noaplica.color)}
+      ${kpi("🔎", fmtNum(c.cuenta.revisar), "Revisar", pct("revisar"), AUD_DICT.revisar.color)}
+      ${kpi("🧭", top ? qaEsc(top[0]) : "—", "Motivo más dicho", top ? `${fmtNum(top[1])} ${top[1]===1 ? "conversación" : "conversaciones"}` : "ningún cliente dijo su motivo", "", !!top)}
+      ${kpi("⏱️", c.espProm===null ? "—" : qaDur(c.espProm), "Espera antes de cerrar", c.espProm===null ? "cuando aplicaba" : "promedio cuando aplicaba")}
+    </div>`;
+}
+function audHtmlGrafica(){
+  return `<div class="kpisdia-section-title">📈 Por día — dictamen y % que no aplicaba</div>
+    <div class="rint-card"><div class="rint-chart"><canvas id="aud-chart"></canvas></div><div class="rint-tend" id="aud-tend"></div></div>`;
+}
+function audGrafica(c){
+  destroyChart("aud-chart");
+  const cv = document.getElementById("aud-chart");
+  if(!cv || typeof Chart==="undefined") return;
+  const dias = c.dias, labels = dias.map(d=> `${Number(d.iso.slice(8,10))}/${Number(d.iso.slice(5,7))}`);
+  const pctNo = dias.map(d=>{ const b = d.aplica + d.noaplica + d.revisar; return b ? d.noaplica/b*100 : null; });
+  const tend = audTendencia(pctNo);
+  const el = document.getElementById("aud-tend");
+  if(el) el.textContent = !tend ? "" : Math.abs(tend.b) < 0.5 ? "Tendencia del % que no aplicaba: estable" : `Tendencia del % que no aplicaba: ${tend.b > 0 ? "sube" : "baja"} ~${Math.abs(tend.b).toFixed(1)} puntos por día`;
+  const ancho = (cv.parentNode && cv.parentNode.clientWidth) || 800, pocas = dias.length <= 31 && ancho / Math.max(1, dias.length) >= 30;
+  const barra = (k, orden)=> ({ type:"bar", label: AUD_DICT[k].nom, data: dias.map(d=> d[k]), backgroundColor: AUD_DICT[k].color + (k==="sinleer" ? "66" : "CC"), stack:"d", order: orden, yAxisID:"y", borderRadius:2, datalabels:{ display:false } });
+  const sets = [barra("noaplica", 3), barra("revisar", 4), barra("aplica", 5)];
+  if(c.cuenta.sinleer) sets.push(barra("sinleer", 6));
+  sets.push({ type:"line", label:"% No aplicaba", data: pctNo, yAxisID:"y1", order:1, borderColor:"#161616", backgroundColor:"#161616", borderWidth:2, pointRadius:2.5, spanGaps:true, tension:0,
+    datalabels:{ display: pocas, align:"top", offset:2, clip:false, color:"#161616", font:{ size:9, weight:"bold" }, formatter: v=> v===null ? "" : v.toFixed(0) + "%" } });
+  if(tend) sets.push({ type:"line", label:"Tendencia", data: tend.serie.map(v=> Math.max(0, Math.min(100, v))), yAxisID:"y1", order:2, borderColor:"#8A8F95", borderDash:[2,3], borderWidth:2, pointRadius:0, tension:0, datalabels:{ display:false } });
+  charts["aud-chart"] = new Chart(cv, {
+    type:"bar", data:{ labels, datasets: sets },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, layout:{ padding:{ top:16 } },
+      plugins:{ legend:{ display:true, position:"bottom", labels:{ boxWidth:10, font:{ size:10 } } },
+        tooltip:{ callbacks:{ label: x=> x.dataset.yAxisID==="y1" ? `${x.dataset.label}: ${x.raw===null ? "—" : Number(x.raw).toFixed(1) + "%"}` : `${x.dataset.label}: ${fmtNum(x.raw)}` } } },
+      scales:{ y:{ stacked:true, beginAtZero:true, grid:{ display:false }, ticks:{ font:{ size:10 }, precision:0 } },
+        y1:{ position:"right", min:0, max:100, grid:{ display:false }, ticks:{ font:{ size:10 }, callback: v=> v + "%" } },
+        x:{ stacked:true, grid:{ display:false }, ticks:{ font:{ size:9 } } } } },
+    plugins:[ChartDataLabels],
+  });
+}
+function audHtmlTablas(c){
+  const T = c.cuenta, sin = T.sinleer > 0;
+  const pctNo = (a)=>{ const b = a.aplica + a.noaplica + a.revisar; return b ? a.noaplica/b*100 : null; };
+  const barra = p=> `<span class="aud-pbar"><i style="width:${p===null ? 0 : Math.min(100, p).toFixed(1)}%"></i></span>${p===null ? "—" : p.toFixed(0) + "%"}`;
+  const filasA = c.asesores.map(a=> `<tr data-auduid="${qaEsc(a.uid)}" class="${AUD.f.uid===a.uid ? "sel" : ""}" title="Ver sus conversaciones abajo">
+      <td class="l">${qaEsc(a.nombre)}</td><td>${fmtNum(a.n)}</td><td class="ok">${fmtNum(a.aplica)}</td><td class="no">${fmtNum(a.noaplica)}</td><td class="rev">${fmtNum(a.revisar)}</td>${sin ? `<td>${fmtNum(a.sinleer)}</td>` : ""}<td class="l">${barra(pctNo(a))}</td></tr>`).join("");
+  const pieA = `<tr class="pie"><td class="l">Total</td><td>${fmtNum(c.n)}</td><td>${fmtNum(T.aplica)}</td><td>${fmtNum(T.noaplica)}</td><td>${fmtNum(T.revisar)}</td>${sin ? `<td>${fmtNum(T.sinleer)}</td>` : ""}<td class="l">${barra(pctNo(T))}</td></tr>`;
+  const filasM = c.cats.map(o=> `<tr data-audcat="${qaEsc(o.cat)}" class="${AUD.f.cat===o.cat ? "sel" : ""}" title="Ver estas conversaciones abajo">
+      <td class="l">${qaEsc(o.cat)}</td><td class="l"><span class="aud-pill ${AUD_DICT[o.dict].cls}">${AUD_DICT[o.dict].nom}</span></td><td>${fmtNum(o.n)}</td><td>${(o.n/c.n*100).toFixed(1)}%</td></tr>`).join("");
+  const pieM = `<tr class="pie"><td class="l">Total</td><td></td><td>${fmtNum(c.n)}</td><td>100%</td></tr>`;
+  return `<div class="aud-dos">
+      <section><div class="kpisdia-section-title">👥 Por asesor</div>
+        <div class="aud-scroll"><table class="aud-t"><thead><tr><th class="l">Asesor</th><th>Conv.</th><th>Aplicaba</th><th>No aplicaba</th><th>Revisar</th>${sin ? "<th>Sin leer</th>" : ""}<th class="l">% No aplicaba</th></tr></thead>
+        <tbody>${filasA}</tbody><tfoot>${pieA}</tfoot></table></div></section>
+      <section><div class="kpisdia-section-title">🧭 Motivo o qué pasó</div>
+        <div class="aud-scroll"><table class="aud-t"><thead><tr><th class="l">Motivo o qué pasó</th><th class="l">Dictamen</th><th>Conv.</th><th>%</th></tr></thead>
+        <tbody>${filasM}</tbody><tfoot>${pieM}</tfoot></table></div></section>
+    </div>`;
+}
+function audFiltrar(c){
+  const F = AUD.f, q = audNorm(F.buscar);
+  return c.res.filter(x=> (!F.dict || x.r.dict===F.dict) && (!F.uid || x.f.uid===F.uid) && (!F.cat || x.r.cat===F.cat)
+    && (!q || audNorm([x.f.cid, x.f.aniTxt, x.f.asesor, x.r.todo, x.r.com, x.r.cat].join(" ")).includes(q)));
+}
+function audHtmlLista(c){
+  const F = AUD.f, lista = audFiltrar(c), MAX = 200;
+  const chips = [["", "Todas", c.n]].concat(AUD_ORDEN.filter(k=> k!=="sinleer" || c.cuenta.sinleer).map(k=> [k, AUD_DICT[k].nom, c.cuenta[k]]))
+    .map(([k, t, n])=> `<button type="button" class="${F.dict===k ? "active" : ""}" data-auddict="${k}">${t} <span class="aud-n">${fmtNum(n)}</span></button>`).join("");
+  const ases = c.asesores.slice().sort((a, b)=> a.nombre.localeCompare(b.nombre, "es"));
+  const cats = Array.from(new Set(c.cats.map(o=> o.cat)));
+  const filtrado = F.dict || F.uid || F.cat || F.buscar;
+  const filas = lista.slice(0, MAX).map(x=>{
+    const f = x.f, r = x.r, d = AUD_DICT[r.dict];
+    return `<tr><td class="f"><b>${qaFecha(f.cierre).slice(0,5)}</b> ${qaHora(f.cierre)}</td><td class="l">${qaEsc(f.asesor)}</td>
+      <td class="txt" title="${qaEsc(r.todo)}">${r.todo ? qaEsc(audCorto(r.todo, 90)) : `<span class="mut">${r.dict==="sinleer" ? "—" : "(no escribió)"}</span>`}</td>
+      <td class="l">${qaEsc(r.cat)}</td><td class="l"><span class="aud-pill ${d.cls}">${d.nom}</span></td>
+      <td class="txt com" title="${qaEsc(r.com)}">${qaEsc(audCorto(r.com, 150))}</td>
+      <td><button type="button" class="aud-ver" data-audver="${qaEsc(f.cid)}" title="Abrir la conversación como en QA">💬 Ver chat</button></td></tr>`;
+  }).join("");
+  return `<div class="kpisdia-section-title" id="aud-lista">💬 Conversaciones</div>
+    <div class="aud-filtros">
+      <div class="kpisdia-modo-toggle rint-chico">${chips}</div>
+      <label>Asesor <select id="aud-f-uid"><option value="">Todos</option>${ases.map(a=> `<option value="${qaEsc(a.uid)}"${F.uid===a.uid ? " selected" : ""}>${qaEsc(a.nombre)}</option>`).join("")}</select></label>
+      <label>Qué pasó <select id="aud-f-cat"><option value="">Todo</option>${cats.map(k=> `<option value="${qaEsc(k)}"${F.cat===k ? " selected" : ""}>${qaEsc(k)}</option>`).join("")}</select></label>
+      <input type="search" id="aud-buscar" placeholder="Buscar: ID, número, texto…" value="${qaEsc(F.buscar)}" aria-label="Buscar en las conversaciones">
+      ${filtrado ? `<button type="button" class="btn-outline aud-chico" data-audacc="limpiar">Quitar filtros</button>` : ""}
+    </div>
+    ${lista.length ? `<div class="rint-tabla-wrap aud-lista-wrap"><table class="aud-t aud-lista">
+      <thead><tr><th class="l">Cerró</th><th class="l">Asesor</th><th class="l">Lo que escribió el cliente</th><th class="l">Motivo o qué pasó</th><th class="l">Dictamen</th><th class="l">Comentario del sistema</th><th></th></tr></thead>
+      <tbody>${filas}</tbody></table></div>
+    <p class="rint-notas">${lista.length > MAX ? `Se muestran ${MAX} de ${fmtNum(lista.length)}; todas van en el Excel.` : `${fmtNum(lista.length)} ${lista.length===1 ? "conversación" : "conversaciones"}${filtrado ? " con estos filtros" : ""}.`} De la más reciente a la más vieja.</p>`
+    : `<div class="aud-vacio">No hay conversaciones con estos filtros.</div>`}`;
+}
+function audHtmlNotas(){
+  return `<div class="rint-notas aud-notas"><b>Cómo decide el sistema.</b> <b>No aplicaba</b>: el cliente dijo su inconveniente (al bot o al asesor, con sus palabras), aunque después dejara de responder; o el cliente no abandonó: el asesor cerró sin escribirle, o el cliente volvió a escribir y no le respondieron.
+    <b>Aplicaba</b>: el cliente no dijo nada (solo saludó, pidió ayuda sin decir para qué, eligió opciones del menú del bot o mandó su número) y, después de que el asesor le ofreció ayuda, no volvió a responder.
+    <b>Revisar</b>: mandó solo audio o imagen, escribió algo que el sistema no reconoce, o Genesys no entregó el chat.
+    El motivo se reconoce por palabras (no es inteligencia artificial y el texto no sale del navegador). Cuenta el día en que el asesor cerró la conversación, igual que Códigos de conclusión.</div>`;
+}
+
+/* ---------- eventos ---------- */
+function audClick(e){
+  const t = e.target, c = s=> t.closest(s);
+  let b;
+  if((b = c("[data-audver]"))){ qaAbrirDetalle(b.dataset.audver); return; }
+  if((b = c("[data-audrango]"))){ AUD.rango = b.dataset.audrango; AUD.desde = AUD.hasta = null; AUD.picker = false; audIniciar(); return; }
+  if((b = c("[data-auddict]"))){ AUD.f.dict = b.dataset.auddict; audDibujar(); return; }
+  if((b = c("tr[data-auduid]"))){ AUD.f.uid = AUD.f.uid===b.dataset.auduid ? "" : b.dataset.auduid; audDibujar(); audIrLista(); return; }
+  if((b = c("tr[data-audcat]"))){ AUD.f.cat = AUD.f.cat===b.dataset.audcat ? "" : b.dataset.audcat; audDibujar(); audIrLista(); return; }
+  if((b = c("[data-audacc]"))){
+    const a = b.dataset.audacc;
+    if(a==="cerrar") closeAudModal();
+    else if(a==="actualizar") audIniciar();
+    else if(a==="excel") audExcel();
+    else if(a==="detener"){ AUD.detener = true; b.disabled = true; const el = document.getElementById("aud-prog-txt"); if(el) el.textContent = "Deteniendo…"; }
+    else if(a==="continuar") audContinuar();
+    else if(a==="picker"){ AUD.picker = !AUD.picker; audDibujar(); }
+    else if(a==="aplicar") audAplicarRango();
+    else if(a==="cancelarrango"){ AUD.picker = false; audDibujar(); }
+    else if(a==="limpiar"){ AUD.f = { dict:"", uid:"", cat:"", buscar:"" }; audDibujar(); }
+  }
+}
+function audIrLista(){ const l = document.getElementById("aud-lista"); if(l) l.scrollIntoView({ block:"start" }); }
+function audChange(e){
+  const t = e.target;
+  if(t.id==="aud-f-uid"){ AUD.f.uid = t.value; audDibujar(); }
+  else if(t.id==="aud-f-cat"){ AUD.f.cat = t.value; audDibujar(); }
+}
+let audBuscarT = null;
+function audInput(e){
+  const t = e.target;
+  if(t.id!=="aud-buscar") return;
+  clearTimeout(audBuscarT);
+  audBuscarT = setTimeout(()=>{
+    AUD.f.buscar = t.value;
+    const pos = t.selectionStart;
+    audDibujar();
+    const n = document.getElementById("aud-buscar");
+    if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(err){} }
+  }, 250);
+}
+
+/* ---------- Excel ---------- */
+function audExcel(){
+  if(!AUD.filas || !AUD.filas.length || AUD.fase==="buscando") return;
+  const c = audCalcular(), v = audValidar(c), per = AUD.per;
+  const wb = XLSX.utils.book_new(), hojas = {};
+  const p2 = n=> String(n).padStart(2, "0"), ahora = new Date();
+  const generado = `${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`;
+  const limpio = t=>{ const x = String(t==null ? "" : t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ""); return x.length > 32000 ? x.slice(0, 32000) + "… (texto recortado)" : x; };
+  const serial = iso=> (Date.parse(iso + "T00:00:00Z") - Date.UTC(1899, 11, 30))/864e5;
+  const fechaDe = isoT=>{ const t = qaHn(isoT); return t ? (Date.UTC(t.y, t.mo-1, t.d) - Date.UTC(1899, 11, 30))/864e5 : "—"; };
+  const horaDe = isoT=>{ const t = qaHn(isoT); return t ? (t.h*3600 + t.mi*60 + t.s)/86400 : "—"; };
+  const durD = s=> s==null || isNaN(s) ? "—" : s/86400;
+  const leidasDe = o=> o.aplica + o.noaplica + o.revisar;
+  const pctNo = o=> leidasDe(o) ? o.noaplica/leidasDe(o) : "—";
+  const si = b=> b===null || b===undefined ? "—" : b ? "Sí" : "No";
+  const sin = c.cuenta.sinleer > 0;
+  const subt = `${AUD_RUTA.join(" › ")} · ${qaFmtRango(per.desde, per.hasta)} (día en que el asesor cerró) · generado el ${generado}`;
+  const cab = (h, titulo)=>{ h.set(0, 0, titulo, "titulo"); h.filas[0] = { hpt:24 }; h.set(1, 0, subt, "sub"); };
+  const dictCols = ["aplica","noaplica","revisar"].concat(sin ? ["sinleer"] : []);
+  // ---- Resumen ----
+  const h1 = new XlsHoja();
+  cab(h1, "Auditoría de código · WhatsApp");
+  const kp = [["Conversaciones", c.n, "kpi"], ["Aplicaba", c.cuenta.aplica, "kpiPro"], ["No aplicaba", c.cuenta.noaplica, "kpiDet"], ["Revisar", c.cuenta.revisar, "kpiPas"]]
+    .concat(sin ? [["Sin leer", c.cuenta.sinleer, "kpi"]] : []).concat([["Asesores", c.nAses, "kpi"]]);
+  kp.forEach(([t, n, e], i)=>{ h1.set(3, i, t, "kpiSub"); h1.set(4, i, n, e); });
+  kp.forEach(([t], i)=>{ const k = { Aplicaba:"aplica", "No aplicaba":"noaplica", Revisar:"revisar" }[t]; h1.set(5, i, k && c.leidas ? c.cuenta[k]/c.leidas : "", k && c.leidas ? "kpiSubPct" : "kpiSub"); });
+  h1.filas[4] = { hpt:30 };
+  h1.set(6, 0, `Los porcentajes son de las ${fmtNum(c.leidas)} conversaciones con el chat leído.`, "sub");
+  let r = 8;
+  h1.set(r++, 0, "Dictamen", "seccion");
+  h1.fila(r++, 0, ["Dictamen", "Conversaciones", "% de las leídas", "% del total"], ["gEnc","gEnc","gEnc","gEnc"]);
+  AUD_ORDEN.filter(k=> k!=="sinleer" || sin).forEach((k, i)=>{
+    const z = i % 2 ? "Z" : "";
+    h1.fila(r++, 0, [AUD_DICT[k].nom, c.cuenta[k], k==="sinleer" ? "—" : c.leidas ? c.cuenta[k]/c.leidas : "—", c.n ? c.cuenta[k]/c.n : "—"], ["gTxtB"+z, "gNum"+z, k==="sinleer" || !c.leidas ? "gGuion"+z : "gPct"+z, "gPct"+z]);
+  });
+  h1.fila(r++, 0, ["Total", c.n, c.leidas ? 1 : "—", 1], ["gTotTxt","gTotNum","gTotPct","gTotPct"]);
+  r++;
+  h1.set(r++, 0, "Por servicio", "seccion");
+  h1.fila(r++, 0, ["Servicio", "Conversaciones"].concat(dictCols.map(k=> AUD_DICT[k].nom)).concat(["% No aplicaba"]), "gEnc");
+  ["Hogar","Móvil","Sin precisar"].forEach((s, i)=>{
+    const o = c.serv[s], z = i % 2 ? "Z" : "";
+    h1.fila(r++, 0, [s, o.n].concat(dictCols.map(k=> o[k])).concat([pctNo(o)]), ["gTxtB"+z, "gNum"+z].concat(dictCols.map(()=> "gNum"+z)).concat([leidasDe(o) ? "gPct"+z : "gGuion"+z]));
+  });
+  h1.fila(r++, 0, ["Total", c.n].concat(dictCols.map(k=> c.cuenta[k])).concat([pctNo(c.cuenta)]), ["gTotTxt","gTotNum"].concat(dictCols.map(()=> "gTotNum")).concat([c.leidas ? "gTotPct" : "gTotTxt"]));
+  r++;
+  h1.set(r++, 0, "Motivos que dijo el cliente (por eso no aplicaba)", "seccion");
+  h1.fila(r++, 0, ["Motivo", "Conversaciones", "% (con motivo)"], "gEnc");
+  const totMot = c.motivos.reduce((s, x)=> s + x[1], 0);
+  if(c.motivos.length) c.motivos.forEach(([m, n], i)=>{ const z = i % 2 ? "Z" : ""; h1.fila(r++, 0, [m, n, n/totMot], ["gTxt"+z, "gNum"+z, "gPct"+z]); });
+  else h1.fila(r++, 0, ["Ningún cliente dijo su motivo", 0, "—"], ["gTxt","gNum","gGuion"]);
+  h1.fila(r++, 0, ["Total", totMot, totMot ? 1 : "—"], ["gTotTxt","gTotNum", totMot ? "gTotPct" : "gTotTxt"]);
+  r++;
+  h1.set(r++, 0, "Cómo decide el sistema", "seccion");
+  [ "No aplicaba: el cliente dijo su inconveniente (al bot o al asesor, con sus palabras), aunque después dejara de responder.",
+    "No aplicaba también: el cliente no abandonó (el asesor cerró sin escribirle, o el cliente volvió a escribir y el asesor cerró sin responderle).",
+    "Aplicaba: el cliente no dijo nada (solo saludó, pidió ayuda sin decir para qué, eligió opciones del menú del bot o mandó su número) y, después de que el asesor le ofreció ayuda, no volvió a responder.",
+    "Revisar: el cliente mandó solo audio o imagen, escribió algo que el sistema no reconoce, o Genesys no entregó el chat.",
+    "El motivo se reconoce por palabras (no es inteligencia artificial). Cuenta el día en que el asesor cerró la conversación, igual que Códigos de conclusión.",
+  ].forEach(t=>{ h1.set(r++, 0, t, "sub"); });
+  h1.cols = [44, 17, 17, 17, 15, 15, 16];
+  XLSX.utils.book_append_sheet(wb, h1.hoja(), "Resumen"); hojas["Resumen"] = h1;
+  // ---- Por asesor ----
+  const h2 = new XlsHoja();
+  cab(h2, "Por asesor");
+  const enc2 = ["Asesor", "Usuario de Genesys", "Conversaciones"].concat(dictCols.map(k=> AUD_DICT[k].nom)).concat(["% No aplicaba", "% Aplicaba", "Motivo o qué pasó más frecuente (no aplicaba)", "Espera promedio antes de cerrar (aplicaba)"]);
+  h2.fila(3, 0, enc2, "gEnc"); h2.filas[3] = { hpt:30 };
+  r = 4;
+  c.asesores.forEach((a, i)=>{
+    const z = i % 2 ? "Z" : "", L = leidasDe(a);
+    h2.fila(r++, 0, [a.nombre, a.usuario || "—", a.n].concat(dictCols.map(k=> a[k])).concat([L ? a.noaplica/L : "—", L ? a.aplica/L : "—", a.motTop || "—", a.espProm===null ? "—" : durD(a.espProm)]),
+      ["gTxtB"+z, a.usuario ? "gTxt"+z : "gGuion"+z, "gNum"+z].concat(dictCols.map(()=> "gNum"+z)).concat([L ? "gPct"+z : "gGuion"+z, L ? "gPct"+z : "gGuion"+z, a.motTop ? "gTxt"+z : "gGuion"+z, a.espProm===null ? "gGuion"+z : "gTmo"+z]));
+  });
+  const espTot = c.espProm;
+  h2.fila(r++, 0, ["Total", "", c.n].concat(dictCols.map(k=> c.cuenta[k])).concat([c.leidas ? c.cuenta.noaplica/c.leidas : "—", c.leidas ? c.cuenta.aplica/c.leidas : "—", c.motivos[0] ? c.motivos[0][0] : "—", espTot===null ? "—" : durD(espTot)]),
+    ["gTotTxt","gTotTxt","gTotNum"].concat(dictCols.map(()=> "gTotNum")).concat([c.leidas ? "gTotPct" : "gTotTxt", c.leidas ? "gTotPct" : "gTotTxt", "gTotTxt", espTot===null ? "gTotTxt" : "gTotTmo"]));
+  h2.cols = [30, 30, 14].concat(dictCols.map(()=> 12)).concat([13, 12, 40, 18]);
+  h2.panel = { x:1, y:4 }; h2.filtro = `A4:${XLSX.utils.encode_cell({ r:3, c: enc2.length-1 })}`;
+  XLSX.utils.book_append_sheet(wb, h2.hoja(), "Por asesor"); hojas["Por asesor"] = h2;
+  // ---- Por motivo ----
+  const h3 = new XlsHoja();
+  cab(h3, "Por motivo o qué pasó");
+  h3.fila(3, 0, ["Motivo o qué pasó", "Dictamen", "Conversaciones", "Hogar", "Móvil", "Sin precisar", "% del total"], "gEnc");
+  r = 4;
+  c.cats.forEach((o, i)=>{
+    const z = i % 2 ? "Z" : "";
+    h3.fila(r, 0, [o.cat, AUD_DICT[o.dict].nom, o.n, o.Hogar, o["Móvil"], o["Sin precisar"], o.n/c.n], ["gTxtB"+z, "gTxt"+z, "gNum"+z, "gNum"+z, "gNum"+z, "gNum"+z, "gPct"+z]);
+    h3.set(r, 1, AUD_DICT[o.dict].nom, AUD_DICT[o.dict].xl);
+    r++;
+  });
+  h3.fila(r++, 0, ["Total", "", c.n, c.serv.Hogar.n, c.serv["Móvil"].n, c.serv["Sin precisar"].n, 1], ["gTotTxt","gTotTxt","gTotNum","gTotNum","gTotNum","gTotNum","gTotPct"]);
+  h3.cols = [48, 14, 14, 10, 10, 13, 12];
+  h3.panel = { y:4 };
+  XLSX.utils.book_append_sheet(wb, h3.hoja(), "Por motivo"); hojas["Por motivo"] = h3;
+  // ---- Por día y Por hora ----
+  const tabla = (nombre, titulo, enc0, filasT, etiqueta)=>{
+    const h = new XlsHoja();
+    cab(h, titulo);
+    h.fila(3, 0, enc0.concat(["Conversaciones"]).concat(dictCols.map(k=> AUD_DICT[k].nom)).concat(["% No aplicaba"]), "gEnc");
+    let rr = 4;
+    filasT.forEach((o, i)=>{
+      const z = i % 2 ? "Z" : "", et = etiqueta(o);
+      h.fila(rr++, 0, et.v.concat([o.n]).concat(dictCols.map(k=> o[k])).concat([pctNo(o)]), et.e.map(x=> x + z).concat(["gNum"+z]).concat(dictCols.map(()=> "gNum"+z)).concat([leidasDe(o) ? "gPct"+z : "gGuion"+z]));
+    });
+    h.fila(rr++, 0, enc0.map((_, i)=> i ? "" : "Total").concat([c.n]).concat(dictCols.map(k=> c.cuenta[k])).concat([pctNo(c.cuenta)]),
+      enc0.map(()=> "gTotTxt").concat(["gTotNum"]).concat(dictCols.map(()=> "gTotNum")).concat([c.leidas ? "gTotPct" : "gTotTxt"]));
+    h.cols = enc0.map(()=> 14).concat([14]).concat(dictCols.map(()=> 12)).concat([13]);
+    h.panel = { y:4 };
+    XLSX.utils.book_append_sheet(wb, h.hoja(), nombre); hojas[nombre] = h;
+  };
+  tabla("Por día", "Por día (día en que el asesor cerró)", ["Día", "Día de la semana"], c.dias,
+    o=> ({ v:[serial(o.iso), QA_DIAS[new Date(o.iso + "T12:00:00Z").getUTCDay()]], e:["gFecha", "gTxt"] }));
+  tabla("Por hora", "Por hora (hora en que el asesor cerró)", ["Hora"], c.horas,
+    o=> ({ v:[`${p2(o.h)}:00 – ${p2(o.h)}:59`], e:["gTxt"] }));
+  // ---- Conversaciones (una fila por asesor y conversación) ----
+  const h5 = new XlsHoja();
+  cab(h5, "Conversaciones auditadas");
+  const COLS = [
+    ["Día en que cerró", 11, "fecha"], ["Hora en que cerró", 9, "hora"], ["Dictamen", 12, null], ["Comentario del sistema", 60, null], ["Motivo o qué pasó", 40, null],
+    ["Servicio", 11, null], ["Lo que escribió el cliente", 60, null], ["Frase con el motivo", 40, null], ["Palabra que encontró el sistema", 16, null], ["Opción que eligió en el bot", 22, null],
+    ["Asesor", 26, null], ["Usuario de Genesys", 28, null], ["Cola", 26, null], ["ID de la conversación", 38, null], ["Número del cliente", 14, null], ["Nombre en WhatsApp", 22, null],
+    ["Día en que entró", 11, "fecha"], ["Hora en que entró", 9, "hora"], ["Hora en que la tomó el asesor", 11, "hora"], ["Espera en cola", 10, "tmo"], ["Tiempo de atención del asesor", 12, "tmo"],
+    ["Mensajes del cliente", 10, "num"], ["Mensajes del asesor", 10, "num"], ["Mensajes del bot", 10, "num"], ["Adjuntos del cliente", 16, null], ["Primer mensaje del cliente", 40, null],
+    ["Último en escribir", 11, null], ["¿El asesor le ofreció ayuda?", 12, null], ["Espera del asesor antes de cerrar", 12, "tmo"], ["¿Avisó el cierre por falta de respuesta?", 14, null],
+    ["¿El cliente escribió después del cierre?", 14, null], ["Asesores en la conversación", 11, "num"], ["Nota de cierre del asesor", 30, null], ["Estado del chat", 22, null],
+  ];
+  const H5 = 3;
+  h5.fila(H5, 0, COLS.map(x=> x[0]), "enc"); h5.filas[H5] = { hpt:42 };
+  const estCol = COLS.map(x=> x[2]==="fecha" ? "dFecha" : x[2]==="hora" ? "dHora" : x[2]==="tmo" ? "tmo" : x[2]==="num" ? "num" : null);
+  const anchoTexto = new Set([3, 6, 7, 25, 32]);
+  const dictFila = [];
+  let r5 = H5 + 1;
+  c.res.forEach(x=>{
+    const f = x.f, R = x.r;
+    const adj = {}; R.adjCli.forEach(t=>{ adj[t] = (adj[t]||0) + 1; });
+    const vals = [fechaDe(f.cierre), horaDe(f.cierre), AUD_DICT[R.dict].nom, R.com, R.cat, R.serv, R.todo || (R.dict==="sinleer" ? "—" : "(no escribió)"), R.cita && R.motivo ? R.cita : "—", R.kw || "—", R.menu.join(" | ") || "—",
+      f.asesor, f.usuario || "—", f.cola || "—", f.cid, f.aniTxt || "—", f.nombreWa || "—",
+      fechaDe(f.inicio), horaDe(f.inicio), horaDe(f.tomo), durD(f.espera), durD(f.t),
+      R.dict==="sinleer" ? "—" : R.nCli, R.dict==="sinleer" ? "—" : R.nAse, R.dict==="sinleer" ? "—" : R.nBot, Object.keys(adj).map(k=> `${adj[k]} ${k}`).join(", ") || "—", R.primero || "—",
+      R.ultimo || "—", R.dict==="sinleer" ? "—" : si(R.ofrecio), R.espera==null ? "—" : durD(R.espera), R.dict==="sinleer" ? "—" : si(R.aviso),
+      R.dict==="sinleer" ? "—" : si(R.despues), f.asesores, f.nota || "—", R.estadoChat];
+    vals.forEach((v, i)=> h5.set(r5, i, typeof v==="string" ? limpio(v) : v));
+    dictFila[r5] = R.dict;
+    r5++;
+  });
+  const ult5 = r5 - 1;
+  // Totales: conteos y promedios
+  const sum = k=> c.res.reduce((s, x)=> s + (typeof x.r[k]==="number" ? x.r[k] : 0), 0);
+  const prom = l=> l.length ? l.reduce((a, b)=> a + b, 0)/l.length : null;
+  const leidos = c.res.filter(x=> x.r.dict!=="sinleer");
+  const tot = new Array(COLS.length).fill("");
+  tot[0] = "Total"; tot[2] = `${fmtNum(c.n)} conv.`; tot[3] = `Aplicaba ${fmtNum(c.cuenta.aplica)} · No aplicaba ${fmtNum(c.cuenta.noaplica)} · Revisar ${fmtNum(c.cuenta.revisar)}${sin ? ` · Sin leer ${fmtNum(c.cuenta.sinleer)}` : ""}`;
+  tot[10] = `${fmtNum(c.nAses)} asesores`;
+  tot[21] = sum("nCli"); tot[22] = sum("nAse"); tot[23] = sum("nBot");
+  tot[27] = `Sí: ${fmtNum(leidos.filter(x=> x.r.ofrecio).length)}`; tot[29] = `Sí: ${fmtNum(leidos.filter(x=> x.r.aviso).length)}`; tot[30] = `Sí: ${fmtNum(leidos.filter(x=> x.r.despues).length)}`;
+  const pr = new Array(COLS.length).fill("");
+  pr[0] = "Promedio";
+  const pE = prom(c.res.map(x=> x.f.espera)), pT = prom(c.res.map(x=> x.f.t)), pW = prom(leidos.filter(x=> x.r.espera!=null).map(x=> x.r.espera));
+  pr[19] = pE===null ? "—" : durD(pE); pr[20] = pT===null ? "—" : durD(pT); pr[28] = pW===null ? "—" : durD(pW);
+  ["nCli","nAse","nBot"].forEach((k, i)=>{ const p = prom(leidos.map(x=> x.r[k])); pr[21+i] = p===null ? "—" : Math.round(p*10)/10; });
+  const rTot = r5, rProm = r5 + 1;
+  tot.forEach((v, i)=> h5.set(rTot, i, v)); pr.forEach((v, i)=> h5.set(rProm, i, v));
+  h5.estiloDe = cel=>{
+    if(cel.r===rTot || cel.r===rProm){
+      const k = COLS[cel.c][2];
+      if(cel.r===rProm && (k==="tmo")) return "totTmo";
+      if(cel.r===rProm && k==="num") return "totC";
+      return k==="num" ? "totNum" : k==="tmo" ? "totTmo" : "totTxt";
+    }
+    if(cel.r <= H5 || cel.r > ult5) return null;
+    if(cel.c===2) return AUD_DICT[dictFila[cel.r]].xl;
+    return estCol[cel.c] || (anchoTexto.has(cel.c) ? "dComent" : "dTxt");
+  };
+  h5.colFmt = {}; COLS.forEach((x, i)=>{ if(x[2]) h5.colFmt[i] = x[2]==="num" ? "num" : x[2]; }); h5.colFmtDesde = H5 + 1;
+  h5.cols = COLS.map(x=> x[1]);
+  h5.panel = { x:3, y:H5+1 };
+  h5.filtro = `A${H5+1}:${XLSX.utils.encode_cell({ r:H5, c:COLS.length-1 })}`;
+  XLSX.utils.book_append_sheet(wb, h5.hoja(), "Conversaciones"); hojas["Conversaciones"] = h5;
+  // ---- Chats: todos los mensajes ----
+  const h6 = new XlsHoja();
+  cab(h6, "Chats completos");
+  const H6 = 3;
+  h6.fila(H6, 0, ["ID de la conversación", "Asesor que cerró", "Dictamen", "N.º", "Fecha", "Hora", "Quién", "Nombre", "Mensaje", "Adjuntos"], "enc");
+  const QUIEN = { c:["Cliente","cCli"], a:["Asesor","cAse"], b:["Bot","cBot"] };
+  const tipoFila = [];
+  let r6 = H6 + 1;
+  const n6 = { total:0, c:0, a:0, b:0 }, vistos = new Set();
+  const porCid = new Map(); c.res.forEach(x=>{ const l = porCid.get(x.f.cid) || []; l.push(x); porCid.set(x.f.cid, l); });
+  c.res.forEach(x=>{
+    if(vistos.has(x.f.cid)) return;
+    vistos.add(x.f.cid);
+    const ch = AUD.chats.get(x.f.cid), ases = porCid.get(x.f.cid), quien = ases.map(y=> y.f.asesor).join(" / "), dict = ases.map(y=> AUD_DICT[y.r.dict].nom).join(" / ");
+    if(!ch || ch.estado!=="ok" || !ch.msgs.length){
+      [x.f.cid, quien, dict, "—", "—", "—", "—", "—", !ch ? "(no se leyó el chat)" : ch.estado==="ok" ? "(el chat no tiene mensajes)" : `(no se pudo leer: ${ch.err || ch.estado})`, ""].forEach((v, i)=> h6.set(r6, i, v));
+      tipoFila[r6] = "x"; r6++; return;
+    }
+    ch.msgs.forEach((m, i)=>{
+      const q = QUIEN[m.q] || QUIEN.b;
+      [x.f.cid, quien, dict, i + 1, m.t ? fechaDe(m.t) : "—", m.t ? horaDe(m.t) : "—", q[0], limpio(m.q==="c" && x.f.aniTxt && x.f.aniTxt!=="—" ? x.f.aniTxt : m.n), limpio(m.x), limpio((m.adj||[]).map(j=> `${j.tipo}: ${j.nombre}`).join(", "))]
+        .forEach((v, k)=> h6.set(r6, k, v));
+      tipoFila[r6] = m.q; n6.total++; n6[m.q] = (n6[m.q]||0) + 1; r6++;
+    });
+  });
+  const ult6 = r6 - 1;
+  r6++;
+  const pies = [["Total de mensajes", n6.total, true], ["   Cliente", n6.c], ["   Asesor", n6.a], ["   Bot / sistema", n6.b], ["Conversaciones", vistos.size, true]];
+  const filaPie = {};
+  pies.forEach(([t, n, fuerte])=>{ for(let k=0; k<10; k++) h6.set(r6, k, k===0 ? t : k===8 ? n : ""); filaPie[r6] = fuerte ? "t" : "s"; r6++; });
+  h6.estiloDe = cel=>{
+    if(filaPie[cel.r]) return cel.c===8 ? (filaPie[cel.r]==="t" ? "gTotNum" : "cPieNum") : (filaPie[cel.r]==="t" ? "gTotTxt" : "cPie");
+    if(cel.r <= H6 || cel.r > ult6) return null;
+    const tp = tipoFila[cel.r];
+    if(cel.c===4) return "dFecha";
+    if(cel.c===5) return "dHora";
+    if(cel.c===3) return "cNum";
+    if(cel.c===6 && QUIEN[tp]) return QUIEN[tp][1];
+    if(cel.c===8) return tp==="b" ? "cMsgBot" : tp==="x" ? "cAdj" : "dComent";
+    if(cel.c===9) return "cAdj";
+    return "dTxt";
+  };
+  h6.colFmt = { 4:"fecha", 5:"hora" }; h6.colFmtDesde = H6 + 1;
+  h6.cols = [38, 26, 14, 6, 11, 8, 9, 20, 90, 26];
+  h6.panel = { y:H6+1 };
+  h6.filtro = `A${H6+1}:${XLSX.utils.encode_cell({ r:H6, c:9 })}`;
+  XLSX.utils.book_append_sheet(wb, h6.hoja(), "Chats"); hojas["Chats"] = h6;
+  // ---- Validación ----
+  const h7 = new XlsHoja();
+  cab(h7, "Validación de los datos");
+  h7.fila(3, 0, ["Tipo", "Dónde", "Detalle"], "gEnc");
+  r = 4;
+  v.avisos.forEach(x=>{ h7.fila(r++, 0, ["Aviso", x[0], x[1]], ["gTxtB", "gTxt", "gJusG"]); });
+  v.infos.forEach(x=>{ h7.fila(r++, 0, ["Nota", x[0], x[1]], ["gTxt", "gTxt", "gJusG"]); });
+  r++;
+  h7.set(r++, 0, "Frases del cliente que el sistema no reconoció (para ajustar las palabras que busca)", "seccion");
+  h7.fila(r++, 0, ["ID de la conversación", "Asesor", "Lo que escribió el cliente"], "gEnc");
+  const raros = c.res.filter(x=> x.r.cat===AUD_CAT.texto).slice(0, 500);
+  if(raros.length) raros.forEach((x, i)=>{ const z = i % 2 ? "Z" : ""; h7.fila(r++, 0, [x.f.cid, x.f.asesor, limpio(x.r.todo)], ["gTxt"+z, "gTxt"+z, "gJusG"+z]); });
+  else h7.fila(r++, 0, ["Ninguna", "", ""], ["gTxt","gTxt","gTxt"]);
+  h7.fila(r++, 0, ["Total", "", raros.length], ["gTotTxt","gTotTxt","gTotNum"]);
+  h7.cols = [38, 26, 110];
+  XLSX.utils.book_append_sheet(wb, h7.hoja(), "Validación"); hojas["Validación"] = h7;
+  const nombre = `Auditoría WhatsApp - Cliente abandona interacción - ${per.desde===per.hasta ? per.desde : `${per.desde} a ${per.hasta}`}.xlsx`;
+  xlsDescargarConEstilo(wb, hojas, nombre);
 }
 
 function renderAll(){
