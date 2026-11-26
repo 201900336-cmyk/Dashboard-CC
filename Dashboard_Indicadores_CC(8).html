@@ -1413,6 +1413,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-estado.cargando{background:var(--qa-soft);color:var(--qa-mut);}
   .qa-estado.error{background:#FDEBEC;color:#B4021F;border:1px solid #F5C2C7;}
   .qa-estado.aviso{background:#FFF7E0;color:#7A5200;border:1px solid #F2DFA6;}
+  .qa-estado.qa-con-barra{flex-wrap:wrap;}   /* v22.44: avance de la bandeja */
+  .qa-estado .qa-barra{flex:1 0 100%;height:6px;background:#E3E7EE;border-radius:4px;overflow:hidden;}
+  .qa-estado .qa-barra i{display:block;height:100%;background:var(--red);border-radius:4px;transition:width .4s;}
   .qa-estado.cc-xl{background:#F3F5F8;color:#3B4350;border:1px solid #E1E4E8;}   /* v22.28: avance del Excel de códigos */
   .qa-spin{width:14px;height:14px;border-radius:50%;border:2px solid #D9DCE1;border-top-color:var(--red);display:inline-block;flex:0 0 auto;animation:qaGira .8s linear infinite;}
   @keyframes qaGira{to{transform:rotate(360deg);}}
@@ -15476,6 +15479,12 @@ const QA = {
   convCache: new Map(),
 };
 const QA_MAX_RESULTADOS = 2500;
+// v22.44 (Oscar, 2026-11-26): "porque aquí no me deja más de 7 días?" → la bandeja para evaluar acepta hasta 31 días
+// y revisa TODAS las llamadas del período (antes: 7 días y tope de 2,500, que en Fijo dejaba días sin revisar).
+// Recontacto en la bandeja = el mismo número llamó otra vez dentro de 7 días (antes o después): así significa lo
+// mismo con una semana o con un mes (con 7 días o menos sale igual que antes).
+const QA_BANDEJA_MAX_DIAS = 31;
+const QA_RECONTACTO_DIAS = 7;
 const QA_FLAGS = {
   asesorColgo: { label:"Colgó el asesor", corto:"Colgó asesor", peso:3, cls:"crit" },
   corta:       { label:"Llamada corta (<20 s)", corto:"Corta", peso:3, cls:"crit" },
@@ -15673,10 +15682,20 @@ function qaResumen(c, wrapups){
     flags, _conv: c,
   };
 }
-function qaMarcarRecontactos(filas){
+function qaMarcarRecontactos(filas, ventanaDias){
   const porAni = {};
   filas.forEach(f=>{ const k = String(f.ani||"").replace(/\D/g,"").slice(-8); if(k.length>=7) (porAni[k] = porAni[k] || []).push(f); });
-  Object.values(porAni).forEach(lista=>{ if(lista.length>1) lista.forEach(f=> f.flags.add("recontacto")); });
+  Object.values(porAni).forEach(lista=>{
+    if(lista.length < 2) return;
+    if(!ventanaDias){ lista.forEach(f=> f.flags.add("recontacto")); return; }   // "Buscar llamadas": como siempre
+    // v22.44 (bandeja): solo si la otra llamada del mismo número está a 7 días o menos
+    const ms = ventanaDias * 864e5, t = f=> Date.parse(f.inicio);
+    lista.sort((x, y)=> t(x) - t(y));
+    lista.forEach((f, i)=>{
+      const antes = i > 0 ? t(f) - t(lista[i-1]) : Infinity, despues = i < lista.length-1 ? t(lista[i+1]) - t(f) : Infinity;
+      if(antes <= ms || despues <= ms) f.flags.add("recontacto");
+    });
+  });
 }
 function qaPrioridad(f){ let p = 0; f.flags.forEach(k=> p += (QA_FLAGS[k]||{}).peso||0); return p; }
 
@@ -15738,6 +15757,7 @@ function qaChipsRango(nombre, valor, opciones){
   return `<div class="qa-chips" data-rango="${nombre}">${opciones.map(([k,l])=>`<button type="button" class="qa-chip ${k===valor?"on":""}" data-val="${k}" aria-pressed="${k===valor}">${l}</button>`).join("")}</div>`;
 }
 function qaEstadoHtml(){
+  if(QA.cargando && QA.barra!=null) return `<div class="qa-estado cargando qa-con-barra"><span class="qa-spin"></span><span class="qa-prog-txt">${qaEsc(QA.progreso||"Consultando Genesys…")}</span><span class="qa-barra" aria-hidden="true"><i style="width:${Number(QA.barra).toFixed(1)}%"></i></span></div>`;   // v22.44
   if(QA.cargando) return `<div class="qa-estado cargando"><span class="qa-spin"></span>${qaEsc(QA.progreso||"Consultando Genesys…")}</div>`;
   if(QA.error) return `<div class="qa-estado error">⚠️ ${qaEsc(QA.error)}</div>`;
   if(QA.aviso) return `<div class="qa-estado aviso">${qaEsc(QA.aviso)}</div>`;
@@ -16480,6 +16500,8 @@ async function qaAbrirDetalle(convId, modo){
   qaSoltarAudio();
   if(modo==="drawer") qaDrawer().classList.add("abierto");
   let f = QA.convCache.get(convId);
+  const previa = f;
+  if(f && !f._conv) f = null;   // v22.44: la bandeja (y la auditoría) guardan las llamadas sin la conversación completa: se vuelve a pedir
   QA.detalle = { id: convId, modo, f, grab:{estado:"cargando"}, stta:{estado:"cargando"}, evals:{estado:"cargando"}, attrs:{estado:"cargando"}, onda:null };
   qaPintarDetalle();
   if(modo==="drawer"){ const b = document.querySelector("#qa-dw-cont .qa-dw-cerrar"); if(b) b.focus(); }
@@ -16490,6 +16512,7 @@ async function qaAbrirDetalle(convId, modo){
       const uids = (c.participants||[]).map(p=>p.userId).filter(Boolean);
       await genesysEnsureUsersLoaded(uids);
       f = qaResumen(c, await qaCompletarWrapups([c]));
+      if(previa && previa.flags) previa.flags.forEach(k=> f.flags.add(k));   // v22.44: conserva el "Recontacto" de la bandeja
       QA.convCache.set(convId, f);
       if(QA.detalle && QA.detalle.id===convId){ QA.detalle.f = f; qaPintarDetalle(); }
     }
@@ -17939,15 +17962,15 @@ function qaHtmlBandeja(){
   const b = QA.bandeja;
   const [a,z] = qaRangoFechas(b.rango, b.desde, b.hasta);
   const intro = `<section class="qa-card qa-search">
-    <div class="qa-intro"><b>¿Qué llamadas conviene evaluar?</b><span>Revisa todas las llamadas del período y te propone las que tienen alertas: colgó el asesor, llamadas cortas, holds largos, transferencias, clientes que volvieron a llamar y esperas largas. Las ordena por prioridad y las resume por asesor.</span></div>
+    <div class="qa-intro"><b>¿Qué llamadas conviene evaluar?</b><span>Revisa todas las llamadas del período (hasta 31 días) y te propone las que tienen alertas: colgó el asesor, llamadas cortas, holds largos, transferencias, clientes que volvieron a llamar en 7 días o menos y esperas largas. Las ordena por prioridad y las resume por asesor.</span></div>
     <div class="qa-opciones">
-      ${qaChipsRango("bandeja", b.rango, [["hoy","Hoy"],["ayer","Ayer"],["7d","Últimos 7 días"],["rango","Rango"]])}
+      ${qaChipsRango("bandeja", b.rango, [["hoy","Hoy"],["ayer","Ayer"],["7d","Últimos 7 días"],["estemes","Este mes"],["mesanterior","Mes anterior"],["rango","Rango"]])}
       ${b.rango==="rango" ? `<label class="qa-fecha">Desde <input type="date" id="qa-b-desde" value="${a}" max="${qaHoyIso()}"/></label><label class="qa-fecha">Hasta <input type="date" id="qa-b-hasta" value="${z}" max="${qaHoyIso()}"/></label>` : `<span class="qa-rango-txt">${qaFmtRango(a,z)}</span>`}
       <label class="qa-skill">Skill ${qaSkillSelectHtml("qa-b-cat", b.cat, false)}</label>
       <button type="button" class="btn-update" data-accion="bandeja" ${QA.cargando?"disabled":""}>Armar bandeja</button>
     </div>
   </section>`;
-  if(!b.cargada) return intro + qaEstadoHtml() + (QA.cargando?"":`<div class="qa-vacio"><b>Elige el período y el skill.</b><span>Para un skill grande, empieza con "Ayer": un día de Fijo son ~1,000 llamadas.</span></div>`);
+  if(!b.cargada) return intro + qaEstadoHtml() + (QA.cargando?"":`<div class="qa-vacio"><b>Elige el período y el skill.</b><span>Puede ser hasta 31 días. Un día de Fijo son ~1,000 llamadas: un mes completo tarda unos minutos y vas viendo el avance.</span></div>`);
   const filas = b.filas, conAlerta = filas.filter(f=> f.flags.size);
   const cuenta = qaContarFlags(filas);
   const vis = qaFilasFiltradas(qaFilasBandejaVisibles()).slice().sort((x,y)=> qaPrioridad(y)-qaPrioridad(x) || Date.parse(y.inicio)-Date.parse(x.inicio));
@@ -17985,20 +18008,19 @@ async function qaArmarBandeja(){
   const [desde, hasta] = qaRangoFechas(b.rango, b.desde, b.hasta);
   QA.error = null; QA.aviso = null; QA.filtro.clear(); b.asesorFiltro = null;
   if(desde > hasta){ QA.error = "La fecha Desde no puede ser posterior a Hasta."; return qaRender(); }
-  if((Date.parse(hasta)-Date.parse(desde))/86400000 > 6){ QA.error = "Para la bandeja el máximo es 7 días."; return qaRender(); }
+  const nDias = Math.round((Date.parse(hasta)-Date.parse(desde))/86400000) + 1;
+  if(nDias > QA_BANDEJA_MAX_DIAS){ QA.error = `Para la bandeja el máximo es ${QA_BANDEJA_MAX_DIAS} días.`; return qaRender(); }
   try{
-    QA.cargando = true; QA.progreso = "Consultando Genesys…"; qaRender();
+    QA.cargando = true; QA.progreso = "Consultando Genesys…"; QA.barra = 0;
+    b.avance = { dias:0, total:nDias, llamadas:0, t0:Date.now() };
+    qaRender();
     await genesysEnsureQueuesLoaded();
-    const wrap = await qaWrapupsMap();
+    await qaWrapupsMap();
     const ids = qaQueueIdsDeCategoria(b.cat);
     if(!ids.length) throw new Error(`No encontré colas de Genesys para el skill ${b.cat}.`);
-    const r = await qaDetailsQuery(desde, hasta, [qaFiltroOr("queueId", ids)], (n)=>{ const el=document.querySelector("#qa-body .qa-estado.cargando"); if(el) el.lastChild.textContent = `Revisando llamadas… ${fmtNum(n)}`; });
-    const uids = new Set(); r.convs.forEach(c=> (c.participants||[]).forEach(p=>{ if(p.userId) uids.add(p.userId); }));
-    await genesysEnsureUsersLoaded(Array.from(uids));
-    const wrap2 = await qaCompletarWrapups(r.convs);
-    b.filas = r.convs.map(c=> qaResumen(c, wrap2));
+    b.filas = await qaBandejaTraer(desde, hasta, ids);
     b.filas.forEach(f=> QA.convCache.set(f.id, f));
-    qaMarcarRecontactos(b.filas);
+    qaMarcarRecontactos(b.filas, QA_RECONTACTO_DIAS);
     const por = {};
     b.filas.forEach(f=>{
       if(!f.userIds.length) return;
@@ -18010,10 +18032,68 @@ async function qaArmarBandeja(){
     b.porAsesor = Object.values(por).map(x=>({ ...x, pct: x.n ? x.conAlerta/x.n : 0 })).sort((p,q)=> q.puntaje-p.puntaje || q.n-p.n);
     b.cargada = true;
     QA.sel = new Set();
-    QA.aviso = r.capado ? `Se revisaron las ${fmtNum(QA_MAX_RESULTADOS)} llamadas más recientes del período — acorta el rango para revisar todas.` : null;
+    QA.aviso = null;
   }catch(e){ QA.error = qaMensajeError(e); }
-  QA.cargando = false;
+  QA.cargando = false; QA.barra = null; b.avance = null;
   qaRender();
+}
+// v22.44: todas las llamadas del período, día por día (3 días a la vez, del más reciente al más viejo). Cada día se
+// resume apenas llega y la llamada se guarda SIN la conversación completa de Genesys (con un mes de Fijo serían
+// decenas de miles): al abrir una llamada, la ficha la vuelve a pedir (qaAbrirDetalle).
+async function qaBandejaTraer(desde, hasta, ids){
+  const av = QA.bandeja.avance, filtros = [qaFiltroOr("queueId", ids)];
+  const dias = [];
+  for(let d = desde; d <= hasta; d = qaSumarDias(d, 1)) dias.push(d);
+  dias.reverse();
+  const filas = [], vistas = new Set();
+  let i = 0;
+  const pagina = async body=>{
+    for(let intento = 1; ; intento++){
+      try{ return await qaFetch("/api/v2/analytics/conversations/details/query", { method:"POST", body: JSON.stringify(body) }); }
+      catch(e){
+        if(e.message==="NOT_SIGNED_IN" || intento >= 3) throw e;
+        await new Promise(r=> setTimeout(r, 1500 * intento));
+      }
+    }
+  };
+  const unDia = async dia=>{
+    const startISO = new Date(`${dia}T00:00:00.000-06:00`).toISOString(), endISO = new Date(`${dia}T23:59:59.999-06:00`).toISOString();
+    const convs = [];
+    for(let page=1; page<=500; page++){
+      const r = await pagina({ interval:`${startISO}/${endISO}`, order:"asc", orderBy:"conversationStart", paging:{ pageSize:100, pageNumber:page }, segmentFilters: filtros });
+      const lote = (r && r.conversations) || [];
+      lote.forEach(c=>{ if(c && c.conversationId && !vistas.has(c.conversationId)){ vistas.add(c.conversationId); convs.push(c); } });
+      av.llamadas = vistas.size;
+      qaBandejaPintarAvance();
+      if(lote.length < 100) break;
+    }
+    const uids = new Set();
+    convs.forEach(c=> (c.participants||[]).forEach(p=>{ if(p.userId) uids.add(p.userId); }));
+    await genesysEnsureUsersLoaded(Array.from(uids));
+    const wrap = await qaCompletarWrapups(convs);
+    convs.forEach(c=>{ const f = qaResumen(c, wrap); f._conv = null; filas.push(f); });
+    av.dias++;
+    qaBandejaPintarAvance();
+  };
+  const trabajar = async ()=>{ while(i < dias.length) await unDia(dias[i++]); };
+  await Promise.all([trabajar(), trabajar(), trabajar()]);
+  return filas;
+}
+function qaBandejaPintarAvance(){
+  const av = QA.bandeja.avance;
+  if(!av) return;
+  const pct = av.total ? av.dias/av.total*100 : 0, s = (Date.now() - av.t0)/1000;
+  let eta = "";
+  if(av.dias >= 2 && av.dias < av.total){
+    const falta = s/av.dias * (av.total - av.dias);
+    eta = falta < 60 ? " · falta menos de 1 min" : ` · faltan ≈ ${Math.round(falta/60)} min`;
+  }
+  QA.barra = pct;
+  QA.progreso = `Revisando llamadas… ${fmtNum(av.llamadas)} · ${fmtNum(av.dias)} de ${fmtNum(av.total)} ${av.total===1 ? "día" : "días"}${eta}`;
+  const el = document.querySelector("#qa-body .qa-estado.cargando .qa-prog-txt");
+  if(el) el.textContent = QA.progreso;
+  const bar = document.querySelector("#qa-body .qa-estado.cargando .qa-barra i");
+  if(bar) bar.style.width = pct.toFixed(1) + "%";
 }
 function qaExcelBandeja(){
   const b = QA.bandeja; if(!b.cargada) return;
@@ -21639,7 +21719,7 @@ async function audBuscar(a, z, tok){
   try{ wrap = await qaCompletarWrapups(filas.map(f=> f.conv)); }catch(e){ if(e.message==="NOT_SIGNED_IN") throw e; }
   filas.forEach(f=>{
     f.asesor = ccNombre(f.uid); f.usuario = ccUsuarioDe(f.uid); f.cola = qaQueueName(f.queueId); f.servCola = audServicioDeCola(f.cola);
-    if(!QA.convCache.has(f.cid)) QA.convCache.set(f.cid, qaResumen(f.conv, wrap));   // para "Ver chat" (la ficha de QA)
+    if(!QA.convCache.has(f.cid)){ const r = qaResumen(f.conv, wrap); r._conv = null; QA.convCache.set(f.cid, r); }   // para "Ver chat" (la ficha la vuelve a pedir; v22.44)
     delete f.conv;
   });
   filas.sort((x, y)=> Date.parse(y.cierre) - Date.parse(x.cierre));
