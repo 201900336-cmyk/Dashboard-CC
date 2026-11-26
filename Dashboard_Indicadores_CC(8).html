@@ -991,7 +991,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
      (eligió la "Opción B" entre 3 diseños): ícono rojo en círculo rosado como el de las tarjetas de
      indicadores, nombre, para qué sirve y flecha. 4 por fila; 2 en pantallas medianas y en el celular. */
   .gherr-sec{margin:2px 0 8px;}
-  .gherr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px;}   /* v22.39: 9 herramientas = 3 x 3 */
+  .gherr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 12px;}   /* v22.41: 10 herramientas = 5 x 2 (4 + 4 + 2 anchas y 2 por fila en pantallas más chicas) */
   .gherr-card{display:flex;align-items:center;gap:12px;min-height:64px;padding:11px 12px 11px 13px;background:#fff;border:1px solid var(--border);border-radius:12px;font-family:inherit;color:var(--black);text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;}
   .gherr-card:hover{border-color:var(--red);box-shadow:0 6px 16px rgba(228,3,46,.10);transform:translateY(-1px);}
   .gherr-card:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
@@ -1002,7 +1002,78 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .gherr-txt small{font-size:11.5px;color:var(--gray);line-height:1.25;}
   .gherr-fl{display:flex;color:#C4C4C4;flex-shrink:0;transition:color .15s,transform .15s;}
   .gherr-card:hover .gherr-fl{color:var(--red);transform:translateX(2px);}
-  @media (max-width:820px){ .gherr{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:1399px){ .gherr{grid-template-columns:repeat(4,minmax(0,1fr));} .gherr-card:nth-last-child(-n+2){grid-column:span 2;} }
+  @media (max-width:1129px){ .gherr{grid-template-columns:repeat(2,minmax(0,1fr));} .gherr-card:nth-last-child(-n+2){grid-column:auto;} }
+  /* v22.41: "Recibido por intervalo" (estilo KPIs del día) */
+  #rint-modal-overlay{
+    --kd-bg:#EEF1F5; --kd-text:#1F2937; --kd-text-dim:#5B6472; --kd-text-faint:#7C8592;
+    --kd-card-bg:#FFFFFF; --kd-card-border:#DCE2EA; --kd-divider:#E6EAF0; --kd-chip-bg:#E4E9F0; --kd-scrollbar:#C7D0DB;
+    --kd-live-color:var(--red-dark); --kd-live-cierre-color:#5B6472;
+    display:none;position:fixed;inset:0;background:rgba(20,24,30,.55);z-index:110;align-items:center;justify-content:center;
+  }
+  #rint-modal{background:var(--kd-bg);border-radius:16px;padding:0;width:1240px;max-width:97vw;max-height:95vh;overflow-y:auto;box-shadow:0 24px 70px rgba(20,24,30,.28),0 0 0 1px rgba(228,3,46,.18);color:var(--kd-text);}
+  #rint-modal::-webkit-scrollbar{width:10px;}
+  #rint-modal::-webkit-scrollbar-thumb{background:var(--kd-scrollbar);border-radius:8px;}
+  #rint-modal .kpisdia-inner{padding:0 22px 10px;}
+  #rint-modal .modal-actions{padding:0 22px 16px;}
+  #rint-modal .mini-banner{margin:8px 0 14px;}
+  #rint-hero{position:sticky;top:0;z-index:4;margin:0 -22px 12px;padding:12px 22px 10px;background:#fff;border-bottom:2px solid var(--red);}
+  #rint-hero-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  #rint-hero .kpisdia-title{display:flex;align-items:center;gap:10px;}
+  #rint-hero .kpisdia-title-bar{width:5px;height:26px;background:var(--red);border-radius:3px;box-shadow:0 0 12px rgba(228,3,46,.45);}
+  #rint-hero h2{margin:0;font-size:18px;font-weight:800;color:var(--kd-text);letter-spacing:-.01em;}
+  #rint-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  #rint-hero .kpisdia-btn-refresh:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .rint-xls{display:inline-flex;align-items:center;gap:6px;}
+  .rint-xls svg{width:13px;height:13px;}
+  .rint-filtros{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;}
+  .rint-filtros label{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--kd-text-dim);text-transform:uppercase;letter-spacing:.04em;}
+  .rint-filtros select{background:var(--kd-chip-bg);border:1px solid var(--kd-card-border);color:var(--kd-text);font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:12px;font-family:inherit;max-width:260px;}
+  .kpisdia-modo-toggle.rint-chico button{padding:5px 11px;font-size:11px;}
+  .rint-kpis .kpisdia-kpi{align-items:flex-start;}
+  .rint-kpis .kpisdia-kpi-value.rint-kpi-largo{font-size:16px;}
+  .rint-kpi-sub{font-size:10.5px;color:var(--kd-text-faint);font-weight:700;line-height:1.3;}
+  .rint-card{background:var(--kd-card-bg);border:1px solid var(--kd-card-border);border-radius:14px;padding:10px 14px 12px;margin:0 0 14px;}
+  .rint-chart{position:relative;height:250px;}
+  .rint-tend{font-size:11.5px;color:var(--kd-text-dim);font-weight:700;margin-top:4px;}
+  .rint-leyenda{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--kd-text-dim);text-transform:none;letter-spacing:0;}
+  .rint-grad{display:inline-block;width:90px;height:10px;border-radius:5px;background:linear-gradient(90deg,#63BE7B,#FFEB84,#F8696B);}
+  .rint-tabla-wrap{overflow:auto;max-height:64vh;border:1px solid var(--kd-card-border);border-radius:10px;background:#fff;position:relative;z-index:0;}   /* z-index:0 = las celdas fijas no tapan la cabecera del modal */
+  table.rint-tabla{border-collapse:separate;border-spacing:0;font-size:11.5px;width:max-content;min-width:100%;}
+  .rint-tabla th,.rint-tabla td{height:24px;box-sizing:border-box;padding:0 6px;text-align:center;white-space:nowrap;border-right:1px solid rgba(255,255,255,.9);border-bottom:1px solid rgba(255,255,255,.9);}
+  .rint-tabla thead th{position:sticky;top:0;z-index:2;background:#C00000;color:#fff;font-weight:700;font-size:11px;}
+  .rint-tabla td.c{min-width:38px;color:#1F2937;font-weight:600;}
+  .rint-tabla td.vacia,.rint-tabla tr.sin td{color:#8A96A3;background:#F7F8FA;}
+  .rint-tabla .fx{position:sticky;z-index:1;background:#fff;text-align:left;border-right:1px solid var(--kd-divider);border-bottom:1px solid var(--kd-divider);}
+  .rint-tabla thead .fx{z-index:3;background:#C00000;}
+  .rint-tabla .f1{left:0;min-width:82px;max-width:82px;}
+  .rint-tabla .f2{left:82px;min-width:84px;max-width:84px;}
+  .rint-tabla .f3{left:166px;min-width:58px;max-width:58px;text-align:center;}
+  .rint-tabla tbody td.fc,.rint-tabla tfoot td.fc{background:#808080;color:#fff;font-weight:700;}
+  .rint-tabla thead th.f3{background:#C00000;}
+  .rint-tabla td.tot{font-weight:800;background:#F3F4F6;border-left:2px solid #DCE2EA;}
+  .rint-tabla td.otras{color:#5B6472;background:#F7F8FA;}
+  .rint-tabla td.desv{font-weight:800;}
+  .rint-tabla td.desv.rojo{color:var(--red);} .rint-tabla td.desv.verde{color:var(--green);} .rint-tabla td.desv.neutro{color:var(--kd-text-dim);}
+  .rint-tabla tr.hoy td{font-style:italic;}
+  .rint-tabla tfoot td{position:sticky;z-index:2;background:#E5E7EB;font-weight:800;color:#1F2937;border-bottom:1px solid #fff;}
+  .rint-tabla tfoot tr.p1 td{bottom:24px;border-top:2px solid var(--red);}
+  .rint-tabla tfoot tr.p2 td{bottom:0;}
+  .rint-tabla tfoot td.fx{z-index:3;background:#E5E7EB;}
+  .rint-tabla tfoot td.fc{background:#6B6B6B;}
+  .rint-notas{font-size:11px;color:var(--kd-text-dim);margin:8px 2px 14px;line-height:1.5;}
+  @media (max-width:900px){ .rint-kpis{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:700px){
+    #rint-modal .kpisdia-inner{padding:0 12px 10px;}
+    #rint-hero{margin:0 -12px 12px;padding:10px 12px 8px;}
+    #rint-hero h2{font-size:16px;}
+    .rint-kpis{grid-template-columns:repeat(2,1fr);}
+    .rint-chart{height:210px;}
+    .rint-leyenda{display:none;}
+    /* en celular solo la Fecha queda fija al mover la tabla a los lados (Día y FC se corren con las franjas) */
+    .rint-tabla .f2,.rint-tabla .f3{left:auto;}
+    .rint-tabla tbody .f1{z-index:2;} .rint-tabla thead .f1,.rint-tabla tfoot .f1{z-index:4;}
+  }
   /* v22.39: modal "Indicadores del año" (plantilla de Oscar, de todos los canales) */
   #indanio-modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,22,22,.55);z-index:110;align-items:center;justify-content:center;}
   #indanio-modal{background:#F4F5F7;padding:22px 24px;width:1240px;max-width:97vw;max-height:94vh;overflow-y:auto;}
@@ -8432,17 +8503,20 @@ const XLS_FUENTES = {
   cgRoja: '<b/><sz val="8"/><color rgb="FFE4032E"/><name val="Century Gothic"/><family val="2"/>',
   cgGris: '<sz val="8"/><color rgb="FF8A8F95"/><name val="Century Gothic"/><family val="2"/>',
   cgNota: '<i/><sz val="8"/><color rgb="FF6B6B6B"/><name val="Century Gothic"/><family val="2"/>',
+  blancaN: '<sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/>',   // v22.41: encabezados de la tabla de Oscar
   // v22.36: conversación escrita de Calidad (quién habló)
   cAzul: '<b/><sz val="11"/><color rgb="FF1D4ED8"/><name val="Calibri"/><family val="2"/>',
   cGris: '<b/><sz val="11"/><color rgb="FF5B6472"/><name val="Calibri"/><family val="2"/>',
 };
 // Formatos de número (v22.24: se agregaron decimal, porcentaje, fecha y hora para Qualtrics)
 const XLS_FORMATOS = { tmo:"[m]:ss", num:"#,##0", dec:"0.0", pct:"0.0%", fecha:"dd/mm/yyyy", hora:"hh:mm",
-  pctSigno:"+0.0%;-0.0%;0.0%", seg:'0"s"' };   // v22.30: Desviación con signo (+4.1%) y segundos como en pantalla (312s)
+  pctSigno:"+0.0%;-0.0%;0.0%", seg:'0"s"',
+  entero:"0", fechaCorta:"d/m/yyyy", numSigno:"+0;-0;0" };   // v22.41: como la tabla de Oscar (1/6/2026, 1315)   // v22.30: Desviación con signo (+4.1%) y segundos como en pantalla (312s)
 const XLS_RELLENOS = { oscuro:"FF1F2937", rojo:"FFE4032E", total:"FFE5E7EB", sub:"FFF3F4F6", q1:"FFDCFCE7", q2:"FFECFCCB", q3:"FFFEF3C7", q4:"FFFEE2E2",
   dPar:"FFFAFAFA", dTot:"FFEFEFEF", dSub:"FFF7F7F7",   // v22.30: cebra y pie de la tabla del dashboard
   cCli:"FFEAF1FE", cAse:"FFFDEBEC",   // v22.36: conversación de Calidad (cliente / asesor)
-  tplVerde:"FF4EA72E" };   // v22.39: verde de los títulos de la plantilla "Indicadores 2026" (tema Énfasis 6)
+  tplVerde:"FF4EA72E",
+  rtTit:"FF595959", rtEnc:"FFC00000", rtFc:"FF808080", rtTot:"FFD9D9D9" };   // v22.41: "Recibido por intervalo" (título, encabezado, FC y totales)   // v22.39: verde de los títulos de la plantilla "Indicadores 2026" (tema Énfasis 6)
 const XLS_ESTILOS = (()=>{
   const e = {
     titulo:{ f:"titulo" }, sub:{ f:"sub" }, seccion:{ f:"seccion" },
@@ -8485,6 +8559,22 @@ const XLS_ESTILOS = (()=>{
     e["iaTot"+k] = Object.assign({ b:4, a:"c", r:"dTot" }, ia[k], ia[k].f==="cg" ? { f:"cgB" } : {});
   });
   e.iaTotTxt = { f:"cgB", r:"dTot", b:4, a:"c" };
+  // v22.41: "Recibido por intervalo" con el formato de la tabla de Oscar: título gris, encabezado rojo oscuro con
+  // letra blanca, FC en gris, bordes finos y fechas/números a la derecha (las franjas llevan la escala de colores)
+  Object.assign(e, {
+    rtTit:{ f:"blancaN", r:"rtTit", a:"c" }, rtSub:{ f:"sub", a:"i" }, rtNota:{ f:"sub" },
+    rtEncI:{ f:"blancaN", r:"rtEnc", b:4, a:"i" }, rtEncC:{ f:"blancaN", r:"rtEnc", b:4, a:"c" },
+    rtFecha:{ f:"dNormal", b:4, a:"d", n:"fechaCorta" }, rtDia:{ f:"dNormal", b:4, a:"i" },
+    rtFc:{ f:"dNormal", r:"rtFc", b:4, a:"c", n:"entero" }, rtFcGuion:{ f:"dNormal", r:"rtFc", b:4, a:"c" },
+    rtNum:{ f:"dNormal", b:4, a:"d", n:"entero" }, rtNumSigno:{ f:"dNormal", b:4, a:"d", n:"numSigno" },
+    rtTotal:{ f:"negrita", b:4, a:"d", n:"entero" }, rtGuion:{ f:"dGris", b:4, a:"c" },
+    rtDesvR:{ f:"dRoja", b:4, a:"d", n:"pctSigno" }, rtDesvV:{ f:"dVerde", b:4, a:"d", n:"pctSigno" }, rtDesvN:{ f:"dNormal", b:4, a:"d", n:"pctSigno" },
+    rtPieTxt:{ f:"negrita", r:"rtTot", b:4, a:"i" }, rtPieNum:{ f:"negrita", r:"rtTot", b:4, a:"d", n:"entero" },
+    rtPieNumSigno:{ f:"negrita", r:"rtTot", b:4, a:"d", n:"numSigno" }, rtPieDec:{ f:"negrita", r:"rtTot", b:4, a:"d", n:"dec" },
+    rtPieFc:{ f:"negrita", r:"rtFc", b:4, a:"c", n:"entero" }, rtPieFcDec:{ f:"negrita", r:"rtFc", b:4, a:"c", n:"dec" },
+    rtPieGuion:{ f:"dGris", r:"rtTot", b:4, a:"c" },
+    rtPieDesvR:{ f:"dRoja", r:"rtTot", b:4, a:"d", n:"pctSigno" }, rtPieDesvV:{ f:"dVerde", r:"rtTot", b:4, a:"d", n:"pctSigno" }, rtPieDesvN:{ f:"negrita", r:"rtTot", b:4, a:"d", n:"pctSigno" },
+  });
   const fila = {
     gTxtB:{ f:"negrita" }, gTxt:{ f:"dNormal" }, gGuion:{ f:"dGris" },
     gFecha:{ f:"dNormal", n:"fecha" }, gFechaB:{ f:"negrita", n:"fecha" },
@@ -8512,7 +8602,7 @@ function xlsEstilosXml(){
     const s = XLS_ESTILOS[k];
     const fontId = fuentes.indexOf(s.f || "normal"), fillId = s.r ? 2 + rellenos.indexOf(s.r) : 0, numFmtId = s.n ? FMT[s.n] : 0, borderId = s.b || 0;   // v22.30: b:2 y b:3
     // alineación: "c" centrada (si no, a la izquierda), "t" arriba (si no, al medio), "w" ajustar texto
-    const al = s.a ? `<alignment horizontal="${s.a.includes("c")?"center":"left"}" vertical="${s.a.includes("t")?"top":"center"}"${s.a.includes("w")?' wrapText="1"':""}/>` : "";
+    const al = s.a ? `<alignment horizontal="${s.a.includes("c")?"center":s.a.includes("d")?"right":"left"}" vertical="${s.a.includes("t")?"top":"center"}"${s.a.includes("w")?' wrapText="1"':""}/>` : "";   // v22.41: "d" = a la derecha
     return `<xf numFmtId="${numFmtId}" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0"${numFmtId?' applyNumberFormat="1"':""} applyFont="1"${fillId?' applyFill="1"':""}${borderId?' applyBorder="1"':""}${al?' applyAlignment="1"':""}>${al}</xf>`;
   };
   const lado = n=> `<${n} style="thin"><color rgb="FFD1D5DB"/></${n}>`;
@@ -8574,6 +8664,12 @@ function xlsDescargarConEstilo(wb, hojas, nombre){
         const pagina = (xml.includes("<pageMargins") ? "" : '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>') + '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>';
         xml = xml.includes("<pageMargins") ? xml.replace(/(<pageMargins[^>]*\/>)/, "$1" + pagina)
           : xml.includes("<ignoredErrors") ? xml.replace("<ignoredErrors", pagina + "<ignoredErrors") : xml.replace("</worksheet>", pagina + "</worksheet>");
+      }
+      if(h.escalas && h.escalas.length){   // v22.41: escala de colores de Excel (verde - amarillo - rojo), como la tabla de Oscar
+        const cf = h.escalas.map((ref, i)=> `<conditionalFormatting sqref="${ref}"><cfRule type="colorScale" priority="${i+1}"><colorScale><cfvo type="min"/><cfvo type="percentile" val="50"/><cfvo type="max"/><color rgb="FF63BE7B"/><color rgb="FFFFEB84"/><color rgb="FFF8696B"/></colorScale></cfRule></conditionalFormatting>`).join("");
+        const pos = Math.min(...["<dataValidations", "<hyperlinks", "<printOptions", "<pageMargins", "<pageSetup", "<headerFooter", "<drawing", "<legacyDrawing", "<tableParts", "<extLst", "</worksheet>"]
+          .map(a=> xml.indexOf(a)).filter(i=> i >= 0));
+        xml = xml.slice(0, pos) + cf + xml.slice(pos);
       }
       escribir(e, xml);
     });
@@ -12443,9 +12539,12 @@ function genesysCategoriasExcel(){
    Cada tarjeta abre lo mismo que el botón de antes; "Tarjetas en Excel" sigue usando
    data-dl="kpi" (downloadKpiGridAsExcel de las 8 tarjetas de indicadores). */
 const GENESYS_HERRAMIENTAS = [
-  { titulo:"Indicadores del año", sub:"NS, TMO, FCR y TNPS por mes", accion:"openIndAnioModal()",   // v22.39
+  { titulo:"Indicadores del año", sub:"NS, TMO, FCR y TNPS", accion:"openIndAnioModal()",   // v22.39
     ayuda:"Nivel de Servicio, Accesibilidad, TMO, ASA, FCR y TNPS de cada mes del año, de todos los canales, con el total del año y en Excel.",
     ico:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>' },
+  { titulo:"Recibido por intervalo", sub:"Franjas de 30 min vs FC", accion:"openRintModal()",   // v22.41
+    ayuda:"Lo recibido en cada franja de 30 minutos, día por día, con el FC de la bitácora, los totales, la tendencia y en Excel.",
+    ico:'<path d="M3 3v18h18"/><path d="M7 15h2M7 11h2M12 15h2M12 11h2M12 7h2M17 15h2M17 11h2"/>' },
   { titulo:"Calculadora de Agentes", sub:"Cuántos agentes necesitás", accion:"openErlangModal()",
     ayuda:"Con el volumen y el TMO reales de Genesys, calcula cuántos agentes se necesitan para cumplir el Nivel de Servicio (Erlang C).",
     ico:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M16 14v4"/><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>' },
@@ -12891,6 +12990,509 @@ function indAnioExcel(){
   h3.panel = { x:0, y:4 };
   XLSX.utils.book_append_sheet(wb, h3.hoja(), "Validación"); hojas["Validación"] = h3;
   xlsDescargarConEstilo(wb, hojas, `Indicadores ${c.anio} - todos los canales.xlsx`);
+}
+
+/* ============================================================
+   v22.41 (Oscar, 2026-11-26): "Recibido por intervalo" (pestaña Genesys → Herramientas)
+   ============================================================
+   Oscar mandó su tabla de junio (Fecha, día, FC y las franjas de 30 min de 07:00 a 21:30
+   con colores de calor) y pidió tenerla en un modal estilo KPIs del día, "siempre totaliza
+   tanto como fila como línea", por skill, con gráfica de tendencia de lo recibido, el FC de
+   las bitácoras, Excel y filtros de fechas y de skill.
+   - Cada celda = lo RECIBIDO en esa franja de 30 min (ofertadas en Genesys: lo que entró a la
+     cola, contestado o no — el mismo criterio de "Exportar Llamadas por Skill"), del skill
+     elegido. Total por fila (día) y por columna (franja), más el promedio por día.
+   - FC = el pronóstico del día de la bitácora (Fact_Bitacora_Diaria, columna FC, la misma que
+     usan la BITÁCORA y KPIs del día). La bitácora lo tiene por DÍA, no por franja, y solo para
+     Fijo, Móvil, Despacho, Corporativo y WhatsApp. Desviación = Recibido ÷ FC − 1 con la misma
+     regla de KPIs del día (kpisDiaPronCalc): solo los días y skills que tienen FC.
+   - Genesys: una consulta PT30M por día (como la Calculadora de Agentes), 4 a la vez, todas las
+     colas mapeadas; se guarda lo de TODOS los skills, así cambiar de skill o de filtro no vuelve
+     a consultar. Los días cerrados no se vuelven a pedir; hoy, a los 5 minutos o con Actualizar.
+   - Colores: la escala "verde - amarillo - rojo" de Excel (mínimo, percentil 50, máximo) sobre
+     las franjas que se ven; el Excel lleva la misma escala como formato condicional.
+   ============================================================ */
+const RINT_MAX_DIAS = 62;
+const RINT_ESCALA = [[0x63,0xBE,0x7B], [0xFF,0xEB,0x84], [0xF8,0x69,0x6B]];
+const RINT_LABELS = Array.from({ length:48 }, (_, i)=> `${String(Math.floor(i/2)).padStart(2,"0")}:${i%2 ? "30" : "00"}`);
+const RINT_HORARIOS = { auto:"Donde hubo llamadas", reporte:"07:00 – 21:30", dia:"24 horas" };
+let rint = { modo:"mes", desde:null, hasta:null, skill:"Fijo", dias:"todos", horario:"auto", picker:false, cargando:false, progreso:null, error:null, validAbierta:false };
+let rintCargaN = 0, rintUltimo = null;
+const rintDatos = {}, rintPromesas = {};
+try{ const s = localStorage.getItem("rint_skill"); if(s) rint.skill = s; }catch(e){ /* sin almacenamiento */ }
+
+function rintOpciones(){
+  return [{ id:"__todos", nombre:"Todos los skills", cats: GENESYS_CATEGORIAS.slice() },
+          { id:"__global", nombre:"Fijo · Móvil · Corporativo", cats: KPISDIA_GLOBAL_CATS.slice() }]
+    .concat(GENESYS_CATEGORIAS.map(c=> ({ id:c, nombre: KPISDIA_CAT_LABEL[c] || c, cats:[c] })));
+}
+function rintSkill(){ const o = rintOpciones(); return o.find(x=> x.id===rint.skill) || o.find(x=> x.id==="Fijo"); }
+function rintPeriodo(){
+  const hoy = genesysHondurasToday();
+  if(rint.modo==="mesAnt"){
+    const fin = genesysShiftDate(hoy.year, hoy.month, 1, -1);
+    return { desde:{ year:fin.year, month:fin.month, day:1 }, hasta:fin };
+  }
+  if(rint.modo==="7d") return { desde: genesysShiftDate(hoy.year, hoy.month, hoy.day, -6), hasta: hoy };
+  if(rint.modo==="rango" && rint.desde && rint.hasta) return { desde: rint.desde, hasta: rint.hasta };
+  return { desde:{ year:hoy.year, month:hoy.month, day:1 }, hasta: hoy };
+}
+function rintIsos(per){
+  const out = [], hasta = kpisDiaIso(per.hasta);
+  for(let d = per.desde, i = 0; i < 400; i++, d = genesysShiftDate(d.year, d.month, d.day, 1)){
+    const iso = kpisDiaIso(d);
+    if(iso > hasta) break;
+    out.push(iso);
+  }
+  return out;
+}
+function rintFechaCorta(iso){ return `${Number(iso.slice(8,10))}/${Number(iso.slice(5,7))}/${iso.slice(0,4)}`; }
+function rintDiaSemana(iso){ return new Date(Date.UTC(+iso.slice(0,4), +iso.slice(5,7)-1, +iso.slice(8,10))).getUTCDay(); }
+
+// ---- Genesys: un día, todas las colas, franjas de 30 min → { categoría: { "HH:MM": recibidas } } ----
+function rintTraerDia(iso, ids, queuesById, forzar){
+  if(rintPromesas[iso]) return rintPromesas[iso];
+  const hoyIso = kpisDiaIso(genesysHondurasToday()), d = rintDatos[iso];
+  if(d && d.estado==="ok" && !forzar && (iso < hoyIso || Date.now() - d.en < 5*60000)) return Promise.resolve(d);
+  const [y, m, dd] = iso.split("-").map(Number);
+  const p = (async ()=>{
+    let ultimo = null;
+    for(let intento = 0; intento < 3; intento++){
+      try{
+        const res = await genesysQueryDayIntervals(y, m, dd, ids);
+        const raw = genesysRawStatsByQueueGrouped(res, b=> genesysIntervalStartLabel(b.interval), queuesById);
+        const porLbl = genesysGroupAggByCategoria(raw, queuesById, new Set());
+        const porCat = {};
+        Object.keys(porLbl).forEach(l=> Object.keys(porLbl[l]).forEach(cat=>{
+          const of = porLbl[l][cat].nOffered || 0;
+          if(!of) return;
+          const x = porCat[cat] || (porCat[cat] = {});
+          x[l] = (x[l] || 0) + of;
+        }));
+        return rintDatos[iso] = { estado:"ok", porCat, en: Date.now() };
+      }catch(e){
+        if(e && e.message==="NOT_SIGNED_IN") throw e;
+        ultimo = e;
+        if(intento < 2) await new Promise(r=> setTimeout(r, 700*(intento+1)));
+      }
+    }
+    return rintDatos[iso] = { estado:"error", error: String((ultimo && ultimo.message) || ultimo), en: Date.now() };
+  })();
+  rintPromesas[iso] = p;
+  p.finally(()=>{ if(rintPromesas[iso]===p) delete rintPromesas[iso]; }).catch(()=>{});
+  return p;
+}
+async function rintCargar(forzar){
+  const n = ++rintCargaN;
+  const isos = rintIsos(rintPeriodo());
+  rint.cargando = true; rint.error = null; rint.progreso = { hechos:0, total: isos.length };
+  rintDibujar();
+  try{
+    await genesysEnsureQueuesLoaded();
+    const queuesById = {}; genesysState.queues.forEach(q=> queuesById[q.id] = q);
+    const ids = genesysState.queues.filter(q=> genesysCategoriaDeCola(q.id, q.name)).map(q=> q.id);
+    const hoyIso = kpisDiaIso(genesysHondurasToday());
+    let i = 0;
+    const trabajador = async ()=>{
+      while(i < isos.length){
+        const iso = isos[i++];
+        // Actualizar: vuelve a pedir hoy y los días que fallaron (los días cerrados no cambian)
+        const d = rintDatos[iso];
+        await rintTraerDia(iso, ids, queuesById, !!forzar && (iso===hoyIso || !d || d.estado!=="ok"));
+        if(n!==rintCargaN) return;
+        rint.progreso.hechos++;
+        rintPintarProgreso();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, isos.length) }, trabajador));
+  }catch(e){
+    if(n!==rintCargaN) return;
+    rint.error = e && e.message==="NOT_SIGNED_IN"
+      ? "Tu sesión de Genesys expiró — cierra este panel e inicia sesión de nuevo desde la pestaña Genesys."
+      : "No se pudo consultar Genesys: " + ((e && e.message) || e);
+  }
+  if(n!==rintCargaN) return;
+  rint.cargando = false; rint.progreso = null;
+  rintDibujar();
+}
+
+// ---- Cálculo: filas (días), columnas (franjas que se ven), totales, FC y desviación ----
+function rintPercentil(ordenados, p){
+  if(!ordenados.length) return 0;
+  const k = (ordenados.length - 1) * p, a = Math.floor(k), b = Math.ceil(k);
+  return ordenados[a] + (ordenados[b] - ordenados[a]) * (k - a);   // como PERCENTIL.INC de Excel
+}
+function rintCalcular(){
+  const per = rintPeriodo(), sk = rintSkill(), cats = sk.cats, hoyIso = kpisDiaIso(genesysHondurasToday());
+  const filas = [];
+  rintIsos(per).forEach(iso=>{
+    const dow = rintDiaSemana(iso);
+    if(rint.dias==="lv" && (dow===0 || dow===6)) return;
+    if(rint.dias==="sd" && dow>=1 && dow<=5) return;
+    const d = rintDatos[iso], ok = !!d && d.estado==="ok";
+    const vals = new Array(48).fill(0);
+    if(ok) cats.forEach(cat=>{
+      const x = d.porCat[cat];
+      if(x) Object.keys(x).forEach(l=>{ const k = RINT_LABELS.indexOf(l); if(k>=0) vals[k] += x[l]; });
+    });
+    // FC de la bitácora y lo recibido de los skills que tienen FC ese día (para la desviación)
+    let fc = 0, hayFc = false, recFc = 0;
+    cats.forEach(cat=>{
+      if(skillIndex(cat) < 0) return;
+      const v = genesysSheetForecastDiario(iso, cat);
+      if(v===null || v===undefined || !(v > 0)) return;
+      hayFc = true; fc += v;
+      const x = ok ? d.porCat[cat] : null;
+      if(x) Object.keys(x).forEach(l=> recFc += x[l]);
+    });
+    const total = vals.reduce((a, b)=> a + b, 0);
+    filas.push({ iso, dow, ok, error: d && d.estado==="error" ? d.error : null, vals, total,
+      fc: hayFc ? fc : null, recFc, desv: hayFc && ok ? recFc/fc - 1 : null, hoy: iso===hoyIso });
+  });
+  const buenas = filas.filter(f=> f.ok), cerradas = buenas.filter(f=> !f.hoy);
+  // Franjas que se ven
+  let ini = 0, fin = 47;
+  if(rint.horario==="reporte"){ ini = 14; fin = 43; }
+  else if(rint.horario==="auto"){
+    const con = [];
+    for(let k = 0; k < 48; k++) if(buenas.some(f=> f.vals[k] > 0)) con.push(k);
+    if(con.length){ ini = con[0]; fin = con[con.length-1]; } else { ini = 14; fin = 43; }
+  }
+  const cols = []; for(let k = ini; k <= fin; k++) cols.push(k);
+  filas.forEach(f=>{ f.otras = f.vals.reduce((a, v, k)=> (k < ini || k > fin) ? a + v : a, 0); });
+  const hayOtras = buenas.some(f=> f.otras > 0);
+  // Totales por columna (Total) y promedio por día (sin hoy, que va en curso)
+  const totCol = new Array(48).fill(0), promCol = new Array(48).fill(null);
+  buenas.forEach(f=> f.vals.forEach((v, k)=> totCol[k] += v));
+  if(cerradas.length) for(let k = 0; k < 48; k++) promCol[k] = cerradas.reduce((a, f)=> a + f.vals[k], 0) / cerradas.length;
+  const total = buenas.reduce((a, f)=> a + f.total, 0);
+  const otras = buenas.reduce((a, f)=> a + f.otras, 0);
+  const conFc = filas.filter(f=> f.fc!==null);
+  const fcTotal = conFc.length ? conFc.reduce((a, f)=> a + f.fc, 0) : null;
+  const recFcTotal = conFc.filter(f=> f.ok).reduce((a, f)=> a + f.recFc, 0);
+  const fcOk = conFc.filter(f=> f.ok).reduce((a, f)=> a + f.fc, 0);
+  const desv = fcOk > 0 ? recFcTotal/fcOk - 1 : null;
+  const promDia = cerradas.length ? cerradas.reduce((a, f)=> a + f.total, 0) / cerradas.length : null;
+  const promFc = conFc.filter(f=> !f.hoy).length ? conFc.filter(f=> !f.hoy).reduce((a, f)=> a + f.fc, 0) / conFc.filter(f=> !f.hoy).length : null;
+  const pico = buenas.length ? buenas.reduce((a, f)=> f.total > a.total ? f : a) : null;
+  let kPico = null; totCol.forEach((v, k)=>{ if(v > 0 && (kPico===null || v > totCol[kPico])) kPico = k; });
+  // Escala de colores: las franjas que se ven, de los días con datos
+  const valores = []; buenas.forEach(f=> cols.forEach(k=> valores.push(f.vals[k])));
+  valores.sort((a, b)=> a - b);
+  const escala = { min: valores.length ? valores[0] : 0, mid: rintPercentil(valores, 0.5), max: valores.length ? valores[valores.length-1] : 0 };
+  return { per, sk, cats, filas, buenas, cerradas, cols, ini, fin, hayOtras, otras, totCol, promCol, total, fcTotal, recFcTotal, fcOk, desv,
+    promDia, promFc, pico, kPico, escala, hoyIso, sinFc: cats.filter(c=> skillIndex(c) < 0), conSkillFc: cats.filter(c=> skillIndex(c) >= 0) };
+}
+function rintColor(v, e){
+  const [G, Y, R] = RINT_ESCALA;
+  let a, b, t;
+  if(v <= e.mid){ a = G; b = Y; t = e.mid > e.min ? (v - e.min)/(e.mid - e.min) : 1; }
+  else { a = Y; b = R; t = e.max > e.mid ? (v - e.mid)/(e.max - e.mid) : 1; }
+  t = Math.max(0, Math.min(1, t));
+  return `rgb(${a.map((x, i)=> Math.round(x + (b[i] - x)*t)).join(",")})`;
+}
+function rintDesvTxt(d){ return kpisDiaPronDesvTxt(d); }
+function rintDesvClase(d){ return kpisDiaPronClase(d); }   // roja: entraron más llamadas que el FC; verde: menos
+// Tendencia lineal (mínimos cuadrados) de lo recibido por día — sin hoy, que va en curso
+function rintTendencia(filas){
+  const pts = filas.map((f, i)=> f.ok && !f.hoy ? [i, f.total] : null).filter(Boolean);
+  if(pts.length < 3) return null;
+  const n = pts.length, sx = pts.reduce((a, p)=> a + p[0], 0), sy = pts.reduce((a, p)=> a + p[1], 0);
+  const sxx = pts.reduce((a, p)=> a + p[0]*p[0], 0), sxy = pts.reduce((a, p)=> a + p[0]*p[1], 0);
+  const den = n*sxx - sx*sx;
+  if(!den) return null;
+  const b = (n*sxy - sx*sy)/den, a = (sy - b*sx)/n;
+  return { a, b, serie: filas.map((f, i)=> a + b*i) };
+}
+
+// ---- Validación de los datos (preferencia de Oscar: "siempre validar primero la BD") ----
+function rintValidar(c){
+  const avisos = [], infos = [];
+  const fechas = l=> l.map(rintFechaCorta).join(", ");
+  const err = c.filas.filter(f=> f.error);
+  if(err.length) avisos.push(["Genesys", `No se pudo traer: ${fechas(err.map(f=> f.iso))} (sus filas quedan en «—»; tocá Actualizar)`]);
+  // Días sin llamadas en Genesys con FC en la bitácora
+  const cero = c.filas.filter(f=> f.ok && !f.hoy && f.total===0 && f.fc);
+  if(cero.length) avisos.push(["Genesys", `${fechas(cero.map(f=> f.iso))}: sin llamadas de ${c.sk.nombre} y la bitácora tiene FC`]);
+  // FC: días sin FC y FC repetido entre skills el mismo día
+  c.conSkillFc.forEach(cat=>{
+    const nombre = KPISDIA_CAT_LABEL[cat] || cat;
+    const falta = c.filas.filter(f=> !f.hoy && f.iso <= c.hoyIso && genesysSheetForecastDiario(f.iso, cat)===null).map(f=> f.iso);
+    if(falta.length) avisos.push([`${nombre} · FC`, `Sin FC en la bitácora: ${falta.length > 10 ? `${falta.length} días (${rintFechaCorta(falta[0])} a ${rintFechaCorta(falta[falta.length-1])})` : fechas(falta)}`]);
+    ["Fijo","Móvil","Despacho","Corporativo","WhatsApp"].filter(o=> o!==cat && !(c.cats.includes(o) && o < cat)).forEach(o=>{
+      const iguales = c.filas.filter(f=>{ const a = genesysSheetForecastDiario(f.iso, cat), b = genesysSheetForecastDiario(f.iso, o); return a && b && a===b; }).map(f=> f.iso);
+      if(iguales.length) avisos.push([`${nombre} · FC`, `${fechas(iguales)}: el FC es igual al de ${KPISDIA_CAT_LABEL[o] || o} el mismo día (¿se copió?)`]);
+    });
+  });
+  if(c.filas.some(f=> f.hoy)) infos.push(["Hoy", `${rintFechaCorta(c.hoyIso)} va en curso: su fila, el total y la desviación todavía cambian; el promedio por día no lo cuenta`]);
+  if(c.sinFc.length && c.conSkillFc.length) infos.push(["FC", `${c.sinFc.map(x=> KPISDIA_CAT_LABEL[x] || x).join(", ")} no ${c.sinFc.length > 1 ? "tienen" : "tiene"} FC en la bitácora: la desviación solo compara los skills que sí`]);
+  else if(c.sinFc.length) infos.push(["FC", `${c.sk.nombre} no tiene FC en la bitácora (solo Fijo, Móvil, Despacho N1, Corporativo y WhatsApp)`]);
+  if(c.hayOtras) infos.push(["Horario", `Las llamadas fuera de ${RINT_LABELS[c.ini]}–${RINT_LABELS[c.fin]} van en la columna «Otras horas»`]);
+  return { avisos, infos };
+}
+
+// ---- Modal ----
+function rintAsegurarModal(){
+  if(document.getElementById("rint-modal-overlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "rint-modal-overlay";
+  ov.innerHTML = `<div id="rint-modal" role="dialog" aria-label="Recibido por intervalo"><div id="rint-cuerpo"></div>
+    <div class="modal-actions"><button class="btn-outline" type="button" onclick="closeRintModal()">Cerrar</button></div></div>`;
+  ov.addEventListener("click", e=>{ if(e.target===ov) closeRintModal(); });
+  document.body.appendChild(ov);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && ov.style.display==="flex") closeRintModal(); });
+}
+function openRintModal(){
+  rintAsegurarModal();
+  document.getElementById("rint-modal-overlay").style.display = "flex";
+  rint.picker = false;
+  rintCargar(false);
+}
+function closeRintModal(){
+  const ov = document.getElementById("rint-modal-overlay");
+  if(ov) ov.style.display = "none";
+  destroyChart("rint-chart");
+}
+function rintSetModo(m){ rint.modo = m; rint.picker = false; rintCargar(false); }
+function rintTogglePicker(){ rint.picker = !rint.picker; rintDibujar(); }
+function rintAplicarRango(){
+  const a = kpisDiaParseIso(document.getElementById("rint-desde").value), b = kpisDiaParseIso(document.getElementById("rint-hasta").value);
+  const err = document.getElementById("rint-rango-error"), hoy = genesysHondurasToday();
+  if(!a || !b) return err.textContent = "Elegí las dos fechas.";
+  if(kpisDiaIso(a) > kpisDiaIso(b)) return err.textContent = "«Desde» tiene que ser antes de «Hasta».";
+  if(kpisDiaIso(b) > kpisDiaIso(hoy)) return err.textContent = "«Hasta» no puede ser después de hoy.";
+  if(kpisDiaDiasEntre(a, b) + 1 > RINT_MAX_DIAS) return err.textContent = `Como mucho ${RINT_MAX_DIAS} días por consulta.`;
+  rint.desde = a; rint.hasta = b; rint.modo = "rango"; rint.picker = false;
+  rintCargar(false);
+}
+function rintSetSkill(v){ rint.skill = v; try{ localStorage.setItem("rint_skill", v); }catch(e){ /* nada */ } rintDibujar(); }
+function rintSetDias(v){ rint.dias = v; rintDibujar(); }
+function rintSetHorario(v){ rint.horario = v; rintDibujar(); }
+function rintActualizar(){ rintCargar(true); }
+function rintPintarProgreso(){
+  const el = document.getElementById("rint-progreso");
+  if(el && rint.progreso) el.textContent = `⏳ Trayendo de Genesys las franjas de 30 min… ${rint.progreso.hechos} de ${rint.progreso.total} ${rint.progreso.total===1 ? "día" : "días"}`;
+}
+function rintDibujar(){
+  const cuerpo = document.getElementById("rint-cuerpo");
+  if(!cuerpo) return;
+  const per = rintPeriodo(), hoy = genesysHondurasToday(), hoyIso = kpisDiaIso(hoy);
+  const incluyeHoy = kpisDiaIso(per.hasta) >= hoyIso;
+  const btn = (m, t)=> `<button type="button" class="${rint.modo===m && !rint.picker ? "active" : ""}" onclick="rintSetModo('${m}')">${t}</button>`;
+  const btnD = (m, t)=> `<button type="button" class="${rint.dias===m ? "active" : ""}" onclick="rintSetDias('${m}')">${t}</button>`;
+  const rangoIni = rint.modo==="rango" && rint.desde ? { desde: rint.desde, hasta: rint.hasta } : per;
+  const picker = rint.picker ? `
+      <div class="kpisdia-rango-picker">
+        <label>Desde <input type="date" id="rint-desde" value="${kpisDiaIso(rangoIni.desde)}" max="${hoyIso}"></label>
+        <label>Hasta <input type="date" id="rint-hasta" value="${kpisDiaIso(rangoIni.hasta)}" max="${hoyIso}"></label>
+        <button type="button" class="kpisdia-btn-refresh" onclick="rintAplicarRango()">Aplicar</button>
+        <button type="button" class="btn-outline" style="padding:6px 12px;font-size:11.5px;" onclick="rintTogglePicker()">Cancelar</button>
+        <span id="rint-rango-error" class="kpisdia-rango-error"></span>
+      </div>` : "";
+  const opciones = rintOpciones().map((o, i)=> `${i===2 ? '<option disabled>──────────</option>' : ""}<option value="${o.id}"${o.id===rintSkill().id ? " selected" : ""}>${o.cats.length===1 ? (KPISDIA_CAT_ICON[o.id] || "📊") + " " : ""}${o.nombre}</option>`).join("");
+  const live = incluyeHoy ? `<span class="kpisdia-live"><span class="dot"></span>En vivo</span>` : `<span class="kpisdia-live cierre"><span class="dot"></span>Período cerrado</span>`;
+  const listo = !rint.cargando && !rint.error;
+  const hero = `
+    <div id="rint-hero">
+      <div id="rint-hero-top">
+        <div class="kpisdia-title"><span class="kpisdia-title-bar"></span><h2>📈 Recibido por intervalo</h2>${live}</div>
+        <div id="rint-hero-actions">
+          <div class="kpisdia-modo-toggle">${btn("mes","🗓️ Este mes")}${btn("mesAnt","⏮️ Mes anterior")}${btn("7d","7 días")}
+            <button type="button" class="${rint.modo==="rango" || rint.picker ? "active" : ""}" onclick="rintTogglePicker()">📅 Rango</button></div>
+          <span class="kpisdia-fecha-badge">📅 ${kpisDiaLabel(per.desde)} → ${kpisDiaLabel(per.hasta)} · Honduras</span>
+          <button type="button" class="kpisdia-btn-refresh" onclick="rintActualizar()"${rint.cargando ? " disabled" : ""}>🔄 Actualizar</button>
+          <button type="button" class="kpisdia-btn-refresh rint-xls" id="rint-excel" onclick="rintExcel()"${listo ? "" : " disabled"} title="Descargar en Excel con el formato de tu tabla">${DL_ICON_SVG} Excel</button>
+        </div>
+      </div>${picker}
+      <div class="rint-filtros">
+        <label>Skill <select id="rint-skill" onchange="rintSetSkill(this.value)">${opciones}</select></label>
+        <div class="kpisdia-modo-toggle rint-chico">${btnD("todos","Todos los días")}${btnD("lv","Lun – Vie")}${btnD("sd","Sáb – Dom")}</div>
+        <label>Horario <select id="rint-horario" onchange="rintSetHorario(this.value)">${Object.keys(RINT_HORARIOS).map(k=> `<option value="${k}"${rint.horario===k ? " selected" : ""}>${RINT_HORARIOS[k]}</option>`).join("")}</select></label>
+      </div>
+    </div>`;
+  if(rint.cargando){
+    destroyChart("rint-chart");
+    cuerpo.innerHTML = `<div class="kpisdia-inner">${hero}<div class="mini-banner loading" id="rint-progreso">⏳ Trayendo de Genesys las franjas de 30 min…</div></div>`;
+    rintPintarProgreso();
+    return;
+  }
+  if(rint.error){
+    destroyChart("rint-chart");
+    cuerpo.innerHTML = `<div class="kpisdia-inner">${hero}<div class="mini-banner error">⚠️ ${rint.error}</div></div>`;
+    return;
+  }
+  const c = rintCalcular();
+  rintUltimo = c;
+  const v = rintValidar(c);
+  const li = (cls, x)=> `<li class="${cls}"><b>${x[0]}</b> · ${x[1]}</li>`;
+  const valid = (v.avisos.length || v.infos.length) ? `<details class="ia-valid${v.avisos.length ? "" : " ok"}"${rint.validAbierta ? " open" : ""}>
+      <summary>${v.avisos.length ? `⚠ ${v.avisos.length} ${v.avisos.length===1 ? "aviso" : "avisos"} sobre los datos` : "✓ Datos validados"}${v.infos.length ? ` <span class="ia-valid-n">(${v.infos.length} ${v.infos.length===1 ? "nota" : "notas"})</span>` : ""}<span class="ia-valid-ver"></span></summary>
+      <ul>${v.avisos.map(x=> li("aviso", x)).join("")}${v.infos.map(x=> li("info", x)).join("")}</ul></details>` : "";
+  const kpi = (icono, valor, etiqueta, sub, color)=> `<div class="kpisdia-kpi"${color ? ` style="border-top-color:${color};"` : ""}><div class="kpisdia-kpi-text"><span class="kpisdia-kpi-value${String(valor).length > 9 ? " rint-kpi-largo" : ""}"${color ? ` style="color:${color};"` : ""}>${valor}</span><span class="kpisdia-kpi-label">${etiqueta}</span>${sub ? `<span class="rint-kpi-sub">${sub}</span>` : ""}</div><span class="kpisdia-kpi-icon">${icono}</span></div>`;
+  const clase = rintDesvClase(c.desv), colorDesv = clase==="rojo" ? "var(--red)" : clase==="verde" ? "var(--green)" : "var(--kd-text-dim)";
+  const diaTxt = f=> `${DIAS_SEMANA[f.dow].slice(0,3)} ${Number(f.iso.slice(8,10))}/${Number(f.iso.slice(5,7))}`;
+  const kpis = `<div class="kpisdia-kpigrid rint-kpis">
+      ${kpi("📞", fmtNum(c.total), "Recibido", `${c.buenas.length} ${c.buenas.length===1 ? "día" : "días"}${c.filas.some(f=> f.hoy) ? " · hoy en curso" : ""}`)}
+      ${kpi("🎯", c.fcTotal===null ? "Sin FC" : fmtNum(c.fcTotal), "FC (bitácora)", c.fcTotal===null ? "la bitácora no tiene FC" : `${c.filas.filter(f=> f.fc!==null).length} días con FC`)}
+      ${kpi(clase==="rojo" ? "📈" : clase==="verde" ? "📉" : "➖", rintDesvTxt(c.desv), "Desviación", c.desv===null ? "sin FC para comparar" : `${fmtNum(c.recFcTotal)} vs FC ${fmtNum(c.fcOk)}`, colorDesv)}
+      ${kpi("📊", c.promDia===null ? "—" : fmtNum(c.promDia), "Promedio diario", c.promFc!==null ? `FC promedio ${fmtNum(c.promFc)}` : c.filas.some(f=> f.hoy) ? "sin contar hoy" : `${c.cerradas.length} ${c.cerradas.length===1 ? "día" : "días"}`)}
+      ${kpi("🔥", c.pico ? diaTxt(c.pico) : "—", "Día pico", c.pico ? `${fmtNum(c.pico.total)} recibidas` : "")}
+      ${kpi("⏰", c.kPico===null ? "—" : RINT_LABELS[c.kPico], "Franja pico", c.kPico===null ? "" : [`${fmtNum(c.totCol[c.kPico])} en total`].concat(c.promCol[c.kPico]!==null ? [`${fmtNum(c.promCol[c.kPico])}/día`] : []).join(" · "))}
+    </div>`;
+  const tend = rintTendencia(c.buenas);
+  const tendTxt = !tend ? "" : Math.abs(tend.b) < 0.5 ? "Tendencia: estable" : `Tendencia: ${tend.b > 0 ? "sube" : "baja"} ~${fmtNum(Math.abs(tend.b))} ${Math.round(Math.abs(tend.b))===1 ? "llamada" : "llamadas"} por día`;
+  const grafica = `<div class="kpisdia-section-title">📈 Tendencia diaria — Recibido vs FC</div>
+    <div class="rint-card"><div class="rint-chart"><canvas id="rint-chart"></canvas></div>${tendTxt ? `<div class="rint-tend">${tendTxt}${c.filas.some(f=> f.hoy) ? " (sin hoy, que va en curso)" : ""}</div>` : ""}</div>`;
+  // Tabla de calor
+  const th = c.cols.map(k=> `<th>${RINT_LABELS[k]}</th>`).join("");
+  const filasHtml = c.filas.map(f=>{
+    const celdas = f.ok ? c.cols.map(k=> `<td class="c" style="background:${rintColor(f.vals[k], c.escala)}">${fmtNum(f.vals[k])}</td>`).join("")
+      : c.cols.map(()=> `<td class="c vacia">—</td>`).join("");
+    const dc = rintDesvClase(f.desv);
+    return `<tr class="${f.hoy ? "hoy" : ""}${f.ok ? "" : " sin"}"><td class="fx f1">${rintFechaCorta(f.iso)}${f.hoy ? "*" : ""}</td><td class="fx f2">${DIAS_SEMANA[f.dow]}</td><td class="fx f3 fc">${f.fc===null ? "—" : fmtNum(f.fc)}</td>${celdas}${c.hayOtras ? `<td class="otras">${f.ok ? fmtNum(f.otras) : "—"}</td>` : ""}<td class="tot">${f.ok ? fmtNum(f.total) : "—"}</td><td class="desv ${dc}">${rintDesvTxt(f.desv)}</td></tr>`;
+  }).join("");
+  const sumOtras = c.buenas.reduce((a, f)=> a + f.otras, 0), promOtras = c.cerradas.length ? c.cerradas.reduce((a, f)=> a + f.otras, 0)/c.cerradas.length : null;
+  const pieTot = `<tr class="pie p1"><td class="fx f1">Total</td><td class="fx f2"></td><td class="fx f3 fc">${c.fcTotal===null ? "—" : fmtNum(c.fcTotal)}</td>${c.cols.map(k=> `<td>${fmtNum(c.totCol[k])}</td>`).join("")}${c.hayOtras ? `<td>${fmtNum(sumOtras)}</td>` : ""}<td class="tot">${fmtNum(c.total)}</td><td class="desv ${clase}">${rintDesvTxt(c.desv)}</td></tr>`;
+  const piePro = `<tr class="pie p2"><td class="fx f1">Promedio</td><td class="fx f2"></td><td class="fx f3 fc">${c.promFc===null ? "—" : fmtNum(c.promFc)}</td>${c.cols.map(k=> `<td>${c.promCol[k]===null ? "—" : fmtNum(c.promCol[k])}</td>`).join("")}${c.hayOtras ? `<td>${promOtras===null ? "—" : fmtNum(promOtras)}</td>` : ""}<td class="tot">${c.promDia===null ? "—" : fmtNum(c.promDia)}</td><td></td></tr>`;
+  const tabla = `<div class="kpisdia-section-title">🗓️ Recibido por franja de 30 min · ${c.sk.nombre}
+      <span class="rint-leyenda">Menos <span class="rint-grad"></span> Más</span></div>
+    <div class="rint-tabla-wrap"><table class="rint-tabla">
+      <thead><tr><th class="fx f1">Fecha</th><th class="fx f2">Día</th><th class="fx f3">FC</th>${th}${c.hayOtras ? "<th>Otras horas</th>" : ""}<th>Total</th><th>Desv.</th></tr></thead>
+      <tbody>${filasHtml || `<tr><td class="fx f1" colspan="3">Sin días con estos filtros</td></tr>`}</tbody>
+      <tfoot>${pieTot}${piePro}</tfoot></table></div>
+    <div class="rint-notas">Recibido: llamadas que entraron a la cola en Genesys (contestadas o no). FC: pronóstico del día de la bitácora (es del día completo, no por franja).
+      Desv. = Recibido ÷ FC − 1 (roja: entraron más que el FC), solo días y skills con FC. Promedio: por día${c.filas.some(f=> f.hoy) ? ", sin contar hoy (*, va en curso)" : ""}.</div>`;
+  cuerpo.innerHTML = `<div class="kpisdia-inner">${hero}${valid}${kpis}${grafica}${tabla}</div>`;
+  const det = cuerpo.querySelector(".ia-valid");
+  if(det) det.addEventListener("toggle", ()=>{ rint.validAbierta = det.open; });
+  rintGrafica(c, tend);
+}
+function rintGrafica(c, tend){
+  destroyChart("rint-chart");
+  const cv = document.getElementById("rint-chart");
+  if(!cv || typeof Chart==="undefined") return;
+  const filas = c.buenas;
+  const labels = filas.map(f=> `${Number(f.iso.slice(8,10))}/${Number(f.iso.slice(5,7))}${f.hoy ? "*" : ""}`);
+  // números arriba de cada barra solo si caben (en celular, con un mes entero, se encimarían)
+  const ancho = (cv.parentNode && cv.parentNode.clientWidth) || 800, pocas = filas.length <= 31 && ancho / Math.max(1, filas.length) >= 30;
+  charts["rint-chart"] = new Chart(cv, {
+    type:"bar",
+    data:{ labels, datasets:[
+      { type:"bar", label:"Recibido", data: filas.map(f=> f.total), order:3, borderRadius:3,
+        backgroundColor: filas.map(f=> f.hoy ? "rgba(228,3,46,0.25)" : "rgba(228,3,46,0.6)"),
+        datalabels:{ display: pocas, anchor:"end", align:"end", offset:1, clip:false, color:"#161616", font:{ size:9, weight:"bold" }, formatter:v=> fmtNum(v) } },
+      { type:"line", label:"FC (bitácora)", data: filas.map(f=> f.fc), order:1, borderColor:"#161616", backgroundColor:"#161616",
+        borderDash:[6,4], borderWidth:2, pointRadius:2, spanGaps:true, tension:0, datalabels:{ display:false } },
+      ...(tend ? [{ type:"line", label:"Tendencia", data: tend.serie.map(x=> Math.round(x)), order:2, borderColor:"#8A8F95",
+        borderDash:[2,3], borderWidth:2, pointRadius:0, tension:0, datalabels:{ display:false } }] : []),
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, layout:{ padding:{ top:16 } },
+      plugins:{ legend:{ display:true, position:"bottom", labels:{ boxWidth:10, font:{ size:10 } } },
+        tooltip:{ callbacks:{ label: x=> `${x.dataset.label}: ${fmtNum(x.raw)}` } } },
+      scales:{ y:{ beginAtZero:true, grid:{ display:false }, ticks:{ font:{ size:10 } } }, x:{ grid:{ display:false }, ticks:{ font:{ size:9 } } } } },
+    plugins:[ChartDataLabels],
+  });
+}
+
+// ---- Excel: el formato de la tabla de Oscar (título gris, encabezado rojo oscuro, FC en gris,
+// bordes finos y la escala de colores de Excel en las franjas), más "Por día" y "Validación" ----
+function rintExcel(){
+  const c = rintUltimo;
+  if(!c || rint.cargando) return;
+  const v = rintValidar(c);
+  const serial = iso=> (Date.UTC(+iso.slice(0,4), +iso.slice(5,7)-1, +iso.slice(8,10)) - Date.UTC(1899, 11, 30))/864e5;
+  const p = c.per, d0 = p.desde, d1 = p.hasta;
+  const ultimoDelMes = genesysShiftDate(d0.month===12 ? d0.year+1 : d0.year, d0.month===12 ? 1 : d0.month+1, 1, -1);
+  const mesEntero = d0.day===1 && d0.year===d1.year && d0.month===d1.month && (d1.day===ultimoDelMes.day || kpisDiaIso(d1)===c.hoyIso);
+  const titulo = mesEntero ? MESES[d0.month-1] : `${rintFechaCorta(kpisDiaIso(d0))} – ${rintFechaCorta(kpisDiaIso(d1))}`;
+  const wb = XLSX.utils.book_new(), hojas = {};
+  // Hoja 1: Por intervalo
+  const h = new XlsHoja();
+  const nC = c.cols.length, cOtras = 3 + nC, cTot = cOtras + (c.hayOtras ? 1 : 0), cDesv = cTot + 1;
+  h.set(0, 0, titulo, "rtTit"); h.set(0, 1, "", "rtTit"); h.set(0, 2, "", "rtTit"); h.unir(0, 0, 0, 2);
+  h.set(0, 3, `${c.sk.nombre} · Recibido por franja de 30 min (Genesys) · FC del día (bitácora)${rint.dias!=="todos" ? ` · ${rint.dias==="lv" ? "lunes a viernes" : "sábados y domingos"}` : ""}`, "rtSub");
+  h.fila(1, 0, ["Fecha", "Día", "FC"], ["rtEncI", "rtEncI", "rtEncC"]);
+  c.cols.forEach((k, i)=> h.set(1, 3+i, RINT_LABELS[k], "rtEncC"));
+  if(c.hayOtras) h.set(1, cOtras, "Otras horas", "rtEncC");
+  h.set(1, cTot, "Total", "rtEncC"); h.set(1, cDesv, "Desv.", "rtEncC");
+  const desvEst = (d, pie)=> (pie ? "rtPieDesv" : "rtDesv") + (d===null ? "N" : rintDesvClase(d)==="rojo" ? "R" : rintDesvClase(d)==="verde" ? "V" : "N");
+  let r = 2;
+  c.filas.forEach(f=>{
+    h.set(r, 0, serial(f.iso), "rtFecha");
+    h.set(r, 1, DIAS_SEMANA[f.dow] + (f.hoy ? " *" : ""), "rtDia");
+    h.set(r, 2, f.fc===null ? "—" : f.fc, f.fc===null ? "rtFcGuion" : "rtFc");
+    c.cols.forEach((k, i)=> h.set(r, 3+i, f.ok ? f.vals[k] : "—", f.ok ? "rtNum" : "rtGuion"));
+    if(c.hayOtras) h.set(r, cOtras, f.ok ? f.otras : "—", f.ok ? "rtNum" : "rtGuion");
+    h.set(r, cTot, f.ok ? f.total : "—", f.ok ? "rtTotal" : "rtGuion");
+    h.set(r, cDesv, f.desv===null ? "—" : f.desv, f.desv===null ? "rtGuion" : desvEst(f.desv, false));
+    r++;
+  });
+  const ultimaFila = r - 1;
+  // Total y Promedio
+  const sumOtras = c.buenas.reduce((a, f)=> a + f.otras, 0), promOtras = c.cerradas.length ? c.cerradas.reduce((a, f)=> a + f.otras, 0)/c.cerradas.length : null;
+  h.fila(r, 0, ["Total", ""], "rtPieTxt"); h.unir(r, 0, r, 1);
+  h.set(r, 2, c.fcTotal===null ? "—" : c.fcTotal, c.fcTotal===null ? "rtPieGuion" : "rtPieFc");
+  c.cols.forEach((k, i)=> h.set(r, 3+i, c.totCol[k], "rtPieNum"));
+  if(c.hayOtras) h.set(r, cOtras, sumOtras, "rtPieNum");
+  h.set(r, cTot, c.total, "rtPieNum");
+  h.set(r, cDesv, c.desv===null ? "—" : c.desv, c.desv===null ? "rtPieGuion" : desvEst(c.desv, true));
+  r++;
+  h.fila(r, 0, ["Promedio", ""], "rtPieTxt"); h.unir(r, 0, r, 1);
+  h.set(r, 2, c.promFc===null ? "—" : c.promFc, c.promFc===null ? "rtPieGuion" : "rtPieFcDec");
+  c.cols.forEach((k, i)=> h.set(r, 3+i, c.promCol[k]===null ? "—" : c.promCol[k], c.promCol[k]===null ? "rtPieGuion" : "rtPieDec"));
+  if(c.hayOtras) h.set(r, cOtras, promOtras===null ? "—" : promOtras, promOtras===null ? "rtPieGuion" : "rtPieDec");
+  h.set(r, cTot, c.promDia===null ? "—" : c.promDia, c.promDia===null ? "rtPieGuion" : "rtPieDec");
+  h.set(r, cDesv, "", "rtPieTxt");
+  r += 2;
+  [ "Recibido: llamadas que entraron a la cola en Genesys (contestadas o no), por franja de 30 minutos (hora de Honduras).",
+    "FC: pronóstico del día de la bitácora (es del día completo, no por franja). Desv. = Recibido ÷ FC − 1, solo días y skills con FC (roja: entraron más que el FC).",
+    `Promedio: por día${c.filas.some(f=> f.hoy) ? `, sin hoy (${rintFechaCorta(c.hoyIso)} va en curso: *)` : ""}.${c.hayOtras ? ` Otras horas: fuera de ${RINT_LABELS[c.ini]}–${RINT_LABELS[c.fin]}.` : ""}`,
+    `Generado el ${kpisDiaLabel(genesysHondurasToday())} desde el Dashboard de Indicadores.` ].forEach(t=>{ h.set(r, 0, t, "rtNota"); r++; });
+  h.cols = [10.5, 11, 7.5].concat(c.cols.map(()=> 6.3)).concat(c.hayOtras ? [8.5] : []).concat([8.5, 8]);
+  h.panel = { x:3, y:2 };
+  if(c.filas.length && nC) h.escalas = [`${XLSX.utils.encode_cell({ r:2, c:3 })}:${XLSX.utils.encode_cell({ r:ultimaFila, c:2+nC })}`];
+  const nom1 = "Por intervalo";
+  XLSX.utils.book_append_sheet(wb, h.hoja(), nom1); hojas[nom1] = h;
+  // Hoja 2: Por día
+  const h2 = new XlsHoja();
+  h2.set(0, 0, titulo, "rtTit"); h2.set(0, 1, "", "rtTit"); h2.unir(0, 0, 0, 1);
+  h2.set(0, 2, `${c.sk.nombre} · Recibido por día vs FC`, "rtSub");
+  h2.fila(1, 0, ["Fecha", "Día", "Recibido", "FC", "Diferencia", "Desv."], ["rtEncI", "rtEncI", "rtEncC", "rtEncC", "rtEncC", "rtEncC"]);
+  let r2 = 2;
+  c.filas.forEach(f=>{
+    h2.set(r2, 0, serial(f.iso), "rtFecha");
+    h2.set(r2, 1, DIAS_SEMANA[f.dow] + (f.hoy ? " *" : ""), "rtDia");
+    h2.set(r2, 2, f.ok ? f.total : "—", f.ok ? "rtTotal" : "rtGuion");
+    h2.set(r2, 3, f.fc===null ? "—" : f.fc, f.fc===null ? "rtFcGuion" : "rtFc");
+    h2.set(r2, 4, f.desv===null ? "—" : f.recFc - f.fc, f.desv===null ? "rtGuion" : "rtNumSigno");
+    h2.set(r2, 5, f.desv===null ? "—" : f.desv, f.desv===null ? "rtGuion" : desvEst(f.desv, false));
+    r2++;
+  });
+  h2.fila(r2, 0, ["Total", ""], "rtPieTxt"); h2.unir(r2, 0, r2, 1);
+  h2.set(r2, 2, c.total, "rtPieNum"); h2.set(r2, 3, c.fcTotal===null ? "—" : c.fcTotal, c.fcTotal===null ? "rtPieGuion" : "rtPieFc");
+  h2.set(r2, 4, c.desv===null ? "—" : c.recFcTotal - c.fcOk, c.desv===null ? "rtPieGuion" : "rtPieNumSigno");
+  h2.set(r2, 5, c.desv===null ? "—" : c.desv, c.desv===null ? "rtPieGuion" : desvEst(c.desv, true));
+  r2++;
+  h2.fila(r2, 0, ["Promedio", ""], "rtPieTxt"); h2.unir(r2, 0, r2, 1);
+  h2.set(r2, 2, c.promDia===null ? "—" : c.promDia, c.promDia===null ? "rtPieGuion" : "rtPieDec");
+  h2.set(r2, 3, c.promFc===null ? "—" : c.promFc, c.promFc===null ? "rtPieGuion" : "rtPieFcDec");
+  h2.set(r2, 4, "", "rtPieTxt"); h2.set(r2, 5, "", "rtPieTxt");
+  h2.cols = [10.5, 11, 10, 9, 10.5, 8.5];
+  h2.panel = { y:2 };
+  XLSX.utils.book_append_sheet(wb, h2.hoja(), "Por día"); hojas["Por día"] = h2;
+  // Hoja 3: Validación
+  if(v.avisos.length || v.infos.length){
+    const h3 = new XlsHoja();
+    h3.set(0, 0, "Validación de los datos", "seccion");
+    h3.fila(2, 0, ["Tipo", "Dónde", "Detalle"], ["gEnc", "gEnc", "gEnc"]);
+    let r3 = 3;
+    v.avisos.forEach(x=>{ h3.fila(r3, 0, ["Aviso", x[0], x[1]], ["gTxtB", "gTxt", "gJusG"]); r3++; });
+    v.infos.forEach(x=>{ h3.fila(r3, 0, ["Nota", x[0], x[1]], ["gTxt", "gTxt", "gJusG"]); r3++; });
+    h3.cols = [8, 18, 100];
+    XLSX.utils.book_append_sheet(wb, h3.hoja(), "Validación"); hojas["Validación"] = h3;
+  }
+  const nombre = `Recibido por intervalo - ${c.sk.nombre.replace(/ · /g, " - ")} - ${mesEntero ? `${MESES[d0.month-1]} ${d0.year}` : `${kpisDiaIso(d0)} a ${kpisDiaIso(d1)}`}.xlsx`;
+  xlsDescargarConEstilo(wb, hojas, nombre);
 }
 
 function renderGenesys(){
