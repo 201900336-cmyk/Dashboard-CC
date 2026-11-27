@@ -1123,6 +1123,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .aud-lista td.f{text-align:left;white-space:nowrap;}
   .aud-lista td.txt{white-space:normal;text-align:left;min-width:180px;max-width:330px;line-height:1.35;}
   .aud-lista td.com{min-width:240px;max-width:400px;color:#3B4350;}
+  /* v22.46: el criterio y los tres pasos del protocolo (instrucción de WhatsApp) */
+  .aud-ruta.aud-crit{margin-top:3px;}
+  .aud-lista td.que{white-space:normal;min-width:130px;max-width:190px;line-height:1.35;}
+  .aud-lista td.prot{white-space:normal;text-align:left;min-width:128px;line-height:1.9;}
+  .aud-pr{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap;margin-right:4px;line-height:1.5;}
+  .aud-pr.ok{background:#E8F5E9;color:#1E6B2A;} .aud-pr.no{background:#FDECEF;color:#B4021F;}
+  .aud-notas{font-size:11.5px;}
+  .aud-reglas{list-style:none;margin:7px 0 0;padding:0;display:grid;gap:6px;}
+  .aud-reglas li{line-height:1.55;}
+  .aud-reglas .aud-pill{margin-right:5px;}
   .aud-lista .mut{color:#8A96A3;}
   .aud-ver{background:#fff;border:1px solid var(--kd-card-border);border-radius:14px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;color:#1F2937;}
   .aud-ver:hover{border-color:var(--red);color:var(--red);}
@@ -21009,7 +21019,7 @@ function ccHtmlCodigo(){
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
       <label style="font-size:12.5px;font-weight:700;color:#3B4350;">Cambiar <select id="cc-nodo" style="height:34px;max-width:300px;border:1px solid #C9CDD3;border-radius:8px;padding:0 8px;font:inherit;font-size:13px;">${ccOpcionesNodo(clave, false)}</select></label>
       <button type="button" class="btn-update" data-ccllnodo="${qaEsc(clave)}" data-ccll="">🎧 Escuchar estas llamadas</button>
-      ${d.cat==="WhatsApp" && audEsNodoObjetivo(nodo) ? `<button type="button" class="btn-update" data-ccaccion="auditar" title="Lee cada chat y dice si el código aplicaba (v22.43)">🔎 Auditar este código</button>` : ""}
+      ${d.cat==="WhatsApp" && audEsNodoObjetivo(nodo) ? `<button type="button" class="btn-update" data-ccaccion="auditar" title="Lee cada chat y dice si el código aplicaba, según la instrucción de WhatsApp para «Llamada no efectiva»">🔎 Auditar este código</button>` : ""}
     </div>
   </section>
   <div class="cc-kpis">
@@ -21466,19 +21476,36 @@ function ccInput(e){
    no, con un comentario corto, y bajar un Excel "sumamente completo" (asesor, hora, todo),
    en un modal con el estilo de KPIs del día.
 
-   Reglas que confirmó Oscar (2026-11-26):
-   · Si el cliente dijo cuál era su inconveniente, NO aplicaba, aunque después haya dejado de
-     responder (por ejemplo, cuando el asesor le pidió el contrato).
-   · Si el cliente no dijo nada (solo "hola", "buenas tardes", "quiero que me ayuden"), el
-     asesor le ofreció ayuda y el cliente dejó de responder, SÍ aplicaba.
+   Reglas (v22.46, 2026-11-27): Oscar pasó la "Instrucción para la tipificación de «Llamada no
+   efectiva» en WhatsApp" (Control de Calidad y Experiencia del Cliente) y eligió SEGUIR EL
+   MANUAL, con 5 minutos de espera. Las reglas del día anterior (v22.43: "si el cliente dijo su
+   inconveniente, no aplicaba") quedaron sin efecto: el manual dice lo contrario.
+   · APLICABA: el asesor le pidió algo al cliente (una respuesta, un dato, un documento o
+     confirmar que seguía ahí), el cliente no respondió y el asesor cumplió el protocolo:
+     esperó AUD_ESPERA_MIN minutos desde el pedido, mandó un recordatorio y avisó el cierre.
+   · NO APLICABA: el asesor no escribió, no le pidió nada o cerró sin retomar; el cliente
+     respondió (también un "sí" a "¿sigue en línea?"), agradeció la respuesta, dijo que ya no
+     necesitaba ayuda o no aceptó; la gestión quedó
+     resuelta, escalada o en seguimiento; siguió con otro asesor o cola; o el asesor cerró sin
+     esperar, sin recordatorio o sin aviso.
+   · REVISAR (los "casos que requieren revisión" del manual, sobre lo que si no saldría
+     "Aplicaba"): el asesor ya había respondido (respuesta parcial); el cliente esperó
+     AUD_DEMORA_MIN minutos o más a que le escribieran; el asesor repitió el mismo mensaje; el
+     cliente solo mandó un agradecimiento (hay un código hermano, "Mensaje de agradecimiento");
+     o Genesys no entregó el chat.
+   · Por qué escribió el cliente (el motivo) ya NO decide: queda como dato.
    · Solo este código, y solo WhatsApp.
-   Lo que decide el sistema (se explica en el modal y en el Excel):
-   · Cuenta lo que el cliente escribió con sus palabras, al bot o al asesor. Lo que eligió en el
-     menú del bot ("1", "Soporte"), su número o su nombre no cuentan como decir el motivo.
-   · Si el asesor cerró sin escribirle, o el cliente volvió a escribir y el asesor cerró sin
-     responderle, el cliente no abandonó: no aplicaba.
-   · Si el cliente mandó solo un audio o una imagen, o escribió algo que el sistema no reconoce,
-     o Genesys no entregó el chat: "Revisar" (lo tiene que ver una persona).
+   Lo que el manual no dice y se fijó acá: AUD_DEMORA_MIN; la espera va desde el pedido (o
+   desde el "un momento" / "ok" del cliente) hasta que el asesor cerró; un recordatorio es otro
+   mensaje (una pregunta, un "¿sigue en línea?" o un aviso que no sea el de cierre) al menos 1
+   minuto después del pedido; el aviso de cierre se reconoce por el texto o por ser el último
+   mensaje, sin pregunta, hasta 2 minutos antes de cerrar; los mensajes automáticos (bot) que
+   le llegan al cliente en el turno del asesor también cuentan. Una falla del sistema o un
+   cierre automático no se ven en el chat.
+   Orden del dictamen (audClasificar): chat ilegible → transferencia → el asesor no escribió →
+   el cliente ya no necesitaba ayuda → el cliente respondió y no le contestaron → gestión
+   resuelta → qué quedó pendiente → protocolo (espera > recordatorio > aviso) → casos de
+   revisión → Aplicaba.
    De dónde sale cada cosa:
    · Conversaciones: la consulta de detalle de Genesys (la de "Llamadas") con las colas de
      WhatsApp y el código. Cuenta el día en que el asesor la cerró, como los conteos de Códigos
@@ -21493,6 +21520,12 @@ const AUD_RUTA = ["Trámites Cortos","Información","Información","Llamada no E
 const AUD_MAX_DIAS = 31;
 const AUD_DIAS_ANTES = 3;
 const AUD_CFG = { paralelo:4, porSeg:4, esperaReintento:2500 };   // objeto (no constantes) para que las pruebas puedan acelerarlo
+// v22.46: el protocolo de la instrucción de WhatsApp para «Llamada no efectiva»
+const AUD_ESPERA_MIN = 5;     // minutos que el asesor debe esperar sin respuesta antes de cerrar (lo dio Oscar; el manual dice "el tiempo vigente")
+const AUD_DEMORA_MIN = 10;    // si el cliente esperó esto o más a que le escribieran, el abandono no se le carga solo a él: «Revisar» (el manual no da el número)
+const AUD_RECORD_SEG = 60;    // un recordatorio es un mensaje del asesor al menos 1 minuto después del pedido
+const AUD_FINAL_SEG = 120;    // el último mensaje (sin pregunta) hasta 2 minutos antes de cerrar cuenta como aviso de cierre aunque no se reconozca el texto
+const AUD_REPETIDO = 3;       // el mismo texto 3 veces o más: los «mensajes repetidos» del manual
 const AUD_DICT = {
   aplica:   { nom:"Aplicaba",    color:"#1E9E4B", cls:"ok",  xl:"dpro" },
   noaplica: { nom:"No aplicaba", color:"#E4032E", cls:"no",  xl:"ddet" },
@@ -21502,16 +21535,33 @@ const AUD_DICT = {
 const AUD_ORDEN = ["noaplica","revisar","aplica","sinleer"];
 const AUD_SESION = "Se venció la sesión de Genesys. Iniciá sesión otra vez y volvé a abrir la auditoría (lo leído hasta ahora se pierde al recargar).";
 const AUD_CAT = {
-  noEscribio:"Sin motivo: el cliente no escribió",
-  saludo:"Sin motivo: solo saludó, pidió ayuda o dio datos",
-  menu:"Sin motivo: solo usó el menú del bot",
+  // v22.46 — Aplicaba: qué le quedó pendiente al cliente (punto 3 del manual)
+  saludo:"No respondió al saludo del asesor",
+  dato:"No envió el dato que se le pidió",
+  doc:"No envió el documento o la evidencia",
+  valid:"Dejó de responder durante una validación",
+  pregunta:"Dejó de responder a una pregunta del asesor",
+  // No aplicaba (punto 4 del manual)
   asesorNo:"El asesor no le escribió al cliente",
-  sinRespuesta:"El asesor no le respondió al cliente",
-  adjunto:"Solo audio o imagen",
-  texto:"Texto que el sistema no reconoció",
+  sinRespuesta:"El asesor cerró sin retomar la atención",
+  sinPedido:"No quedó nada pendiente del cliente",
+  yaNo:"El cliente dijo que ya no necesitaba ayuda",
+  resuelta:"Quedó resuelta, escalada o en seguimiento",
+  transfer:"Siguió con otro asesor o cola",
+  sinEspera:`Cerró sin esperar ${AUD_ESPERA_MIN} minutos`,
+  sinRecord:"Cerró sin mandar recordatorio",
+  sinAviso:"Cerró sin avisar el cierre",
+  // Revisar (punto 5 del manual)
+  respondido:"El asesor ya había respondido",
+  demora:"El cliente esperó mucho al asesor",
+  repetido:"El asesor repitió el mismo mensaje",
+  gracias:"El cliente solo mandó un agradecimiento",
   chat:"No se pudo leer el chat",
   sinleer:"Sin leer",
 };
+const AUD_PROTOCOLO = new Set([AUD_CAT.sinEspera, AUD_CAT.sinRecord, AUD_CAT.sinAviso]);
+// Por qué escribió el cliente cuando no se reconoce un motivo (ya no decide el dictamen: es un dato)
+const AUD_PORQUE = { nada:"No lo dijo", adjunto:"Mandó audio o imagen", texto:"Lo dijo con palabras que el sistema no reconoce", chat:"Chat sin leer o no disponible" };
 const AUD = {
   rango:"7d", desde:null, hasta:null, picker:false,
   ids:[],
@@ -21546,7 +21596,29 @@ const AUD_RE = {
   venta: /\b(contratar|contrato nuevo|adquirir|instalar|instalacion|instalen|nuevo servicio|servicio nuevo|plan|planes|promocion|promociones|promo|oferta|ofertas|precio|precios|cuanto cuesta|cuanto vale|cuanto sale|costo|costos|tarifa|tarifas|cotizar|cotizacion|comprar|equipo nuevo|celular nuevo|telefono nuevo|renovar|renovacion|combo|combos|doble pack|triple pack|ventas|vendedor|aumentar la velocidad|subir la velocidad|mas velocidad|mas megas)\b/,
   hogar: /\b(casa|hogar|residencia|residencial|fijo|modem|router|ruter|wifi|wi fi|cable|tv|television|decodificador|fibra|instalacion|colonia|barrio|apartamento)\b/,
   movil: /\b(celular|cel|movil|telefono movil|chip|sim|saldo|recarga|recargas|recargue|paquete|paquetes|datos moviles|datos|megas|prepago|pospago|linea movil|4g|5g|lte)\b/,
-  aviso: /\b(no (hemos |he )?(recibido|obtenido|tenido|recibimos|obtuvimos) (su |tu |una )?respuesta|falta de respuesta|sin respuesta|inactividad|al no (recibir|obtener|tener) respuesta|no (nos )?(responde|contesta)|(procedemos|procedere|procederemos|vamos) a (cerrar|finalizar)|(cerrar|finalizar|cerraremos|finalizaremos|cerrare|finalizare|cerramos|finalizamos) (la |esta |el |este )?(conversacion|chat|interaccion|atencion|gestion|sesion|caso)|daremos por (finalizada|terminada|cerrada)|doy por (finalizada|terminada|cerrada)|vuelva a escribirnos|puede volver a escribirnos)\b/,
+  aviso: /\b(no (hemos |he )?(recibido|obtenido|tenido|recibimos|obtuvimos) (su |tu |una |ninguna )?respuesta|falta de respuesta|sin respuesta|inactividad|al no (recibir|obtener|tener|contar con)|no fue posible (completar|continuar|concluir|finalizar|realizar)|no (nos )?(responde|contesta)|(procedemos|procedere|procederemos|procedo|vamos|voy) a (cerrar|finalizar|concluir|terminar)(la|lo|le)?|(cerrar|finalizar|concluir|cerraremos|finalizaremos|cerrare|finalizare|cerramos|finalizamos|concluimos) (la |esta |el |este )?(conversacion|chat|interaccion|atencion|gestion|sesion|caso|comunicacion)|(daremos|damos|doy|dare) por (finalizada|terminada|cerrada|concluida)|por no (tener|recibir|obtener) respuesta|(se )?(cierra|finaliza|concluye|termina) (la |esta |el |este )?(conversacion|chat|interaccion|sesion|atencion)|(sera|se|queda|quedara) (cerrad[oa]|finalizad[oa])|cierre de (la |esta |el |este )?(conversacion|chat|sesion|interaccion)|vuelva a escribirnos|puede volver a escribirnos)\b/,
+  // v22.46 (instrucción de WhatsApp): qué le pidió el asesor, recordatorios, gestión resuelta y cliente que ya no necesita ayuda
+  pide: /\b(en que (le |te |lo |la |les )?(puedo|podemos|podria|podriamos) (ayudar|apoyar|servir|colaborar|asistir)|como (le |te |lo |la )?(puedo|podemos) (ayudar|apoyar|servir|colaborar)|cual es su (consulta|duda|inconveniente|solicitud|requerimiento|problema)|(me|nos) (puede|podria|puedes|podrias|pueden) (brindar|indicar|compartir|enviar|proporcionar|confirmar|facilitar|decir|dar|regalar|detallar|comentar|adjuntar|mandar)|(me|nos) (brinda|indica|comparte|envia|proporciona|confirma|facilita|dice|regala|detalla|comenta|adjunta|manda) (su|sus|el|la|los|las|un|una|por favor|si)|(necesito|necesitamos|requiero|requerimos|ocupo|ocupamos) (que|su|sus|el|la|los|las|un|una|me|nos)|favor (de )?(indicar|brindar|enviar|compartir|confirmar|proporcionar|adjuntar)|(indique|brinde|comparta|envie|proporcione|confirme|facilite|adjunte)(me|nos)?|(diga|cuente|comente|escriba|detalle|regale)(me|nos)|(indica|brinda|comparte|envia|confirma|cuenta|comenta|regala|manda)me|dime)\b/,
+  sigue: /\b(sigues? (en linea|con nosotros|ahi|aqui|conectad[oa]|presente)|continuas? (en linea|con nosotros|ahi|aqui|conectad[oa])|(se|te) encuentras? (en linea|ahi|aqui|con nosotros|conectad[oa])|(esta|estas) (ahi|en linea|con nosotros|conectad[oa])|(aun|todavia) (esta|estas|se encuentra|te encuentras|sigue|sigues|continua|continuas)|seguimos (atentos|atentas|pendientes|a la espera|en espera|en linea)|(quedo|quedamos|estoy|estamos|sigo) (atento|atenta|atentos|atentas|pendiente|pendientes|a la espera|en espera)|(en|a la) espera de (su|tu) (respuesta|confirmacion)|(espero|esperamos|aguardo|aguardamos|esperando|aguardando) (su|tu) (respuesta|confirmacion))\b/,
+  algoMas: /\b(algo mas|alguna otra|otra (consulta|duda|pregunta|gestion|cosa)|algo adicional|(consulta|duda) adicional)\b/,
+  espere: /\b(permitame|permiteme|me permite|un momento|un momentito|un segundo|un minuto|deme (un|unos)|dame (un|unos)|aguarde|espere|voy a (validar|verificar|revisar|consultar|chequear)|estoy (validando|verificando|revisando|consultando)|procedo a (validar|verificar|revisar|consultar))\b/,
+  resuelta: /\b(se (le |les )?(ha |han )?(genero|generado|registro|registrado|levanto|levantado|creo|creado|ingreso|ingresado|escalo|escalado|aplico|aplicado|activo|activado|realizo|realizado|reconecto|reconectado|restablecio|restablecido|soluciono|solucionado|resolvio|resuelto|proceso|procesado|agendo|agendado|programo|programado|traslado|trasladado)\b.{0,40}\b(reporte|ticket|caso|averia|gestion|solicitud|orden|visita|reclamo|ajuste|paquete|recarga|servicio|reconexion|activacion|cambio|tramite|reintegro|credito)|numero de (reporte|ticket|caso|gestion|orden|solicitud|reclamo|averia) (es )?\d|(reporte|ticket|caso|gestion|orden|solicitud|reclamo|averia) (numero |n |no )?\d{4,}|(quedo|queda|ha quedado|fue|ha sido) (generad[oa]|registrad[oa]|escalad[oa]|aplicad[oa]|activad[oa]|realizad[oa]|agendad[oa]|programad[oa]|ingresad[oa]|solucionad[oa]|resuelt[oa]|restablecid[oa]|trasladad[oa])|tecnico (lo|la|le|los|les) (visitara|estara visitando|contactara|estara contactando)|en (un )?(plazo|lapso|tiempo) (maximo )?de \d+ (a \d+ )?(horas|dias)|(le|lo|la|les) estaremos (contactando|llamando|visitando|notificando|informando)|en seguimiento|su servicio ya (esta|fue|ha sido|se encuentra)|ya (puede|deberia) (navegar|utilizar|usar|disfrutar)|ya (se encuentra|esta|quedo) (activ[oa]|restablecid[oa]|solucionad[oa]|aplicad[oa]|reconectad[oa]))\b/,
+  yaNo: /\b(ya no (es necesario|hace falta|lo necesito|la necesito|necesito ayuda|ocupo ayuda|gracias)|ya (se )?(arreglo|soluciono|resolvio|compuso|restablecio|normalizo)|ya (me )?(funciona|funciono|sirve|sirvio|llego|regreso|volvio|quedo)|ya tengo (internet|servicio|senal|linea|cable|wifi|saldo|datos)|ya esta (bien|funcionando|solucionado|resuelto|listo)|ya (lo|la) (resolvi|solucione|arregle|hice)|ya pude|olvidelo|olvidalo|dejelo asi|dejalo asi|dejemoslo asi|mejor (despues|luego|otro dia|llamo|voy a (la|una) (tienda|agencia))|(lo|la) (hare|hago|vere|veo) (despues|luego|mas tarde)|(escribo|llamo|vuelvo|regreso) (despues|luego|mas tarde|otro dia)|cancel(ar|e|o) (la |mi )?(solicitud|gestion|consulta)|no gracias|no deseo|no quiero (continuar|seguir)|no me interesa|(esta|es|sale|me sale|lo veo|la veo) (muy |bien |demasiado |bastante )?(caro|cara|carisimo|carisima|elevado|elevada)|muy caro|no (lo|la) (quiero|deseo|acepto)|no acepto|no estoy de acuerdo)\b/,
+  doc: /\b(comprobante|foto|fotos|fotografia|fotografias|captura|capturas|pantallazo|imagen|imagenes|screenshot|evidencia|adjunt[a-z]*|numero de serie|documento|voucher|boleta|recibo de pago)\b/,
+  dato: /\b(contrato|numero de (linea|telefono|celular|cuenta|cliente|referencia|identidad|reporte|caso|servicio)|identidad|dni|rtn|nombre (completo|del titular)|titular|direccion|codigo|referencia|correo|numero (afectado|con el problema|en consulta)|linea (afectada|en consulta)|imei|fecha de nacimiento|sus datos)\b/,
+  ayudar: /\b(en que|como (le|te|lo|la)|cual es su)\b/,
+  // el cliente contesta "sí", "ok", "listo" (solo cuenta como respuesta si el asesor le había preguntado algo)
+  afirma: /^(ok+|okay|oki+s?|vale|va|vaya|dale|listo|perfecto|excelente|entendido|de acuerdo|esta bien|bien|si+)\b/,
+  // el cliente contesta que no necesita nada más (al "¿le puedo ayudar en algo más?")
+  nada: /^(no+|nada|ninguna|ninguno|eso es todo|es todo|seria todo|eso seria todo|solo eso|era eso|eso era todo|nada mas|por (el momento|ahora) no)( (muchas |mil )?(gracias+|nada mas|es todo|eso es todo|seria todo|eso seria todo|solo eso|por el momento|por ahora|muy amable|bendiciones|igualmente))*$/,
+  gracias: /\b(gracias+|agradezco|agradecid[oa]|muy amable|bendiciones|dios (le|les|te|los) bendiga)\b/,
+  monto: /\b(l|lps?|hnl|usd)\s?\d|\b\d+( \d{2})?\s(lempiras?|lps?|dolares?)\b/,
+  // textos fijos de apertura que no son una respuesta al cliente
+  intro: /\b(grabad[ao]|almacenad[ao]|monitoread[ao]|fines de calidad|politicas? de privacidad|aviso de privacidad|terminos y condiciones|horario de atencion|nuestro horario)\b/,
+  // el mensaje dice que va a cerrar (un aviso de cierre de verdad, aunque además pregunte algo)
+  cierre: /\b((procedemos|procedere|procederemos|procedo|vamos|voy) a (cerrar|finalizar|concluir|terminar)(la|lo|le)?|(cerrar|finalizar|concluir|cerraremos|finalizaremos|cerrare|finalizare|cerramos|finalizamos|concluimos) (la |esta |el |este )?(conversacion|chat|interaccion|atencion|gestion|sesion|caso|comunicacion)|(daremos|damos|doy|dare) por (finalizada|terminada|cerrada|concluida)|no fue posible (completar|continuar|concluir|finalizar|realizar)|(se )?(cierra|finaliza|concluye|termina) (la |esta |el |este )?(conversacion|chat|interaccion|sesion|atencion)|cierre de (la |esta |el |este )?(conversacion|chat|sesion|interaccion)|(conversacion|chat|sesion|interaccion) (sera|se|queda|quedara) (cerrad[oa]|finalizad[oa]|cerrara|finalizara|dara por (finalizad[oa]|terminad[oa]|cerrad[oa])))\b/,
+  // el saludo con el que abre el asesor (para no confundirlo con una respuesta)
+  saludoAse: /\b(hola|buen dia|buenos dias|buenas tardes|buenas noches|buenas|bienvenid[oa]|(le|te|les) saluda|mi nombre es|es un (gusto|placer)|sera un (gusto|placer)|un (gusto|placer) (saludar|atender)(le|lo|la|te)|gracias por (comunicarse|comunicarte|contactarnos|contactar|escribirnos|escribir|preferirnos)|con (mucho )?gusto (le|lo|la|te) (ayudo|atiendo|apoyo|asisto|ayudare|atendere|voy a (ayudar|atender|apoyar)))\b/,
 };
 // Motivos: gana el primero que coincide (el orden importa). serv: servicio cuando el motivo lo dice solo.
 const AUD_MOTIVOS = [
@@ -21668,6 +21740,29 @@ function audListaAdj(tipos){
   const nom = { audio:["un audio","audios"], imagen:["una imagen","imágenes"], video:["un video","videos"], archivo:["un archivo","archivos"] };
   return Object.keys(n).map(k=> n[k]===1 ? nom[k][0] : `${n[k]} ${nom[k][1]}`).join(" y ") || "un adjunto";
 }
+// v22.46: el cliente pide tiempo ("un momento", "ya se lo mando"): no es una respuesta, pero la espera se cuenta desde ahí
+function audEsEspera(x){
+  const n = audNorm(x);
+  return !!n && n.split(" ").length <= 8 && /\b(un momento|un momentito|un segundo|un minuto|en un momento|ya (le|se lo|te|te lo) (digo|mando|envio|paso|busco|doy)|espere|espereme|esperame|deme (un|unos)|dame (un|unos)|permitame|permiteme|ahorita|voy a (buscar|ver|revisar)|dejeme (buscar|ver|revisar)|dejame (buscar|ver|revisar)|ya casi|ya voy)\b/.test(n);
+}
+// v22.46: la espera del protocolo se escribe sin redondear hacia arriba (4 min 40 s no puede leerse como "5 min")
+function audEsperaTxt(seg){
+  if(seg==null || isNaN(seg)) return "—";
+  const s = Math.floor(seg), m = Math.floor(s/60), r = s % 60;
+  if(m >= 60){ const h = Math.floor(m/60), mm = m % 60; return mm ? `${h} h ${mm} min` : `${h} h`; }
+  if(!m) return `${r} s`;
+  return r && m < 10 ? `${m} min ${r} s` : `${m} min`;
+}
+// v22.46: qué clase de mensaje del asesor es, para el protocolo del manual.
+//   pedido  = le pide o le pregunta algo        sigue = "¿sigue en línea?", "seguimos atentos" (recordatorio)
+//   algomas = "¿le puedo ayudar en algo más?"    aviso = avisa el cierre (sin pregunta)
+//   espere  = "permítame un momento" (corto)     info  = cualquier otra cosa (una respuesta, un saludo, una despedida)
+// `aviso` va aparte porque un mensaje puede preguntar y además avisar el cierre.
+function audTipoAsesor(x){
+  const n = audNorm(x), q = /[?¿]/.test(String(x==null ? "" : x)), aviso = AUD_RE.aviso.test(n);
+  const tipo = AUD_RE.algoMas.test(n) ? "algomas" : AUD_RE.sigue.test(n) ? "sigue" : (q || AUD_RE.pide.test(n)) ? "pedido" : aviso ? "aviso" : AUD_RE.espere.test(n) && n.split(" ").length <= 16 && !AUD_RE.monto.test(n) ? "espere" : "info";
+  return { tipo, aviso, n };
+}
 
 /* ---------- los mensajes del chat ---------- */
 // Cada uno: { t, q:"c" (cliente) | "a" (asesor) | "b" (bot o Genesys), u: id del asesor, n: nombre, x: texto, boton, ops: opciones, adj: [{ tipo, nombre }] }
@@ -21717,8 +21812,10 @@ function audRes(f){
   return f._res = audClasificar(f, ch);
 }
 function audClasificar(f, ch){
-  const r = { dict:"sinleer", cat:AUD_CAT.sinleer, motivo:null, kw:"", cita:"", serv: f.servCola || "Sin precisar", com:"",
-    nCli:0, nAse:0, nBot:0, adjCli:[], menu:[], primero:"", todo:"", ultimo:"", ofrecio:null, aviso:false, espera:null, despues:false,
+  const r = { dict:"sinleer", cat:AUD_CAT.sinleer, motivo:null, porque:AUD_PORQUE.chat, kw:"", cita:"", serv: f.servCola || "Sin precisar", com:"",
+    nCli:0, nAse:0, nBot:0, adjCli:[], menu:[], primero:"", todo:"", ultimo:"", ofrecio:null, aviso:false, avisoComo:"", espera:null, despues:false,
+    // v22.46: el protocolo (solo cuando quedó algo pendiente del cliente)
+    pidio:false, pedido:"", pedidoT:"", esperaPedido:null, cumpleEspera:null, recordatorios:null, repetidos:0, demora:null, ultAsesor:"", sinContar:[],
     estadoChat:"Sin leer", raro:"" };
   if(!ch){ r.com = "No se leyó el chat (la lectura se detuvo antes de llegar a esta conversación)."; return r; }
   if(ch.estado!=="ok"){
@@ -21727,9 +21824,11 @@ function audClasificar(f, ch){
     return r;
   }
   r.estadoChat = "Leído";
+  const T = m=> Date.parse(m.t);
   const finMs = Date.parse(f.finAt || f.cierre), tope = isNaN(finMs) ? Infinity : finMs + 60000;
-  const msgs = (ch.msgs||[]).filter(m=>{ const t = Date.parse(m.t); return isNaN(t) || t <= tope; });
-  r.despues = (ch.msgs||[]).some(m=> m.q==="c" && Date.parse(m.t) > tope);
+  const msgs = (ch.msgs||[]).filter(m=>{ const t = T(m); return isNaN(t) || t <= tope; });
+  // después de que el asesor cerró: un "gracias" o un sticker no cuentan como que el cliente volvió a escribir
+  r.despues = !isNaN(finMs) && (ch.msgs||[]).some(m=> m.q==="c" && T(m) > finMs && (audNorm(m.x) ? !audSoloCortesia(m.x) : /[?¿]/.test(String(m.x||"")) || (m.adj||[]).some(j=> j.tipo!=="sticker")));
   let prevBot = "";
   const cli = [];
   msgs.forEach(m=>{
@@ -21743,54 +21842,214 @@ function audClasificar(f, ch){
   r.menu = cli.filter(x=> x.a.tipo==="menu").map(x=> String(x.m.x||"").trim()).filter(Boolean);
   // los mensajes del asesor que cerró, en su turno (si la pasaron de otro asesor, lo que escribió el otro no cuenta)
   const iniMs = Date.parse(f.tomo);
-  const ases = msgs.filter(m=>{ if(m.q!=="a" || (m.u && f.uid && m.u!==f.uid)) return false; const t = Date.parse(m.t); return isNaN(t) || isNaN(iniMs) || t >= iniMs - 60000; });
+  const ases = msgs.filter(m=>{ if(m.q!=="a" || (m.u && f.uid && m.u!==f.uid)) return false; const t = T(m); return isNaN(t) || isNaN(iniMs) || t >= iniMs - 60000; });
   const ultA = ases.length ? ases[ases.length-1] : null;
   r.ofrecio = ases.length > 0;
   r.aviso = ases.some(m=> AUD_RE.aviso.test(audNorm(m.x)));
+  if(r.aviso) r.avisoComo = "texto";
   const ult = msgs.length ? msgs[msgs.length-1] : null;
   r.ultimo = !ult ? "" : ult.q==="c" ? "Cliente" : ult.q==="a" ? "Asesor" : "Bot";
-  if(ultA){ const t = Date.parse(ultA.t); if(!isNaN(t) && !isNaN(finMs)) r.espera = Math.max(0, (finMs - t)/1000); }
+  if(ultA){ const t = T(ultA); if(!isNaN(t) && !isNaN(finMs)) r.espera = Math.max(0, (finMs - t)/1000); }
+  // ---- por qué escribió el cliente: es un dato, ya no decide el dictamen (v22.46) ----
   const todoN = audNorm(cli.map(x=> x.m.x).join(" "));
   const motivos = cli.filter(x=> x.a.tipo==="motivo");
   const conAdj = cli.filter(x=> (x.m.adj||[]).some(j=> j.tipo!=="sticker"));
   const raros = cli.filter(x=> x.a.tipo==="texto");
-  // ¿el cliente volvió a escribir después del último mensaje del asesor? (un "ok", "gracias" o un sticker no cuentan)
-  const tA = ultA ? Date.parse(ultA.t) : NaN;
-  const respondio = ultA ? cli.filter(x=>{ const t = Date.parse(x.m.t); return !isNaN(t) && !isNaN(tA) && t > tA && (x.a.tipo!=="relleno" || !audSoloCortesia(x.m.x)) && (x.a.tipo!=="vacio" || (x.m.adj||[]).some(j=> j.tipo!=="sticker")); }) : [];
-  const horaA = ultA && ultA.t ? qaHora(ultA.t) : "";
+  let intro;
   if(motivos.length){
     const x = motivos[0];
-    r.dict = "noaplica"; r.motivo = x.a.motivo; r.cat = r.motivo.nom; r.kw = r.motivo.kw || ""; r.cita = audCita(x.m.x);
+    r.motivo = x.a.motivo; r.porque = r.motivo.nom; r.kw = r.motivo.kw || ""; r.cita = audCita(x.m.x);
     r.serv = audServicioDe(r.motivo, audNorm(x.m.x), todoN, f.servCola);
-    r.com = `El cliente dijo su motivo: ${r.motivo.nom}${r.serv && r.serv!=="Sin precisar" ? ` (${r.serv})` : ""}, «${r.cita}». Como se supo el motivo, no aplicaba el abandono.`;
-    return r;
+    intro = `El cliente escribió por: ${r.motivo.nom}${r.serv && r.serv!=="Sin precisar" ? ` (${r.serv})` : ""}, «${r.cita}».`;
+  } else {
+    r.serv = audServicioDe(null, "", todoN, f.servCola);
+    if(conAdj.length){ r.porque = AUD_PORQUE.adjunto; intro = `El cliente mandó ${audListaAdj([].concat(...conAdj.map(x=> x.m.adj.map(j=> j.tipo))))} y no escribió qué necesitaba.`; }
+    else if(raros.length){ r.porque = AUD_PORQUE.texto; r.cita = audCita(raros[0].m.x); r.raro = raros[0].m.x; intro = `El cliente escribió «${r.cita}».`; }
+    else { r.porque = AUD_PORQUE.nada; intro = audQueEscribio(cli); }
   }
-  r.serv = audServicioDe(null, "", todoN, f.servCola);
-  if(conAdj.length){
-    r.dict = "revisar"; r.cat = AUD_CAT.adjunto;
-    r.com = `El cliente mandó ${audListaAdj([].concat(...conAdj.map(x=> x.m.adj.map(j=> j.tipo))))} y no escribió el motivo. Revisá el chat para saber qué pidió.`;
-    return r;
-  }
-  if(raros.length){
-    r.dict = "revisar"; r.cat = AUD_CAT.texto; r.cita = audCita(raros[0].m.x); r.raro = raros[0].m.x;
-    r.com = `El cliente escribió «${r.cita}» y el sistema no reconoció el motivo. Revisalo.`;
-    return r;
-  }
-  const queEscribio = audQueEscribio(cli);
-  if(!ases.length){
-    r.dict = "noaplica"; r.cat = AUD_CAT.asesorNo;
-    r.com = `${queEscribio} El asesor cerró sin escribirle, así que el cliente no abandonó: no aplicaba.`;
-    return r;
-  }
+  // lo que el asesor alcanzó a ver: lo que el cliente escribió antes de que cerrara
+  const visto = x=>{ const t = T(x.m); return isNaN(finMs) || isNaN(t) || t <= finMs; };
+  const dijo = motivos.some(visto) || conAdj.some(visto) || raros.some(visto);   // dijo (o mandó) algo sobre lo que necesitaba
+  const no = (cat, com)=>{ r.dict = "noaplica"; r.cat = cat; r.com = com; return r; };
+  const rev = (cat, com)=>{ r.dict = "revisar"; r.cat = cat; r.com = com; return r; };
+  // ---- 1) siguió con otro asesor o cola: es una transferencia ----
+  if(f.sigue) return no(AUD_CAT.transfer, "Después de este asesor la conversación siguió con otro asesor o cola: es una transferencia, no un abandono, así que no aplicaba.");
+  // ---- 2) el asesor no le escribió ----
+  if(!ases.length) return no(AUD_CAT.asesorNo, `${intro} El asesor cerró sin escribirle, así que el cliente no abandonó: no aplicaba.`);
+  // Qué es cada mensaje del cliente para el protocolo:
+  //   "resp"   = respondió (lo que sea de fondo; también un "sí" o "no" cuando el asesor le preguntó si seguía ahí o si necesitaba algo más)
+  //   "espera" = pidió tiempo ("un momento") o contestó "ok" a un pedido: lo pedido sigue pendiente y la espera se cuenta desde ahí
+  //   "nada"   = cortesía ("gracias", "ok" a un aviso) o sticker
+  const antesDe = x=>{ const t = T(x.m); let p = null; ases.forEach(m=>{ if(T(m) < t) p = m; }); return p ? Object.assign({ crudo: String(p.x||"") }, audTipoAsesor(p.x)) : { tipo:"", n:"", crudo:"" }; };   // el último mensaje del asesor antes de este
+  // un "sí" o un "ok" no contesta un pedido que necesita contenido (un dato, un documento, "¿en qué le ayudo?", "¿cuál es…?"); sí contesta una pregunta de sí o no
+  const pideContenido = p=> AUD_RE.doc.test(p.n) || AUD_RE.dato.test(p.n) || AUD_RE.ayudar.test(p.n) || /\b(su|tu) (nombre|numero|telefono|direccion|correo|consulta|duda|inconveniente|requerimiento|solicitud|problema|caso)\b/.test(p.n)
+    || /¿\s*(qu[eé]|cu[aá]l(es)?|c[oó]mo|cu[aá]ndo|d[oó]nde|qui[eé]n|cu[aá]nt[oa]s?|con qui[eé]n|a qu[eé]|en qu[eé]|por qu[eé]|para qu[eé])(?![a-záéíóúñ])/i.test(p.crudo);
+  const comoOk = (x, neg)=>{   // "sí", "ok", "no", un emoji: depende de a qué le contesta
+    const p = antesDe(x);
+    if(p.tipo==="sigue" || p.tipo==="algomas") return "resp";
+    if(p.tipo==="pedido") return neg || !pideContenido(p) ? "resp" : "espera";
+    return "nada";
+  };
+  const clase = x=>{
+    if(x.a.tipo==="vacio"){
+      if((x.m.adj||[]).some(j=> j.tipo!=="sticker")) return "resp";            // audio, imagen, documento
+      const crudo = String(x.m.x||"").trim();
+      if(/[?¿]/.test(crudo)) return "resp";                                     // "?", "??": está ahí, esperando
+      return crudo || (x.m.adj||[]).length ? comoOk(x, false) : "nada";        // un emoji o un sticker: como un "ok"
+    }
+    if(x.a.tipo!=="relleno") return "resp";
+    if(audEsEspera(x.m.x)) return "espera";
+    if(!audSoloCortesia(x.m.x)) return "resp";
+    const n = audNorm(x.m.x), neg = /^no\b/.test(n);
+    return neg || AUD_RE.afirma.test(n) ? comoOk(x, neg) : "nada";             // "gracias", "bendiciones", "hasta luego": cortesía
+  };
+  cli.forEach(x=>{ x.k = clase(x); });
+  const cliV = cli.filter(visto);
+  const tA = T(ultA), tA1 = T(ases[0]);
+  // ---- 3) lo último que el cliente le dijo al asesor fue que ya no necesitaba ayuda, o no aceptó ----
+  const esYaNo = x=>{
+    const n = audNorm(x.m.x), w = n ? n.split(" ").length : 0;
+    if(!w) return "";
+    if(w <= 6 && AUD_RE.nada.test(n) && antesDe(x).tipo==="algomas") return "algomas";
+    return w <= 10 && AUD_RE.yaNo.test(n) ? "yano" : "";
+  };
+  const dicho = cliV.filter(x=>{ const t = T(x.m); return !isNaN(t) && !isNaN(tA1) && t > tA1 && (x.k==="resp" || esYaNo(x)); });
+  const ultDicho = dicho.length ? dicho[dicho.length-1] : null, yaNo = ultDicho ? esYaNo(ultDicho) : "";
+  if(yaNo==="algomas") return no(AUD_CAT.yaNo, `El asesor le preguntó si necesitaba algo más y el cliente respondió «${audCita(ultDicho.m.x)}»: la atención terminó ahí. Va el código de lo que se gestionó: no aplicaba.`);
+  if(yaNo) return no(AUD_CAT.yaNo, `El cliente le dijo al asesor «${audCita(ultDicho.m.x)}»: ya no necesitaba ayuda o no aceptó lo que le ofrecieron. Va el resultado real de la gestión: no aplicaba.`);
+  // ---- 4) el cliente volvió a escribir y el asesor cerró sin responderle ----
+  const respondio = cliV.filter(x=>{ const t = T(x.m); return !isNaN(t) && !isNaN(tA) && t > tA && x.k==="resp"; });
   if(respondio.length){
     const x = respondio[respondio.length-1];
-    r.dict = "noaplica"; r.cat = AUD_CAT.sinRespuesta; r.cita = audCita(x.m.x || (x.m.adj||[]).map(j=> j.tipo).join(", "));
-    r.com = `El asesor le escribió, pero el cliente volvió a escribir («${r.cita}») y el asesor cerró sin responderle: no aplicaba.`;
-    return r;
+    return no(AUD_CAT.sinRespuesta, `El asesor le escribió, pero el cliente volvió a escribir («${audCita(x.m.x || (x.m.adj||[]).map(j=> j.tipo).join(", "))}») y el asesor cerró sin responderle: no aplicaba.`);
   }
-  r.dict = "aplica";
-  r.cat = !cli.length || !cli.some(x=> String(x.m.x||"").trim()) ? AUD_CAT.noEscribio : cli.every(x=> x.a.tipo==="menu" || x.a.tipo==="vacio") ? AUD_CAT.menu : AUD_CAT.saludo;
-  r.com = `${queEscribio} El asesor le ofreció ayuda${horaA ? ` a las ${horaA}` : ""} y el cliente no volvió a responder${r.espera!=null ? ` (cerró ${audMinTxt(r.espera)} después)` : ""}. Sí aplicaba.`;
+  // ---- 5) la gestión quedó resuelta, escalada o en seguimiento (si el asesor fue quien escribió primero, nombrar el caso es parte del seguimiento) ----
+  const hecho = f.dir==="outbound" ? null : ases.find(m=> AUD_RE.resuelta.test(audNorm(m.x)));
+  if(hecho) return no(AUD_CAT.resuelta, `El asesor dejó la gestión resuelta, escalada o en seguimiento («${audCita(hecho.x)}»). Va el código de esa gestión: no aplicaba.`);
+  // ---- 6) qué quedó pendiente del cliente: los mensajes del asesor que quedaron sin respuesta ----
+  const sus = cliV.filter(x=> x.k==="resp").map(x=> T(x.m)).filter(t=> !isNaN(t));
+  const tUlt = sus.length ? Math.max(...sus) : NaN;
+  let cola = ases.filter(m=> isNaN(tUlt) || T(m) > tUlt);
+  if(!cola.length) cola = ases.slice();
+  cola = cola.map(m=> Object.assign({ m, t: T(m) }, audTipoAsesor(m.x)));
+  // el saludo con el que el asesor abre no es una respuesta
+  const esSaludo = c=> c.m===ases[0] && AUD_RE.saludoAse.test(c.n) && !/\d{3,}/.test(c.n);
+  cola.forEach(c=>{ if(c.tipo==="info" && esSaludo(c) && c.n.split(" ").length <= 30) c.tipo = "saludo"; });
+  // ¿el mensaje trae una respuesta de fondo? Un monto siempre; si no, un número, un enlace o una explicación larga, salvo en la
+  // apertura del asesor (su primer minuto) cuando el cliente no había dicho nada o el mensaje es la bienvenida fija.
+  const apertura = c=> !isNaN(tA1) && !isNaN(c.t) && c.t - tA1 < 60000;
+  const fondo = c=>{
+    if((c.tipo!=="info" && c.tipo!=="pedido") || esSaludo(c) || AUD_RE.intro.test(c.n)) return false;
+    const crudo = String(c.m.x||"");
+    if(c.tipo==="pedido" && !/\?/.test(crudo)) return false;   // un pedido sin signo de pregunta: no se puede separar lo que respondió de lo que pidió
+    const n = c.tipo==="pedido" ? audNorm(crudo.replace(/¿[^?]*\?/g, " ").replace(/[^.!?\n]*\?/g, " ")) : c.n;
+    const w = n ? n.split(" ").length : 0;
+    if(AUD_RE.monto.test(n)) return true;
+    if(apertura(c) && (!dijo || AUD_RE.saludoAse.test(c.n))) return false;
+    return (w >= 5 && /\d/.test(n)) || /https?:|www\./i.test(crudo) || (c.tipo==="info" && w >= 18);
+  };
+  // ---- 6b) el cliente agradeció una respuesta del asesor y después no hubo más preguntas: la atención terminó ahí ----
+  const agradecio = cliV.filter(x=>{ const t = T(x.m); return !isNaN(t) && !isNaN(tA1) && t > tA1 && x.k==="nada" && AUD_RE.gracias.test(audNorm(x.m.x)); }).pop();
+  if(agradecio){
+    const tg = T(agradecio.m), previo = cola.filter(c=> c.t < tg).pop();
+    const respondio2 = previo && (previo.tipo==="algomas" || (previo.tipo==="info" && !AUD_RE.intro.test(previo.n) && (/\d/.test(previo.n) || /https?:|www\./i.test(String(previo.m.x||"")) || previo.n.split(" ").length >= 8)));
+    if(respondio2 && !cola.some(c=> c.t > tg && (c.tipo==="pedido" || c.tipo==="sigue")))
+      return no(AUD_CAT.resuelta, (previo.tipo==="algomas" ? `El asesor le preguntó si necesitaba algo más y el cliente respondió «${audCita(agradecio.m.x)}»` : `El asesor le respondió («${audCorto(previo.m.x, 70)}») y el cliente agradeció («${audCita(agradecio.m.x)}»)`)
+        + ": la atención terminó ahí. Va el código de lo que se gestionó: no aplicaba.");
+  }
+  r.ultAsesor = audCorto(cola[cola.length-1].m.x, 200);
+  const esResp = c=> c.tipo==="algomas" || fondo(c);            // el asesor ya había respondido algo de fondo
+  const especifico = c=> AUD_RE.doc.test(c.n) || AUD_RE.dato.test(c.n);
+  const iPrim = cola.findIndex(c=> c.tipo==="pedido"), iSig = cola.findIndex(c=> c.tipo==="sigue"), iSal = cola.findIndex(c=> c.tipo==="saludo");
+  // iPed: el mensaje desde el que corre la espera; iDesc: el mensaje con el que se describe lo que quedó pendiente
+  let iPed = -1, iDesc = -1, valid = false, soloSaludo = false;
+  if(iPrim >= 0){
+    iPed = iDesc = iPrim;
+    // si abrió con un saludo que tampoco tuvo respuesta y después solo le ofreció ayuda, la espera corre desde el saludo (punto 1.1 del manual)
+    if(iSal >= 0 && iSal < iPrim && !cola.slice(iSal, iPrim).some(esResp) && !especifico(cola[iPrim])){
+      iPed = iSal;
+      if(cola[iPrim].t - cola[iSal].t >= AUD_RECORD_SEG*1000){ iDesc = iSal; soloSaludo = true; }   // la pregunta llegó más tarde: es el recordatorio
+    }
+  } else if(!(iSig >= 0 ? cola.slice(0, iSig) : cola).some(esResp)){   // si ya le había respondido, no quedó nada pendiente: va a revisión (abajo)
+    if(iSal >= 0){ iPed = iDesc = iSal; soloSaludo = true; }                                             // lo saludó y el cliente no contestó
+    else if(iSig >= 0){ iPed = iDesc = iSig; valid = cola.slice(0, iSig).some(c=> c.tipo==="espere"); }   // le preguntó si seguía ahí (si antes le pidió un momento, es una validación)
+    else if(!dijo){ iPed = iDesc = cola.findIndex(c=> c.tipo==="info"); soloSaludo = iPed >= 0; }         // el cliente no había dicho nada: lo primero que le escribió el asesor
+  }
+  if(iPed < 0){
+    const algo = cola.find(c=> c.tipo==="algomas"), resp = cola.find(fondo);
+    if(algo || resp) return rev(AUD_CAT.respondido, `El asesor ya le había respondido${resp ? ` («${audCorto(resp.m.x, 70)}»)` : ""}${algo ? " y le preguntó si necesitaba algo más" : ""}; no quedó nada pendiente del cliente. Revisá si la gestión quedó resuelta: entonces va el código del motivo real.`);
+    const esp = cola.find(c=> c.tipo==="espere"), otro = cola.find(c=> c.tipo==="info" || c.tipo==="saludo");
+    if(esp) return no(AUD_CAT.sinRespuesta, `El asesor solo le pidió un momento («${audCita(esp.m.x)}») y cerró sin retomar la atención: no aplicaba.`);
+    const ultCli = cliV.filter(x=> x.k==="resp" && T(x.m) > tA1).pop();   // lo último que el cliente le respondió a este asesor
+    return no(AUD_CAT.sinPedido, !otro ? `El asesor solo avisó el cierre («${audCita(cola[0].m.x)}») sin pedirle nada al cliente: no aplicaba.`
+      : ultCli ? `Lo último que escribió el cliente fue «${audCorto(ultCli.m.x || (ultCli.m.adj||[]).map(j=> j.tipo).join(", "), 70)}»; el asesor le contestó «${audCorto(otro.m.x, 70)}» y cerró sin pedirle nada más: no hubo abandono, así que no aplicaba.`
+      : `El asesor le escribió «${audCita(otro.m.x)}» y cerró sin pedirle nada: el cliente no tenía nada pendiente que responder, así que no aplicaba.`);
+  }
+  // ---- 7) el protocolo: espera, recordatorio y aviso de cierre ----
+  const ped = cola[iPed], desc = cola[iDesc], segs = cola.slice(iPed + 1), tPed = ped.t;
+  const pedidoN = cola.filter((c, i)=> i >= iPed && (c.tipo==="pedido" || c.tipo==="sigue")).map(c=> c.n).join(" ");
+  const cat = valid ? AUD_CAT.valid : soloSaludo ? AUD_CAT.saludo : AUD_RE.doc.test(pedidoN) ? AUD_CAT.doc : AUD_RE.dato.test(pedidoN) ? AUD_CAT.dato : !dijo ? AUD_CAT.saludo : AUD_CAT.pregunta;
+  r.pidio = true; r.pedido = audCorto(desc.m.x, 160); r.pedidoT = ped.m.t || "";
+  // si después del pedido el cliente pidió un momento (o dijo "ok"), la espera se cuenta desde ahí
+  const tRef = Math.max(tPed, ...cliV.filter(x=> T(x.m) > tPed && x.k==="espera").map(x=> T(x.m)));
+  if(!isNaN(finMs) && !isNaN(tRef)){ r.esperaPedido = Math.max(0, (finMs - tRef)/1000); r.cumpleEspera = r.esperaPedido >= AUD_ESPERA_MIN*60; }
+  // los mensajes automáticos (bot o Genesys) que le llegaron al cliente mientras lo atendía el asesor también cuentan como recordatorio o aviso
+  // aviso de cierre: un mensaje que no pregunta nada y avisa que no hubo respuesta, o cualquiera que diga que va a cerrar.
+  // "No hemos recibido respuesta, ¿sigue en línea?" es un recordatorio, no un aviso de cierre.
+  const esAviso = c=> c.aviso && (c.tipo==="aviso" || AUD_RE.cierre.test(c.n));
+  const autos = msgs.filter(m=>{ const t = T(m); return m.q==="b" && t > tPed && (isNaN(finMs) || t <= finMs); })
+    .map(m=> Object.assign({ m, t: T(m), bot:true }, audTipoAsesor(m.x))).filter(c=> c.tipo==="sigue" || c.tipo==="aviso" || esAviso(c));
+  const seguim = segs.concat(autos).sort((a, b)=> a.t - b.t);
+  const tarde = c=> c.t - tPed >= AUD_RECORD_SEG*1000;
+  const ultS = segs.length ? segs[segs.length-1] : null, conAviso = seguim.filter(esAviso);
+  let final = null;   // o el último mensaje del asesor (que no sea pregunta) hasta AUD_FINAL_SEG antes de cerrar
+  r.aviso = esAviso(ped) || conAviso.length > 0; r.avisoComo = r.aviso ? "texto" : "";
+  if(!r.aviso && ultS && ultS.tipo==="info" && ultS.n.split(" ").length >= 3 && tarde(ultS) && !isNaN(finMs) && finMs - ultS.t <= AUD_FINAL_SEG*1000){ r.aviso = true; r.avisoComo = "final"; final = ultS; }
+  const cierreMsg = final || (conAviso.length ? conAviso[conAviso.length-1] : null);
+  // recordatorio: otro mensaje (una pregunta, un "¿sigue en línea?" o un aviso de que no hay respuesta) al menos AUD_RECORD_SEG después
+  // del pedido, que no sea el aviso de cierre. Si lo pendiente ya era un "¿sigue en línea?", ese mensaje es el aviso de continuidad.
+  const recs = seguim.filter(c=> c!==cierreMsg && tarde(c) && (c.tipo==="sigue" || c.tipo==="pedido" || c.tipo==="algomas" || c.tipo==="aviso"));
+  r.recordatorios = recs.length + (ped.tipo==="sigue" ? 1 : 0);
+  r.sinContar = segs.filter(c=> c!==cierreMsg && tarde(c) && !recs.includes(c)).map(c=> audCorto(c.m.x, 160));   // para la hoja Validación
+  const veces = new Map();
+  cola.forEach(c=>{ if(c.n.length >= 8) veces.set(c.n, (veces.get(c.n)||0) + 1); });
+  const rep = Array.from(veces.entries()).sort((a, b)=> b[1]-a[1])[0];
+  r.repetidos = rep && rep[1] > 1 ? rep[1] : 0;
+  if(f.dir!=="outbound"){   // cuánto esperó el cliente a que le escribieran el mensaje que quedó sin respuesta
+    const t0 = cola[0].t, previos = ases.map(T).filter(t=> !isNaN(t) && t < t0), tPrev = previos.length ? previos[previos.length-1] : NaN;
+    if(!isNaN(t0)){
+      if(!isNaN(tPrev)){   // a mitad de la conversación: desde el primer mensaje del cliente que el asesor dejó sin contestar
+        const sinCont = cli.map(x=> T(x.m)).filter(t=> !isNaN(t) && t > tPrev && t < t0);
+        r.demora = sinCont.length ? (t0 - Math.min(...sinCont))/1000 : 0;
+      } else if(f.asesores > 1 || isNaN(iniMs)){   // venía de otro asesor: desde el último mensaje del cliente
+        const prev = cli.map(x=> T(x.m)).filter(t=> !isNaN(t) && t < t0);
+        if(prev.length) r.demora = Math.max(0, (t0 - Math.max(...prev))/1000);
+      } else r.demora = Math.max(0, (f.espera || 0) + (t0 - iniMs)/1000);   // al entrar: la espera en cola más lo que tardó el asesor en escribirle
+    }
+  }
+  const cita = audCorto(desc.m.x, 70), aLas = ped.m.t ? ` a las ${qaHora(ped.m.t)}` : "";
+  const accion = cat===AUD_CAT.valid ? "le pidió un momento para validar y después le preguntó si seguía ahí"
+    : cat===AUD_CAT.dato ? `le pidió un dato («${cita}»)` : cat===AUD_CAT.doc ? `le pidió un documento o evidencia («${cita}»)`
+    : soloSaludo ? (/\b(que tenga|feliz (dia|tarde|noche)|hasta (luego|pronto)|fue un (gusto|placer))\b/.test(desc.n) ? `solo se despidió («${cita}»)` : `lo saludó («${cita}»)`) : desc.tipo==="sigue" ? "le preguntó si seguía en línea" : AUD_RE.ayudar.test(desc.n) ? "le preguntó en qué podía ayudarle" : `le preguntó «${cita}»`;
+  const esp = audEsperaTxt(r.esperaPedido), nRec = `${r.recordatorios} ${r.recordatorios===1 ? "recordatorio" : "recordatorios"}`;
+  if(r.cumpleEspera!==true){
+    const falta = (r.recordatorios ? [] : ["sin recordatorio"]).concat(r.aviso ? [] : ["sin aviso de cierre"]);
+    return no(AUD_CAT.sinEspera, `El asesor ${accion}${aLas} y cerró ${esp} después (el mínimo son ${AUD_ESPERA_MIN} min)${falta.length ? ", " + falta.join(" y ") : ""}: no aplicaba.`);
+  }
+  if(!r.recordatorios) return no(AUD_CAT.sinRecord, `El asesor ${accion}${aLas} y esperó ${esp}, pero cerró sin mandarle un recordatorio${r.aviso ? "" : " ni avisarle el cierre"}: no aplicaba.`);
+  if(!r.aviso) return no(AUD_CAT.sinAviso, `El asesor ${accion}${aLas}, esperó ${esp} y le mandó ${nRec}, pero cerró sin avisarle el cierre: no aplicaba.`);
+  // ---- 8) cumplió el protocolo: los casos que el manual manda a revisión antes de dar el código por bueno ----
+  const yaResp = cat===AUD_CAT.pregunta || cat===AUD_CAT.saludo ? cola.slice(0, iDesc + 1).find(fondo) : null;
+  if(yaResp) return rev(AUD_CAT.respondido, (yaResp!==desc ? `El asesor ya le había respondido («${audCorto(yaResp.m.x, 70)}») y después ${accion}; el cliente no contestó.`
+    : soloSaludo ? `El asesor le escribió «${cita}» sin pedirle nada, y el cliente no contestó.` : `El asesor le respondió y le preguntó en el mismo mensaje («${cita}»), y el cliente no contestó.`)
+    + " Revisá si con eso quedó resuelto lo que necesitaba: entonces va el código del motivo real.");
+  const escritos = cli.filter(x=> x.a.tipo!=="menu" && x.a.tipo!=="vacio");
+  if(!dijo && escritos.length && AUD_RE.gracias.test(audNorm(escritos[0].m.x)) && escritos.every(x=> x.a.tipo==="relleno"))
+    return rev(AUD_CAT.gracias, `El cliente solo escribió un agradecimiento («${audCita(escritos[0].m.x)}»). El asesor cumplió el protocolo, pero para eso existe el código «Mensaje de agradecimiento»: revisá cuál correspondía.`);
+  if(r.demora!==null && r.demora >= AUD_DEMORA_MIN*60) return rev(AUD_CAT.demora, `El cliente esperó ${audMinTxt(r.demora)} a que le escribieran y ya no respondió. El asesor cumplió el protocolo, pero ese abandono no se le carga solo al cliente: revisalo.`);
+  if(r.repetidos >= AUD_REPETIDO) return rev(AUD_CAT.repetido, `El asesor mandó ${r.repetidos} veces el mismo mensaje («${audCorto((cola.find(c=> c.n===rep[0]) || ped).m.x, 70)}»). Revisá si hubo un recordatorio de verdad.`);
+  r.dict = "aplica"; r.cat = cat;
+  r.com = `El asesor ${accion}${aLas}, esperó ${esp}, le mandó ${nRec} y avisó el cierre; el cliente no respondió. Sí aplicaba.`;
   return r;
 }
 function audSoloCortesia(x){
@@ -21835,9 +22094,16 @@ function audFilasDeConv(c, idSet, qById, wrapSet, desdeMs, hastaMs){
     if(!fin) return;                                   // todavía abierta
     const ms = Date.parse(fin);
     if(isNaN(ms) || ms < desdeMs || ms > hastaMs) return;
+    // v22.46: ¿la conversación siguió con otro asesor o cola apenas terminó este asesor? Entonces fue una transferencia
+    const finP = Date.parse(finAt || fin);
+    let sigue = qaSegs(p).some(sg=> /transfer/i.test(String(sg.disconnectType || "")));
+    if(!sigue && !isNaN(finP)) parts.forEach(q=>{
+      if(q===p || !(q.purpose==="acd" || ((q.purpose==="agent" || q.purpose==="user") && q.userId))) return;
+      qaSegs(q).forEach(sg=>{ const t0 = Date.parse(sg.segmentStart); if(!isNaN(t0) && t0 >= finP - 2000 && t0 <= finP + 15000) sigue = true; });
+    });
     out.push({ key: `${c.conversationId}:${p.participantId || p.userId}`, cid: c.conversationId, uid: p.userId, queueId: cola,
       inicio: c.conversationStart || "", tomo, finAt: finAt || fin, cierre: fin, fin: c.conversationEnd || "",
-      espera, t, acw, ani, aniTxt: qaLimpiarTel(ani), nombreWa: (cust && cust.participantName) || "", dir, nota,
+      espera, t, acw, ani, aniTxt: qaLimpiarTel(ani), nombreWa: (cust && cust.participantName) || "", dir, nota, sigue,
       asesores: new Set(agentes.map(x=> x.userId)).size, conv: c });
   });
   return out;
@@ -22101,10 +22367,11 @@ function audCalcular(){
   const porU = new Map();
   res.forEach(x=>{
     let a = porU.get(x.f.uid);
-    if(!a){ a = { uid:x.f.uid, nombre:x.f.asesor, usuario:x.f.usuario, n:0, aplica:0, noaplica:0, revisar:0, sinleer:0, mot:new Map(), esp:[] }; porU.set(x.f.uid, a); }
+    if(!a){ a = { uid:x.f.uid, nombre:x.f.asesor, usuario:x.f.usuario, n:0, aplica:0, noaplica:0, revisar:0, sinleer:0, prot:0, sinEspera:0, sinRecord:0, sinAviso:0, mot:new Map(), esp:[] }; porU.set(x.f.uid, a); }
     a.n++; a[x.r.dict]++;
     if(x.r.dict==="noaplica") a.mot.set(x.r.cat, (a.mot.get(x.r.cat)||0) + 1);
-    if(x.r.dict==="aplica" && x.r.espera!=null) a.esp.push(x.r.espera);
+    if(AUD_PROTOCOLO.has(x.r.cat)){ a.prot++; a[x.r.cat===AUD_CAT.sinEspera ? "sinEspera" : x.r.cat===AUD_CAT.sinRecord ? "sinRecord" : "sinAviso"]++; }   // v22.46
+    if(x.r.esperaPedido!==null) a.esp.push(x.r.esperaPedido);
   });
   const asesores = Array.from(porU.values()).sort((a, b)=> (b.noaplica - a.noaplica) || (b.n - a.n) || a.nombre.localeCompare(b.nombre, "es"));
   asesores.forEach(a=>{ const top = Array.from(a.mot.entries()).sort((x, y)=> y[1]-x[1])[0]; a.motTop = top ? top[0] : ""; a.espProm = a.esp.length ? a.esp.reduce((s, v)=> s+v, 0)/a.esp.length : null; });
@@ -22127,11 +22394,16 @@ function audCalcular(){
     if(t){ const i = idxD.get(qaIsoDia(t.y, t.mo, t.d)); if(i!==undefined){ dias[i].n++; dias[i][x.r.dict]++; } horas[t.h].n++; horas[t.h][x.r.dict]++; }
     const s = serv[x.r.serv] || serv["Sin precisar"]; s.n++; s[x.r.dict]++;
   });
-  const mot = new Map();
-  res.forEach(x=>{ if(x.r.motivo) mot.set(x.r.motivo.nom, (mot.get(x.r.motivo.nom)||0) + 1); });
-  const motivos = Array.from(mot.entries()).sort((a, b)=> b[1]-a[1]);
-  const esperas = res.filter(x=> x.r.dict==="aplica" && x.r.espera!=null).map(x=> x.r.espera);
-  return { res, n: res.length, cuenta, leidas, asesores, cats, dias, horas, serv, motivos, nAses: porU.size,
+  // v22.46: por qué escribió el cliente (dato) y el protocolo del asesor cuando quedó algo pendiente del cliente
+  const pq = new Map();
+  res.forEach(x=>{ let o = pq.get(x.r.porque); if(!o){ o = Object.assign({ nom:x.r.porque, esMotivo: !!x.r.motivo }, vacio()); pq.set(x.r.porque, o); } o.n++; o[x.r.dict]++; });
+  const porques = Array.from(pq.values()).sort((a, b)=> (b.esMotivo - a.esMotivo) || (b.n - a.n));
+  const conPed = res.filter(x=> x.r.pidio);
+  const prot = { conPedido: conPed.length, espera: conPed.filter(x=> x.r.cumpleEspera===true).length, record: conPed.filter(x=> x.r.recordatorios > 0).length,
+    aviso: conPed.filter(x=> x.r.aviso).length, todo: conPed.filter(x=> x.r.cumpleEspera===true && x.r.recordatorios > 0 && x.r.aviso).length,
+    fallas: res.filter(x=> AUD_PROTOCOLO.has(x.r.cat)).length };
+  const esperas = conPed.filter(x=> x.r.esperaPedido!==null).map(x=> x.r.esperaPedido);
+  return { res, n: res.length, cuenta, leidas, asesores, cats, dias, horas, serv, porques, prot, nAses: porU.size,
     espProm: esperas.length ? esperas.reduce((a, b)=> a+b, 0)/esperas.length : null };
 }
 function audTendencia(vals){
@@ -22157,7 +22429,7 @@ function audValidar(c){
   const est = {};
   c.res.forEach(x=>{ const ch = AUD.chats.get(x.f.cid), k = !ch ? "sinleer" : ch.estado; est[k] = (est[k]||0) + 1; });
   const malos = n - (est.ok||0) - (est.sinleer||0);
-  if(malos) avisos.push(["Chats", `${fmtNum(malos)} ${malos===1 ? "chat no se pudo leer" : "chats no se pudieron leer"} en Genesys (${[["nodisponible","no disponibles"],["vacio","sin texto"],["sinpermiso","sin permiso"],["preparando","todavía preparándose"],["error","con error"]].filter(([k])=> est[k]).map(([k, t])=> `${fmtNum(est[k])} ${t}`).join(", ")}). Van como «Revisar».`]);
+  if(malos) avisos.push(["Chats", `${fmtNum(malos)} ${malos===1 ? "chat no se pudo leer" : "chats no se pudieron leer"} en Genesys (${[["nodisponible","no disponible","no disponibles"],["vacio","sin texto"],["sinpermiso","sin permiso"],["preparando","todavía preparándose"],["error","con error"]].filter(([k])=> est[k]).map(([k, t, tp])=> `${fmtNum(est[k])} ${est[k]===1 ? t : (tp || t)}`).join(", ")}). ${malos===1 ? "Va" : "Van"} como «Revisar».`]);
   else if(est.ok) infos.push(["Chats", `Se leyeron ${est.ok===1 ? "el chat" : `los ${fmtNum(est.ok)} chats`}.`]);
   if(est.sinleer) avisos.push(["Lectura", `Faltan ${fmtNum(est.sinleer)} chats por leer${AUD.fase==="leyendo" ? " (se están leyendo)" : " (se detuvo la lectura)"}: van como «Sin leer» y los porcentajes son de lo leído.`]);
   const ok = c.res.filter(x=>{ const ch = AUD.chats.get(x.f.cid); return ch && ch.estado==="ok"; });
@@ -22167,8 +22439,15 @@ function audValidar(c){
     (pCli >= 30 ? avisos : infos).push(["Mensajes del cliente", `${fmtNum(sinCli)} de ${fmtNum(ok.length)} chats (${pCli.toFixed(0)}%) no tienen ningún mensaje del cliente.${pCli >= 30 ? " Es mucho: puede que Genesys no esté marcando bien al cliente. Abrí algunas con «Ver chat» para confirmarlo." : ""}`]);
     (pAse >= 30 ? avisos : infos).push(["Mensajes del asesor", `${fmtNum(sinAse)} de ${fmtNum(ok.length)} chats (${pAse.toFixed(0)}%) no tienen mensajes del asesor; esos salen «No aplicaba» porque el asesor cerró sin escribirle.${pAse >= 30 ? " Es mucho: confirmá con «Ver chat» que de verdad el asesor no escribió." : ""}`]);
     infos.push(["Bot", `${fmtNum(conBot)} de ${fmtNum(ok.length)} chats (${(conBot/ok.length*100).toFixed(0)}%) tienen mensajes del bot o de Genesys.`]);
-    const adj = c.res.filter(x=> x.r.cat===AUD_CAT.adjunto).length, raro = c.res.filter(x=> x.r.cat===AUD_CAT.texto).length;
-    if(adj || raro) infos.push(["Revisar", `${fmtNum(adj)} con solo audio o imagen y ${fmtNum(raro)} con texto que el sistema no reconoció. Esas frases van en la hoja Validación del Excel para ajustar las palabras que busca el sistema.`]);
+    const P = c.prot;   // v22.46
+    if(P.conPedido){
+      const pc = k=> (k/P.conPedido*100).toFixed(0) + "%", harto = P.conPedido >= 20;
+      const pocoAv = harto && P.aviso/P.conPedido < 0.3, pocoRec = harto && P.record/P.conPedido < 0.3, poco = pocoAv || pocoRec;
+      const queFalta = pocoAv && pocoRec ? "El recordatorio y el aviso de cierre aparecen" : pocoAv ? "El aviso de cierre aparece" : "El recordatorio aparece";
+      (poco ? avisos : infos).push(["Protocolo", `En ${fmtNum(P.conPedido)} ${P.conPedido===1 ? "chat" : "chats"} quedó algo pendiente del cliente: el asesor esperó ${AUD_ESPERA_MIN} min o más en ${fmtNum(P.espera)} (${pc(P.espera)}), mandó recordatorio en ${fmtNum(P.record)} (${pc(P.record)}) y avisó el cierre en ${fmtNum(P.aviso)} (${pc(P.aviso)}).${poco ? ` ${queFalta} en muy pocos: o los asesores no lo mandan, o usan un texto fijo que el sistema no reconoce y esos chats salen «No aplicaba». Mirá la hoja Validación del Excel (ahí están los mensajes que no contaron) y avisá cuál es ese texto.` : ""}`]);
+    }
+    const adj = c.res.filter(x=> x.r.porque===AUD_PORQUE.adjunto).length, raro = c.res.filter(x=> x.r.porque===AUD_PORQUE.texto).length;
+    if(adj || raro) infos.push(["Motivo", `${fmtNum(adj)} con solo audio o imagen y ${fmtNum(raro)} con palabras que el sistema no reconoció: no se sabe por qué escribieron, pero el dictamen no depende de eso. Las frases van en la hoja Validación del Excel.`]);
   }
   if(AUD.pausas) infos.push(["Genesys", `Pidió ${AUD.pausas===1 ? "una pausa" : fmtNum(AUD.pausas) + " pausas"} por su límite de consultas; se esperó y se siguió.`]);
   return { avisos, infos };
@@ -22243,6 +22522,7 @@ function audHtmlHero(){
         </div>
       </div>${picker}
       <div class="aud-ruta"><span>Código</span>${qaEsc(AUD_RUTA.slice(0, -1).join(" › "))} › <b>${qaEsc(AUD_RUTA[AUD_RUTA.length-1])}</b></div>
+      <div class="aud-ruta aud-crit"><span>Criterio</span>Instrucción de WhatsApp para «Llamada no efectiva»: el asesor espera <b>${AUD_ESPERA_MIN} min</b>, manda un recordatorio y avisa el cierre</div>
     </div>`;
 }
 function audHtmlEstado(c){
@@ -22267,14 +22547,14 @@ function audHtmlKpis(c){
   const base = c.leidas;
   const pct = k=> base ? `${(c.cuenta[k]/base*100).toFixed(1)}% de las leídas` : "falta leer los chats";
   const kpi = (icono, valor, etiqueta, sub, color, texto)=> `<div class="kpisdia-kpi"${color ? ` style="border-top-color:${color};"` : ""}><div class="kpisdia-kpi-text"><span class="kpisdia-kpi-value${texto ? " aud-kpi-txt" : String(valor).length > 9 ? " rint-kpi-largo" : ""}"${color ? ` style="color:${color};"` : ""}>${valor}</span><span class="kpisdia-kpi-label">${etiqueta}</span>${sub ? `<span class="rint-kpi-sub">${sub}</span>` : ""}</div><span class="kpisdia-kpi-icon">${icono}</span></div>`;
-  const top = c.motivos[0];
+  const prot = c.prot.fallas;   // v22.46
   return `<div class="kpisdia-kpigrid rint-kpis aud-kpis">
       ${kpi("💬", fmtNum(c.n), "Conversaciones", `${fmtNum(c.nAses)} ${c.nAses===1 ? "asesor" : "asesores"}${c.cuenta.sinleer ? ` · ${fmtNum(c.leidas)} leídas` : ""}`)}
       ${kpi("✅", fmtNum(c.cuenta.aplica), "Aplicaba", pct("aplica"), AUD_DICT.aplica.color)}
       ${kpi("❌", fmtNum(c.cuenta.noaplica), "No aplicaba", pct("noaplica"), AUD_DICT.noaplica.color)}
       ${kpi("🔎", fmtNum(c.cuenta.revisar), "Revisar", pct("revisar"), AUD_DICT.revisar.color)}
-      ${kpi("🧭", top ? qaEsc(top[0]) : "—", "Motivo más dicho", top ? `${fmtNum(top[1])} ${top[1]===1 ? "conversación" : "conversaciones"}` : "ningún cliente dijo su motivo", "", !!top)}
-      ${kpi("⏱️", c.espProm===null ? "—" : qaDur(c.espProm), "Espera antes de cerrar", c.espProm===null ? "cuando aplicaba" : "promedio cuando aplicaba")}
+      ${kpi("📋", fmtNum(prot), "Sin cumplir el protocolo", base ? `${(prot/base*100).toFixed(1)}% · espera, recordatorio o aviso` : "falta leer los chats", prot ? AUD_DICT.noaplica.color : "")}
+      ${kpi("⏱️", c.espProm===null ? "—" : qaDur(c.espProm), "Espera antes de cerrar", `${c.espProm===null ? "" : "promedio desde el pedido · "}mínimo ${AUD_ESPERA_MIN} min`)}
     </div>`;
 }
 function audHtmlGrafica(){
@@ -22313,24 +22593,24 @@ function audHtmlTablas(c){
   const pctNo = (a)=>{ const b = a.aplica + a.noaplica + a.revisar; return b ? a.noaplica/b*100 : null; };
   const barra = p=> `<span class="aud-pbar"><i style="width:${p===null ? 0 : Math.min(100, p).toFixed(1)}%"></i></span>${p===null ? "—" : p.toFixed(0) + "%"}`;
   const filasA = c.asesores.map(a=> `<tr data-auduid="${qaEsc(a.uid)}" class="${AUD.f.uid===a.uid ? "sel" : ""}" title="Ver sus conversaciones abajo">
-      <td class="l">${qaEsc(a.nombre)}</td><td>${fmtNum(a.n)}</td><td class="ok">${fmtNum(a.aplica)}</td><td class="no">${fmtNum(a.noaplica)}</td><td class="rev">${fmtNum(a.revisar)}</td>${sin ? `<td>${fmtNum(a.sinleer)}</td>` : ""}<td class="l">${barra(pctNo(a))}</td></tr>`).join("");
-  const pieA = `<tr class="pie"><td class="l">Total</td><td>${fmtNum(c.n)}</td><td>${fmtNum(T.aplica)}</td><td>${fmtNum(T.noaplica)}</td><td>${fmtNum(T.revisar)}</td>${sin ? `<td>${fmtNum(T.sinleer)}</td>` : ""}<td class="l">${barra(pctNo(T))}</td></tr>`;
+      <td class="l">${qaEsc(a.nombre)}</td><td>${fmtNum(a.n)}</td><td class="ok">${fmtNum(a.aplica)}</td><td class="no">${fmtNum(a.noaplica)}</td><td>${fmtNum(a.prot)}</td><td class="rev">${fmtNum(a.revisar)}</td>${sin ? `<td>${fmtNum(a.sinleer)}</td>` : ""}<td class="l">${barra(pctNo(a))}</td></tr>`).join("");
+  const pieA = `<tr class="pie"><td class="l">Total</td><td>${fmtNum(c.n)}</td><td>${fmtNum(T.aplica)}</td><td>${fmtNum(T.noaplica)}</td><td>${fmtNum(c.prot.fallas)}</td><td>${fmtNum(T.revisar)}</td>${sin ? `<td>${fmtNum(T.sinleer)}</td>` : ""}<td class="l">${barra(pctNo(T))}</td></tr>`;
   const filasM = c.cats.map(o=> `<tr data-audcat="${qaEsc(o.cat)}" class="${AUD.f.cat===o.cat ? "sel" : ""}" title="Ver estas conversaciones abajo">
       <td class="l">${qaEsc(o.cat)}</td><td class="l"><span class="aud-pill ${AUD_DICT[o.dict].cls}">${AUD_DICT[o.dict].nom}</span></td><td>${fmtNum(o.n)}</td><td>${(o.n/c.n*100).toFixed(1)}%</td></tr>`).join("");
   const pieM = `<tr class="pie"><td class="l">Total</td><td></td><td>${fmtNum(c.n)}</td><td>100%</td></tr>`;
   return `<div class="aud-dos">
       <section><div class="kpisdia-section-title">👥 Por asesor</div>
-        <div class="aud-scroll"><table class="aud-t"><thead><tr><th class="l">Asesor</th><th>Conv.</th><th>Aplicaba</th><th>No aplicaba</th><th>Revisar</th>${sin ? "<th>Sin leer</th>" : ""}<th class="l">% No aplicaba</th></tr></thead>
+        <div class="aud-scroll"><table class="aud-t"><thead><tr><th class="l">Asesor</th><th>Conv.</th><th>Aplicaba</th><th>No aplicaba</th><th title="De las que no aplicaban: cerró sin esperar ${AUD_ESPERA_MIN} minutos, sin recordatorio o sin aviso de cierre">Sin protocolo</th><th>Revisar</th>${sin ? "<th>Sin leer</th>" : ""}<th class="l">% No aplicaba</th></tr></thead>
         <tbody>${filasA}</tbody><tfoot>${pieA}</tfoot></table></div></section>
-      <section><div class="kpisdia-section-title">🧭 Motivo o qué pasó</div>
-        <div class="aud-scroll"><table class="aud-t"><thead><tr><th class="l">Motivo o qué pasó</th><th class="l">Dictamen</th><th>Conv.</th><th>%</th></tr></thead>
+      <section><div class="kpisdia-section-title">🧭 Qué pasó</div>
+        <div class="aud-scroll"><table class="aud-t"><thead><tr><th class="l">Qué pasó</th><th class="l">Dictamen</th><th>Conv.</th><th>%</th></tr></thead>
         <tbody>${filasM}</tbody><tfoot>${pieM}</tfoot></table></div></section>
     </div>`;
 }
 function audFiltrar(c){
   const F = AUD.f, q = audNorm(F.buscar);
   return c.res.filter(x=> (!F.dict || x.r.dict===F.dict) && (!F.uid || x.f.uid===F.uid) && (!F.cat || x.r.cat===F.cat)
-    && (!q || audNorm([x.f.cid, x.f.aniTxt, x.f.asesor, x.r.todo, x.r.com, x.r.cat].join(" ")).includes(q)));
+    && (!q || audNorm([x.f.cid, x.f.aniTxt, x.f.asesor, x.r.todo, x.r.com, x.r.cat, x.r.porque, x.r.pedido].join(" ")).includes(q)));
 }
 function audHtmlLista(c){
   const F = AUD.f, lista = audFiltrar(c), MAX = 200;
@@ -22339,12 +22619,20 @@ function audHtmlLista(c){
   const ases = c.asesores.slice().sort((a, b)=> a.nombre.localeCompare(b.nombre, "es"));
   const cats = Array.from(new Set(c.cats.map(o=> o.cat)));
   const filtrado = F.dict || F.uid || F.cat || F.buscar;
+  // v22.46: los tres pasos del protocolo, cuando quedó algo pendiente del cliente
+  const pasos = r=>{
+    if(!r.pidio) return `<span class="mut">—</span>`;
+    const e = r.esperaPedido, m = e===null ? "—" : e < 60 ? "menos de 1 min" : `${Math.floor(e/60)} min`, n = r.recordatorios || 0;
+    return `<span class="aud-pr ${r.cumpleEspera===true ? "ok" : "no"}" title="Desde el pedido hasta que cerró (mínimo ${AUD_ESPERA_MIN} min)">Esperó ${m}</span>`
+      + `<span class="aud-pr ${n ? "ok" : "no"}">${n ? `${n} ${n===1 ? "recordatorio" : "recordatorios"}` : "Sin recordatorio"}</span>`
+      + `<span class="aud-pr ${r.aviso ? "ok" : "no"}">${r.aviso ? "Avisó el cierre" : "Sin aviso de cierre"}</span>`;
+  };
   const filas = lista.slice(0, MAX).map(x=>{
     const f = x.f, r = x.r, d = AUD_DICT[r.dict];
     return `<tr><td class="f"><b>${qaFecha(f.cierre).slice(0,5)}</b> ${qaHora(f.cierre)}</td><td class="l">${qaEsc(f.asesor)}</td>
       <td class="txt" title="${qaEsc(r.todo)}">${r.todo ? qaEsc(audCorto(r.todo, 90)) : `<span class="mut">${r.dict==="sinleer" ? "—" : "(no escribió)"}</span>`}</td>
-      <td class="l">${qaEsc(r.cat)}</td><td class="l"><span class="aud-pill ${d.cls}">${d.nom}</span></td>
-      <td class="txt com" title="${qaEsc(r.com)}">${qaEsc(audCorto(r.com, 150))}</td>
+      <td class="l que">${qaEsc(r.cat)}</td><td class="prot">${pasos(r)}</td><td class="l"><span class="aud-pill ${d.cls}">${d.nom}</span></td>
+      <td class="txt com" title="${qaEsc(r.com)}">${qaEsc(audCorto(r.com, 270))}</td>
       <td><button type="button" class="aud-ver" data-audver="${qaEsc(f.cid)}" title="Abrir la conversación como en QA">💬 Ver chat</button></td></tr>`;
   }).join("");
   return `<div class="kpisdia-section-title" id="aud-lista">💬 Conversaciones</div>
@@ -22356,16 +22644,21 @@ function audHtmlLista(c){
       ${filtrado ? `<button type="button" class="btn-outline aud-chico" data-audacc="limpiar">Quitar filtros</button>` : ""}
     </div>
     ${lista.length ? `<div class="rint-tabla-wrap aud-lista-wrap"><table class="aud-t aud-lista">
-      <thead><tr><th class="l">Cerró</th><th class="l">Asesor</th><th class="l">Lo que escribió el cliente</th><th class="l">Motivo o qué pasó</th><th class="l">Dictamen</th><th class="l">Comentario del sistema</th><th></th></tr></thead>
+      <thead><tr><th class="l">Cerró</th><th class="l">Asesor</th><th class="l">Lo que escribió el cliente</th><th class="l">Qué pasó</th><th class="l">Protocolo del asesor</th><th class="l">Dictamen</th><th class="l">Comentario del sistema</th><th></th></tr></thead>
       <tbody>${filas}</tbody></table></div>
     <p class="rint-notas">${lista.length > MAX ? `Se muestran ${MAX} de ${fmtNum(lista.length)}; todas van en el Excel.` : `${fmtNum(lista.length)} ${lista.length===1 ? "conversación" : "conversaciones"}${filtrado ? " con estos filtros" : ""}.`} De la más reciente a la más vieja.</p>`
     : `<div class="aud-vacio">No hay conversaciones con estos filtros.</div>`}`;
 }
 function audHtmlNotas(){
-  return `<div class="rint-notas aud-notas"><b>Cómo decide el sistema.</b> <b>No aplicaba</b>: el cliente dijo su inconveniente (al bot o al asesor, con sus palabras), aunque después dejara de responder; o el cliente no abandonó: el asesor cerró sin escribirle, o el cliente volvió a escribir y no le respondieron.
-    <b>Aplicaba</b>: el cliente no dijo nada (solo saludó, pidió ayuda sin decir para qué, eligió opciones del menú del bot o mandó su número) y, después de que el asesor le ofreció ayuda, no volvió a responder.
-    <b>Revisar</b>: mandó solo audio o imagen, escribió algo que el sistema no reconoce, o Genesys no entregó el chat.
-    El motivo se reconoce por palabras (no es inteligencia artificial y el texto no sale del navegador). Cuenta el día en que el asesor cerró la conversación, igual que Códigos de conclusión.</div>`;
+  return `<div class="rint-notas aud-notas"><b>Cómo decide el sistema</b> (instrucción de WhatsApp para «Llamada no efectiva»)
+    <ul class="aud-reglas">
+      <li><span class="aud-pill ok">Aplicaba</span> El asesor le pidió algo al cliente (una respuesta, un dato, un documento o confirmar que seguía ahí), el cliente no respondió y el asesor cumplió el protocolo: esperó ${AUD_ESPERA_MIN} minutos o más desde el pedido, le mandó un recordatorio y avisó el cierre.</li>
+      <li><span class="aud-pill no">No aplicaba</span> El asesor no le escribió, no le pidió nada o cerró sin retomar; el cliente respondió (también cuenta un «sí» cuando le preguntaron si seguía ahí), agradeció la respuesta o dijo que ya no necesitaba ayuda; la gestión quedó resuelta, escalada o en seguimiento; siguió con otro asesor o cola; o el asesor cerró sin esperar, sin recordatorio o sin aviso de cierre.</li>
+      <li><span class="aud-pill rev">Revisar</span> El asesor ya le había respondido antes de que el cliente dejara de escribir; el cliente esperó ${AUD_DEMORA_MIN} minutos o más a que le escribieran; el asesor repitió el mismo mensaje; el cliente solo mandó un agradecimiento (hay un código para eso); o Genesys no entregó el chat.</li>
+      <li><b>Cómo se mide.</b> La espera va desde el pedido (o desde el «un momento» del cliente) hasta que el asesor cerró. Un recordatorio es otro mensaje al menos 1 minuto después del pedido: una pregunta, un «¿sigue en línea?» o un aviso de que no hay respuesta. El aviso de cierre se reconoce por el texto («al no recibir respuesta…», «procedemos a cerrar…») o por ser el último mensaje, sin pregunta, hasta 2 minutos antes de cerrar. Los mensajes automáticos que le llegan al cliente también cuentan.</li>
+      <li><b>Lo que no decide.</b> Por qué escribió el cliente ya no decide el dictamen: queda como dato. Una falla del sistema o un cierre automático no se ven en el chat, así que no se evalúan acá.</li>
+      <li><b>De dónde sale.</b> Todo se reconoce por las palabras y las horas de los mensajes (no es inteligencia artificial y el texto no sale del navegador). Cuenta el día en que el asesor cerró la conversación, igual que Códigos de conclusión.</li>
+    </ul></div>`;
 }
 
 /* ---------- eventos ---------- */
@@ -22425,19 +22718,18 @@ function audExcel(){
   const leidasDe = o=> o.aplica + o.noaplica + o.revisar;
   const pctNo = o=> leidasDe(o) ? o.noaplica/leidasDe(o) : "—";
   const si = b=> b===null || b===undefined ? "—" : b ? "Sí" : "No";
-  const sin = c.cuenta.sinleer > 0;
+  const sin = c.cuenta.sinleer > 0, P = c.prot;
   const subt = `${AUD_RUTA.join(" › ")} · ${qaFmtRango(per.desde, per.hasta)} (día en que el asesor cerró) · generado el ${generado}`;
   const cab = (h, titulo)=>{ h.set(0, 0, titulo, "titulo"); h.filas[0] = { hpt:24 }; h.set(1, 0, subt, "sub"); };
   const dictCols = ["aplica","noaplica","revisar"].concat(sin ? ["sinleer"] : []);
   // ---- Resumen ----
   const h1 = new XlsHoja();
   cab(h1, "Auditoría de código · WhatsApp");
-  const kp = [["Conversaciones", c.n, "kpi"], ["Aplicaba", c.cuenta.aplica, "kpiPro"], ["No aplicaba", c.cuenta.noaplica, "kpiDet"], ["Revisar", c.cuenta.revisar, "kpiPas"]]
-    .concat(sin ? [["Sin leer", c.cuenta.sinleer, "kpi"]] : []).concat([["Asesores", c.nAses, "kpi"]]);
-  kp.forEach(([t, n, e], i)=>{ h1.set(3, i, t, "kpiSub"); h1.set(4, i, n, e); });
-  kp.forEach(([t], i)=>{ const k = { Aplicaba:"aplica", "No aplicaba":"noaplica", Revisar:"revisar" }[t]; h1.set(5, i, k && c.leidas ? c.cuenta[k]/c.leidas : "", k && c.leidas ? "kpiSubPct" : "kpiSub"); });
-  h1.filas[4] = { hpt:30 };
-  h1.set(6, 0, `Los porcentajes son de las ${fmtNum(c.leidas)} conversaciones con el chat leído.`, "sub");
+  const kp = [["Conversaciones", c.n, "kpi", null], ["Aplicaba", c.cuenta.aplica, "kpiPro", c.cuenta.aplica], ["No aplicaba", c.cuenta.noaplica, "kpiDet", c.cuenta.noaplica], ["Revisar", c.cuenta.revisar, "kpiPas", c.cuenta.revisar]]
+    .concat(sin ? [["Sin leer", c.cuenta.sinleer, "kpi", null]] : []).concat([["Sin cumplir el protocolo", P.fallas, "kpiDet", P.fallas], ["Asesores", c.nAses, "kpi", null]]);
+  kp.forEach(([t, n, e, base], i)=>{ h1.set(3, i, t, "kpiSub"); h1.set(4, i, n, e); h1.set(5, i, base!==null && c.leidas ? base/c.leidas : "", base!==null && c.leidas ? "kpiSubPct" : "kpiSub"); });
+  h1.filas[3] = { hpt:28 }; h1.filas[4] = { hpt:30 };
+  h1.set(6, 0, `Los porcentajes son de las ${fmtNum(c.leidas)} conversaciones con el chat leído. Criterio: instrucción de WhatsApp para «Llamada no efectiva», con ${AUD_ESPERA_MIN} minutos de espera.`, "sub");
   let r = 8;
   h1.set(r++, 0, "Dictamen", "seccion");
   h1.fila(r++, 0, ["Dictamen", "Conversaciones", "% de las leídas", "% del total"], ["gEnc","gEnc","gEnc","gEnc"]);
@@ -22447,6 +22739,23 @@ function audExcel(){
   });
   h1.fila(r++, 0, ["Total", c.n, c.leidas ? 1 : "—", 1], ["gTotTxt","gTotNum","gTotPct","gTotPct"]);
   r++;
+  h1.set(r++, 0, "Qué pasó", "seccion");
+  h1.fila(r++, 0, ["Qué pasó", "Dictamen", "Conversaciones", "% del total"], "gEnc");
+  c.cats.forEach((o, i)=>{
+    const z = i % 2 ? "Z" : "";
+    h1.fila(r, 0, [o.cat, AUD_DICT[o.dict].nom, o.n, o.n/c.n], ["gTxtB"+z, "gTxt"+z, "gNum"+z, "gPct"+z]);
+    h1.set(r, 1, AUD_DICT[o.dict].nom, AUD_DICT[o.dict].xl);
+    r++;
+  });
+  h1.fila(r++, 0, ["Total", "", c.n, 1], ["gTotTxt","gTotTxt","gTotNum","gTotPct"]);
+  r++;
+  h1.set(r++, 0, "Protocolo del asesor (cuando quedó algo pendiente del cliente)", "seccion");
+  h1.fila(r++, 0, ["Paso del protocolo", "Conversaciones", "% de las pendientes"], "gEnc");
+  [["Quedó algo pendiente del cliente", P.conPedido, P.conPedido ? 1 : "—"], [`El asesor esperó ${AUD_ESPERA_MIN} minutos o más`, P.espera, P.conPedido ? P.espera/P.conPedido : "—"],
+    ["Mandó un recordatorio", P.record, P.conPedido ? P.record/P.conPedido : "—"], ["Avisó el cierre", P.aviso, P.conPedido ? P.aviso/P.conPedido : "—"],
+    ["Cumplió los tres pasos", P.todo, P.conPedido ? P.todo/P.conPedido : "—"]]
+    .forEach(([t, n, p], i)=>{ const z = i % 2 ? "Z" : "", ult = i===4; h1.fila(r++, 0, [t, n, p], ult ? ["gTotTxt","gTotNum", P.conPedido ? "gTotPct" : "gTotTxt"] : ["gTxtB"+z, "gNum"+z, P.conPedido ? "gPct"+z : "gGuion"+z]); });
+  r++;
   h1.set(r++, 0, "Por servicio", "seccion");
   h1.fila(r++, 0, ["Servicio", "Conversaciones"].concat(dictCols.map(k=> AUD_DICT[k].nom)).concat(["% No aplicaba"]), "gEnc");
   ["Hogar","Móvil","Sin precisar"].forEach((s, i)=>{
@@ -22455,43 +22764,40 @@ function audExcel(){
   });
   h1.fila(r++, 0, ["Total", c.n].concat(dictCols.map(k=> c.cuenta[k])).concat([pctNo(c.cuenta)]), ["gTotTxt","gTotNum"].concat(dictCols.map(()=> "gTotNum")).concat([c.leidas ? "gTotPct" : "gTotTxt"]));
   r++;
-  h1.set(r++, 0, "Motivos que dijo el cliente (por eso no aplicaba)", "seccion");
-  h1.fila(r++, 0, ["Motivo", "Conversaciones", "% (con motivo)"], "gEnc");
-  const totMot = c.motivos.reduce((s, x)=> s + x[1], 0);
-  if(c.motivos.length) c.motivos.forEach(([m, n], i)=>{ const z = i % 2 ? "Z" : ""; h1.fila(r++, 0, [m, n, n/totMot], ["gTxt"+z, "gNum"+z, "gPct"+z]); });
-  else h1.fila(r++, 0, ["Ningún cliente dijo su motivo", 0, "—"], ["gTxt","gNum","gGuion"]);
-  h1.fila(r++, 0, ["Total", totMot, totMot ? 1 : "—"], ["gTotTxt","gTotNum", totMot ? "gTotPct" : "gTotTxt"]);
-  r++;
-  h1.set(r++, 0, "Cómo decide el sistema", "seccion");
-  [ "No aplicaba: el cliente dijo su inconveniente (al bot o al asesor, con sus palabras), aunque después dejara de responder.",
-    "No aplicaba también: el cliente no abandonó (el asesor cerró sin escribirle, o el cliente volvió a escribir y el asesor cerró sin responderle).",
-    "Aplicaba: el cliente no dijo nada (solo saludó, pidió ayuda sin decir para qué, eligió opciones del menú del bot o mandó su número) y, después de que el asesor le ofreció ayuda, no volvió a responder.",
-    "Revisar: el cliente mandó solo audio o imagen, escribió algo que el sistema no reconoce, o Genesys no entregó el chat.",
-    "El motivo se reconoce por palabras (no es inteligencia artificial). Cuenta el día en que el asesor cerró la conversación, igual que Códigos de conclusión.",
+  h1.set(r++, 0, "Cómo decide el sistema (instrucción de WhatsApp para «Llamada no efectiva»)", "seccion");
+  [ `Aplicaba: el asesor le pidió algo al cliente (una respuesta, un dato, un documento o confirmar que seguía ahí), el cliente no respondió y el asesor cumplió el protocolo: esperó ${AUD_ESPERA_MIN} minutos o más desde el pedido, le mandó un recordatorio y avisó el cierre.`,
+    "No aplicaba: el asesor no le escribió, no le pidió nada o cerró sin retomar; el cliente respondió (también cuenta un «sí» cuando le preguntaron si seguía ahí), agradeció la respuesta o dijo que ya no necesitaba ayuda; la gestión quedó resuelta, escalada o en seguimiento; o siguió con otro asesor o cola.",
+    `No aplicaba también: el asesor cerró sin esperar ${AUD_ESPERA_MIN} minutos, sin mandar un recordatorio o sin avisar el cierre.`,
+    `Revisar: el asesor ya le había respondido antes de que el cliente dejara de escribir; el cliente esperó ${AUD_DEMORA_MIN} minutos o más a que le escribieran; el asesor repitió el mismo mensaje; el cliente solo mandó un agradecimiento (hay un código para eso); o Genesys no entregó el chat.`,
+    "Cómo se mide: la espera va desde el pedido (o desde el «un momento» del cliente) hasta que el asesor cerró. Recordatorio: otro mensaje al menos 1 minuto después del pedido (una pregunta, un «¿sigue en línea?» o un aviso de que no hay respuesta). Aviso de cierre: se reconoce por el texto o por ser el último mensaje, sin pregunta, hasta 2 minutos antes de cerrar. Los mensajes automáticos que le llegan al cliente también cuentan.",
+    "Por qué escribió el cliente ya no decide el dictamen: queda como dato. Una falla del sistema o un cierre automático no se ven en el chat, así que no se evalúan acá.",
+    "Todo se reconoce por las palabras y las horas de los mensajes (no es inteligencia artificial). Cuenta el día en que el asesor cerró la conversación, igual que Códigos de conclusión.",
   ].forEach(t=>{ h1.set(r++, 0, t, "sub"); });
-  h1.cols = [44, 17, 17, 17, 15, 15, 16];
+  h1.cols = [46, 17, 17, 17, 22, 22, 16];
   XLSX.utils.book_append_sheet(wb, h1.hoja(), "Resumen"); hojas["Resumen"] = h1;
   // ---- Por asesor ----
   const h2 = new XlsHoja();
   cab(h2, "Por asesor");
-  const enc2 = ["Asesor", "Usuario de Genesys", "Conversaciones"].concat(dictCols.map(k=> AUD_DICT[k].nom)).concat(["% No aplicaba", "% Aplicaba", "Motivo o qué pasó más frecuente (no aplicaba)", "Espera promedio antes de cerrar (aplicaba)"]);
-  h2.fila(3, 0, enc2, "gEnc"); h2.filas[3] = { hpt:30 };
+  const enc2 = ["Asesor", "Usuario de Genesys", "Conversaciones"].concat(dictCols.map(k=> AUD_DICT[k].nom))
+    .concat(["% No aplicaba", "% Aplicaba", AUD_CAT.sinEspera, AUD_CAT.sinRecord, AUD_CAT.sinAviso, "Qué pasó más frecuente (no aplicaba)", "Espera promedio antes de cerrar"]);
+  h2.fila(3, 0, enc2, "gEnc"); h2.filas[3] = { hpt:42 };
   r = 4;
   c.asesores.forEach((a, i)=>{
     const z = i % 2 ? "Z" : "", L = leidasDe(a);
-    h2.fila(r++, 0, [a.nombre, a.usuario || "—", a.n].concat(dictCols.map(k=> a[k])).concat([L ? a.noaplica/L : "—", L ? a.aplica/L : "—", a.motTop || "—", a.espProm===null ? "—" : durD(a.espProm)]),
-      ["gTxtB"+z, a.usuario ? "gTxt"+z : "gGuion"+z, "gNum"+z].concat(dictCols.map(()=> "gNum"+z)).concat([L ? "gPct"+z : "gGuion"+z, L ? "gPct"+z : "gGuion"+z, a.motTop ? "gTxt"+z : "gGuion"+z, a.espProm===null ? "gGuion"+z : "gTmo"+z]));
+    h2.fila(r++, 0, [a.nombre, a.usuario || "—", a.n].concat(dictCols.map(k=> a[k])).concat([L ? a.noaplica/L : "—", L ? a.aplica/L : "—", a.sinEspera, a.sinRecord, a.sinAviso, a.motTop || "—", a.espProm===null ? "—" : durD(a.espProm)]),
+      ["gTxtB"+z, a.usuario ? "gTxt"+z : "gGuion"+z, "gNum"+z].concat(dictCols.map(()=> "gNum"+z)).concat([L ? "gPct"+z : "gGuion"+z, L ? "gPct"+z : "gGuion"+z, "gNum"+z, "gNum"+z, "gNum"+z, a.motTop ? "gTxt"+z : "gGuion"+z, a.espProm===null ? "gGuion"+z : "gTmo"+z]));
   });
-  const espTot = c.espProm;
-  h2.fila(r++, 0, ["Total", "", c.n].concat(dictCols.map(k=> c.cuenta[k])).concat([c.leidas ? c.cuenta.noaplica/c.leidas : "—", c.leidas ? c.cuenta.aplica/c.leidas : "—", c.motivos[0] ? c.motivos[0][0] : "—", espTot===null ? "—" : durD(espTot)]),
-    ["gTotTxt","gTotTxt","gTotNum"].concat(dictCols.map(()=> "gTotNum")).concat([c.leidas ? "gTotPct" : "gTotTxt", c.leidas ? "gTotPct" : "gTotTxt", "gTotTxt", espTot===null ? "gTotTxt" : "gTotTmo"]));
-  h2.cols = [30, 30, 14].concat(dictCols.map(()=> 12)).concat([13, 12, 40, 18]);
+  const espTot = c.espProm, sumaA = k=> c.asesores.reduce((s, a)=> s + a[k], 0);
+  const topNo = c.cats.filter(o=> o.dict==="noaplica")[0];
+  h2.fila(r++, 0, ["Total", "", c.n].concat(dictCols.map(k=> c.cuenta[k])).concat([c.leidas ? c.cuenta.noaplica/c.leidas : "—", c.leidas ? c.cuenta.aplica/c.leidas : "—", sumaA("sinEspera"), sumaA("sinRecord"), sumaA("sinAviso"), topNo ? topNo.cat : "—", espTot===null ? "—" : durD(espTot)]),
+    ["gTotTxt","gTotTxt","gTotNum"].concat(dictCols.map(()=> "gTotNum")).concat([c.leidas ? "gTotPct" : "gTotTxt", c.leidas ? "gTotPct" : "gTotTxt", "gTotNum", "gTotNum", "gTotNum", "gTotTxt", espTot===null ? "gTotTxt" : "gTotTmo"]));
+  h2.cols = [30, 30, 14].concat(dictCols.map(()=> 12)).concat([13, 12, 15, 15, 15, 40, 18]);
   h2.panel = { x:1, y:4 }; h2.filtro = `A4:${XLSX.utils.encode_cell({ r:3, c: enc2.length-1 })}`;
   XLSX.utils.book_append_sheet(wb, h2.hoja(), "Por asesor"); hojas["Por asesor"] = h2;
-  // ---- Por motivo ----
+  // ---- Qué pasó ----
   const h3 = new XlsHoja();
-  cab(h3, "Por motivo o qué pasó");
-  h3.fila(3, 0, ["Motivo o qué pasó", "Dictamen", "Conversaciones", "Hogar", "Móvil", "Sin precisar", "% del total"], "gEnc");
+  cab(h3, "Qué pasó en cada conversación");
+  h3.fila(3, 0, ["Qué pasó", "Dictamen", "Conversaciones", "Hogar", "Móvil", "Sin precisar", "% del total"], "gEnc");
   r = 4;
   c.cats.forEach((o, i)=>{
     const z = i % 2 ? "Z" : "";
@@ -22502,7 +22808,20 @@ function audExcel(){
   h3.fila(r++, 0, ["Total", "", c.n, c.serv.Hogar.n, c.serv["Móvil"].n, c.serv["Sin precisar"].n, 1], ["gTotTxt","gTotTxt","gTotNum","gTotNum","gTotNum","gTotNum","gTotPct"]);
   h3.cols = [48, 14, 14, 10, 10, 13, 12];
   h3.panel = { y:4 };
-  XLSX.utils.book_append_sheet(wb, h3.hoja(), "Por motivo"); hojas["Por motivo"] = h3;
+  XLSX.utils.book_append_sheet(wb, h3.hoja(), "Qué pasó"); hojas["Qué pasó"] = h3;
+  // ---- Por qué escribió (dato: no decide el dictamen) ----
+  const h4 = new XlsHoja();
+  cab(h4, "Por qué escribió el cliente (es un dato: no decide el dictamen)");
+  h4.fila(3, 0, ["Por qué escribió el cliente", "Conversaciones"].concat(dictCols.map(k=> AUD_DICT[k].nom)).concat(["% del total"]), "gEnc");
+  r = 4;
+  c.porques.forEach((o, i)=>{
+    const z = i % 2 ? "Z" : "";
+    h4.fila(r++, 0, [o.nom, o.n].concat(dictCols.map(k=> o[k])).concat([o.n/c.n]), [(o.esMotivo ? "gTxtB" : "gTxt")+z, "gNum"+z].concat(dictCols.map(()=> "gNum"+z)).concat(["gPct"+z]));
+  });
+  h4.fila(r++, 0, ["Total", c.n].concat(dictCols.map(k=> c.cuenta[k])).concat([1]), ["gTotTxt","gTotNum"].concat(dictCols.map(()=> "gTotNum")).concat(["gTotPct"]));
+  h4.cols = [48, 14].concat(dictCols.map(()=> 12)).concat([12]);
+  h4.panel = { y:4 };
+  XLSX.utils.book_append_sheet(wb, h4.hoja(), "Por qué escribió"); hojas["Por qué escribió"] = h4;
   // ---- Por día y Por hora ----
   const tabla = (nombre, titulo, enc0, filasT, etiqueta)=>{
     const h = new XlsHoja();
@@ -22526,63 +22845,106 @@ function audExcel(){
   // ---- Conversaciones (una fila por asesor y conversación) ----
   const h5 = new XlsHoja();
   cab(h5, "Conversaciones auditadas");
+  const leido = R=> R.dict!=="sinleer";
+  // [título, ancho, tipo ("fecha" | "hora" | "tmo" | "num" | "largo" | null), valor]
   const COLS = [
-    ["Día en que cerró", 11, "fecha"], ["Hora en que cerró", 9, "hora"], ["Dictamen", 12, null], ["Comentario del sistema", 60, null], ["Motivo o qué pasó", 40, null],
-    ["Servicio", 11, null], ["Lo que escribió el cliente", 60, null], ["Frase con el motivo", 40, null], ["Palabra que encontró el sistema", 16, null], ["Opción que eligió en el bot", 22, null],
-    ["Asesor", 26, null], ["Usuario de Genesys", 28, null], ["Cola", 26, null], ["ID de la conversación", 38, null], ["Número del cliente", 14, null], ["Nombre en WhatsApp", 22, null],
-    ["Día en que entró", 11, "fecha"], ["Hora en que entró", 9, "hora"], ["Hora en que la tomó el asesor", 11, "hora"], ["Espera en cola", 10, "tmo"], ["Tiempo de atención del asesor", 12, "tmo"],
-    ["Mensajes del cliente", 10, "num"], ["Mensajes del asesor", 10, "num"], ["Mensajes del bot", 10, "num"], ["Adjuntos del cliente", 16, null], ["Primer mensaje del cliente", 40, null],
-    ["Último en escribir", 11, null], ["¿El asesor le ofreció ayuda?", 12, null], ["Espera del asesor antes de cerrar", 12, "tmo"], ["¿Avisó el cierre por falta de respuesta?", 14, null],
-    ["¿El cliente escribió después del cierre?", 14, null], ["Asesores en la conversación", 11, "num"], ["Nota de cierre del asesor", 30, null], ["Estado del chat", 22, null],
+    ["Día en que cerró", 11, "fecha", f=> fechaDe(f.cierre)],
+    ["Hora en que cerró", 9, "hora", f=> horaDe(f.cierre)],
+    ["Dictamen", 12, null, (f, R)=> AUD_DICT[R.dict].nom],
+    ["Comentario del sistema", 60, "largo", (f, R)=> R.com],
+    ["Qué pasó", 38, null, (f, R)=> R.cat],
+    ["Por qué escribió el cliente", 34, null, (f, R)=> R.porque],
+    ["Servicio", 11, null, (f, R)=> R.serv],
+    ["Lo que escribió el cliente", 60, "largo", (f, R)=> R.todo || (leido(R) ? "(no escribió)" : "—")],
+    ["Frase con el motivo", 40, "largo", (f, R)=> R.cita && R.motivo ? R.cita : "—"],
+    ["Palabra que encontró el sistema", 16, null, (f, R)=> R.kw || "—"],
+    ["Opción que eligió en el bot", 22, null, (f, R)=> R.menu.join(" | ") || "—"],
+    ["Lo que le pidió el asesor", 46, "largo", (f, R)=> R.pedido || "—"],
+    ["Hora del pedido", 9, "hora", (f, R)=> R.pedidoT ? horaDe(R.pedidoT) : "—"],
+    ["Espera desde el pedido hasta el cierre", 13, "tmo", (f, R)=> R.esperaPedido===null ? "—" : durD(R.esperaPedido)],
+    [`¿Esperó ${AUD_ESPERA_MIN} minutos?`, 11, null, (f, R)=> R.pidio ? si(R.cumpleEspera===true) : "—"],
+    ["Recordatorios", 13, "num", (f, R)=> R.pidio ? R.recordatorios : "—"],
+    ["¿Avisó el cierre?", 17, null, (f, R)=> !leido(R) ? "—" : R.aviso ? (R.avisoComo==="final" ? "Sí (mensaje final)" : "Sí") : "No"],
+    ["Lo que esperó el cliente al asesor", 13, "tmo", (f, R)=> R.demora===null ? "—" : durD(R.demora)],
+    ["Veces que repitió el mismo mensaje", 13, "num", (f, R)=> R.pidio ? R.repetidos : "—"],
+    ["Asesor", 26, null, f=> f.asesor],
+    ["Usuario de Genesys", 28, null, f=> f.usuario || "—"],
+    ["Cola", 26, null, f=> f.cola || "—"],
+    ["ID de la conversación", 38, null, f=> f.cid],
+    ["Número del cliente", 14, null, f=> f.aniTxt || "—"],
+    ["Nombre en WhatsApp", 22, null, f=> f.nombreWa || "—"],
+    ["Día en que entró", 11, "fecha", f=> fechaDe(f.inicio)],
+    ["Hora en que entró", 9, "hora", f=> horaDe(f.inicio)],
+    ["Hora en que la tomó el asesor", 11, "hora", f=> horaDe(f.tomo)],
+    ["Espera en cola", 10, "tmo", f=> durD(f.espera)],
+    ["Tiempo de atención del asesor", 12, "tmo", f=> durD(f.t)],
+    ["Mensajes del cliente", 10, "num", (f, R)=> leido(R) ? R.nCli : "—"],
+    ["Mensajes del asesor", 10, "num", (f, R)=> leido(R) ? R.nAse : "—"],
+    ["Mensajes del bot", 10, "num", (f, R)=> leido(R) ? R.nBot : "—"],
+    ["Adjuntos del cliente", 16, null, (f, R)=>{ const adj = {}; R.adjCli.forEach(t=>{ adj[t] = (adj[t]||0) + 1; }); return Object.keys(adj).map(k=> `${adj[k]} ${k}`).join(", ") || "—"; }],
+    ["Primer mensaje del cliente", 40, "largo", (f, R)=> R.primero || "—"],
+    ["Último en escribir", 11, null, (f, R)=> R.ultimo || "—"],
+    ["¿El asesor le escribió?", 12, null, (f, R)=> leido(R) ? si(R.ofrecio) : "—"],
+    ["Espera desde el último mensaje del asesor", 13, "tmo", (f, R)=> R.espera===null ? "—" : durD(R.espera)],
+    ["¿El cliente escribió después del cierre?", 14, null, (f, R)=> leido(R) ? si(R.despues) : "—"],
+    ["¿Siguió con otro asesor o cola?", 14, null, f=> si(!!f.sigue)],
+    ["Asesores en la conversación", 11, "num", f=> f.asesores],
+    ["Nota de cierre del asesor", 30, "largo", f=> f.nota || "—"],
+    ["Estado del chat", 22, null, (f, R)=> R.estadoChat],
   ];
+  const ix = t=>{ const i = COLS.findIndex(x=> x[0]===t); if(i < 0) throw new Error("Columna sin definir: " + t); return i; };
   const H5 = 3;
   h5.fila(H5, 0, COLS.map(x=> x[0]), "enc"); h5.filas[H5] = { hpt:42 };
-  const estCol = COLS.map(x=> x[2]==="fecha" ? "dFecha" : x[2]==="hora" ? "dHora" : x[2]==="tmo" ? "tmo" : x[2]==="num" ? "num" : null);
-  const anchoTexto = new Set([3, 6, 7, 25, 32]);
+  const estCol = COLS.map(x=> x[2]==="fecha" ? "dFecha" : x[2]==="hora" ? "dHora" : x[2]==="tmo" ? "tmo" : x[2]==="num" ? "num" : x[2]==="largo" ? "dComent" : "dTxt");
   const dictFila = [];
   let r5 = H5 + 1;
   c.res.forEach(x=>{
-    const f = x.f, R = x.r;
-    const adj = {}; R.adjCli.forEach(t=>{ adj[t] = (adj[t]||0) + 1; });
-    const vals = [fechaDe(f.cierre), horaDe(f.cierre), AUD_DICT[R.dict].nom, R.com, R.cat, R.serv, R.todo || (R.dict==="sinleer" ? "—" : "(no escribió)"), R.cita && R.motivo ? R.cita : "—", R.kw || "—", R.menu.join(" | ") || "—",
-      f.asesor, f.usuario || "—", f.cola || "—", f.cid, f.aniTxt || "—", f.nombreWa || "—",
-      fechaDe(f.inicio), horaDe(f.inicio), horaDe(f.tomo), durD(f.espera), durD(f.t),
-      R.dict==="sinleer" ? "—" : R.nCli, R.dict==="sinleer" ? "—" : R.nAse, R.dict==="sinleer" ? "—" : R.nBot, Object.keys(adj).map(k=> `${adj[k]} ${k}`).join(", ") || "—", R.primero || "—",
-      R.ultimo || "—", R.dict==="sinleer" ? "—" : si(R.ofrecio), R.espera==null ? "—" : durD(R.espera), R.dict==="sinleer" ? "—" : si(R.aviso),
-      R.dict==="sinleer" ? "—" : si(R.despues), f.asesores, f.nota || "—", R.estadoChat];
-    vals.forEach((v, i)=> h5.set(r5, i, typeof v==="string" ? limpio(v) : v));
-    dictFila[r5] = R.dict;
+    COLS.forEach((col, i)=>{ const val = col[3](x.f, x.r); h5.set(r5, i, typeof val==="string" ? limpio(val) : val); });
+    dictFila[r5] = x.r.dict;
     r5++;
   });
   const ult5 = r5 - 1;
   // Totales: conteos y promedios
   const sum = k=> c.res.reduce((s, x)=> s + (typeof x.r[k]==="number" ? x.r[k] : 0), 0);
   const prom = l=> l.length ? l.reduce((a, b)=> a + b, 0)/l.length : null;
-  const leidos = c.res.filter(x=> x.r.dict!=="sinleer");
+  const leidos = c.res.filter(x=> x.r.dict!=="sinleer"), conPed = c.res.filter(x=> x.r.pidio);
   const tot = new Array(COLS.length).fill("");
-  tot[0] = "Total"; tot[2] = `${fmtNum(c.n)} conv.`; tot[3] = `Aplicaba ${fmtNum(c.cuenta.aplica)} · No aplicaba ${fmtNum(c.cuenta.noaplica)} · Revisar ${fmtNum(c.cuenta.revisar)}${sin ? ` · Sin leer ${fmtNum(c.cuenta.sinleer)}` : ""}`;
-  tot[10] = `${fmtNum(c.nAses)} asesores`;
-  tot[21] = sum("nCli"); tot[22] = sum("nAse"); tot[23] = sum("nBot");
-  tot[27] = `Sí: ${fmtNum(leidos.filter(x=> x.r.ofrecio).length)}`; tot[29] = `Sí: ${fmtNum(leidos.filter(x=> x.r.aviso).length)}`; tot[30] = `Sí: ${fmtNum(leidos.filter(x=> x.r.despues).length)}`;
+  tot[ix("Día en que cerró")] = "Total"; tot[ix("Dictamen")] = `${fmtNum(c.n)} conv.`;
+  tot[ix("Comentario del sistema")] = `Aplicaba ${fmtNum(c.cuenta.aplica)} · No aplicaba ${fmtNum(c.cuenta.noaplica)} · Revisar ${fmtNum(c.cuenta.revisar)}${sin ? ` · Sin leer ${fmtNum(c.cuenta.sinleer)}` : ""}`;
+  tot[ix("Qué pasó")] = `Sin cumplir el protocolo: ${fmtNum(P.fallas)}`;
+  tot[ix("Lo que le pidió el asesor")] = `Quedó algo pendiente del cliente: ${fmtNum(P.conPedido)}`;
+  tot[ix(`¿Esperó ${AUD_ESPERA_MIN} minutos?`)] = `Sí: ${fmtNum(P.espera)}`;
+  tot[ix("Recordatorios")] = conPed.reduce((s, x)=> s + (x.r.recordatorios || 0), 0);
+  tot[ix("¿Avisó el cierre?")] = `Sí: ${fmtNum(leidos.filter(x=> x.r.aviso).length)}`;
+  tot[ix("Veces que repitió el mismo mensaje")] = conPed.reduce((s, x)=> s + (x.r.repetidos || 0), 0);
+  tot[ix("Asesor")] = `${fmtNum(c.nAses)} asesores`;
+  tot[ix("Mensajes del cliente")] = sum("nCli"); tot[ix("Mensajes del asesor")] = sum("nAse"); tot[ix("Mensajes del bot")] = sum("nBot");
+  tot[ix("¿El asesor le escribió?")] = `Sí: ${fmtNum(leidos.filter(x=> x.r.ofrecio).length)}`;
+  tot[ix("¿El cliente escribió después del cierre?")] = `Sí: ${fmtNum(leidos.filter(x=> x.r.despues).length)}`;
+  tot[ix("¿Siguió con otro asesor o cola?")] = `Sí: ${fmtNum(c.res.filter(x=> x.f.sigue).length)}`;
+  tot[ix("Asesores en la conversación")] = c.res.reduce((s, x)=> s + (x.f.asesores || 0), 0);
   const pr = new Array(COLS.length).fill("");
-  pr[0] = "Promedio";
-  const pE = prom(c.res.map(x=> x.f.espera)), pT = prom(c.res.map(x=> x.f.t)), pW = prom(leidos.filter(x=> x.r.espera!=null).map(x=> x.r.espera));
-  pr[19] = pE===null ? "—" : durD(pE); pr[20] = pT===null ? "—" : durD(pT); pr[28] = pW===null ? "—" : durD(pW);
-  ["nCli","nAse","nBot"].forEach((k, i)=>{ const p = prom(leidos.map(x=> x.r[k])); pr[21+i] = p===null ? "—" : Math.round(p*10)/10; });
+  pr[ix("Día en que cerró")] = "Promedio";
+  const tmoProm = (t, lista)=>{ const p = prom(lista.filter(v=> v!==null && v!==undefined && !isNaN(v))); pr[ix(t)] = p===null ? "—" : durD(p); };
+  tmoProm("Espera en cola", c.res.map(x=> x.f.espera)); tmoProm("Tiempo de atención del asesor", c.res.map(x=> x.f.t));
+  tmoProm("Espera desde el pedido hasta el cierre", conPed.map(x=> x.r.esperaPedido)); tmoProm("Lo que esperó el cliente al asesor", conPed.map(x=> x.r.demora));
+  tmoProm("Espera desde el último mensaje del asesor", leidos.map(x=> x.r.espera));
+  [["Mensajes del cliente","nCli"],["Mensajes del asesor","nAse"],["Mensajes del bot","nBot"]].forEach(([t, k])=>{ const p = prom(leidos.map(x=> x.r[k])); pr[ix(t)] = p===null ? "—" : Math.round(p*10)/10; });
+  { const p = prom(conPed.map(x=> x.r.recordatorios || 0)); pr[ix("Recordatorios")] = p===null ? "—" : Math.round(p*10)/10; }
   const rTot = r5, rProm = r5 + 1;
-  tot.forEach((v, i)=> h5.set(rTot, i, v)); pr.forEach((v, i)=> h5.set(rProm, i, v));
+  tot.forEach((val, i)=> h5.set(rTot, i, val)); pr.forEach((val, i)=> h5.set(rProm, i, val));
+  const iDict = ix("Dictamen");
   h5.estiloDe = cel=>{
     if(cel.r===rTot || cel.r===rProm){
       const k = COLS[cel.c][2];
-      if(cel.r===rProm && (k==="tmo")) return "totTmo";
       if(cel.r===rProm && k==="num") return "totC";
       return k==="num" ? "totNum" : k==="tmo" ? "totTmo" : "totTxt";
     }
     if(cel.r <= H5 || cel.r > ult5) return null;
-    if(cel.c===2) return AUD_DICT[dictFila[cel.r]].xl;
-    return estCol[cel.c] || (anchoTexto.has(cel.c) ? "dComent" : "dTxt");
+    if(cel.c===iDict) return AUD_DICT[dictFila[cel.r]].xl;
+    return estCol[cel.c];
   };
-  h5.colFmt = {}; COLS.forEach((x, i)=>{ if(x[2]) h5.colFmt[i] = x[2]==="num" ? "num" : x[2]; }); h5.colFmtDesde = H5 + 1;
+  h5.colFmt = {}; COLS.forEach((x, i)=>{ if(x[2] && x[2]!=="largo") h5.colFmt[i] = x[2]; }); h5.colFmtDesde = H5 + 1;
   h5.cols = COLS.map(x=> x[1]);
   h5.panel = { x:3, y:H5+1 };
   h5.filtro = `A${H5+1}:${XLSX.utils.encode_cell({ r:H5, c:COLS.length-1 })}`;
@@ -22602,13 +22964,13 @@ function audExcel(){
     vistos.add(x.f.cid);
     const ch = AUD.chats.get(x.f.cid), ases = porCid.get(x.f.cid), quien = ases.map(y=> y.f.asesor).join(" / "), dict = ases.map(y=> AUD_DICT[y.r.dict].nom).join(" / ");
     if(!ch || ch.estado!=="ok" || !ch.msgs.length){
-      [x.f.cid, quien, dict, "—", "—", "—", "—", "—", !ch ? "(no se leyó el chat)" : ch.estado==="ok" ? "(el chat no tiene mensajes)" : `(no se pudo leer: ${ch.err || ch.estado})`, ""].forEach((v, i)=> h6.set(r6, i, v));
+      [x.f.cid, quien, dict, "—", "—", "—", "—", "—", !ch ? "(no se leyó el chat)" : ch.estado==="ok" ? "(el chat no tiene mensajes)" : `(no se pudo leer: ${ch.err || ch.estado})`, ""].forEach((val, i)=> h6.set(r6, i, val));
       tipoFila[r6] = "x"; r6++; return;
     }
     ch.msgs.forEach((m, i)=>{
       const q = QUIEN[m.q] || QUIEN.b;
       [x.f.cid, quien, dict, i + 1, m.t ? fechaDe(m.t) : "—", m.t ? horaDe(m.t) : "—", q[0], limpio(m.q==="c" && x.f.aniTxt && x.f.aniTxt!=="—" ? x.f.aniTxt : m.n), limpio(m.x), limpio((m.adj||[]).map(j=> `${j.tipo}: ${j.nombre}`).join(", "))]
-        .forEach((v, k)=> h6.set(r6, k, v));
+        .forEach((val, k)=> h6.set(r6, k, val));
       tipoFila[r6] = m.q; n6.total++; n6[m.q] = (n6[m.q]||0) + 1; r6++;
     });
   });
@@ -22642,9 +23004,30 @@ function audExcel(){
   v.avisos.forEach(x=>{ h7.fila(r++, 0, ["Aviso", x[0], x[1]], ["gTxtB", "gTxt", "gJusG"]); });
   v.infos.forEach(x=>{ h7.fila(r++, 0, ["Nota", x[0], x[1]], ["gTxt", "gTxt", "gJusG"]); });
   r++;
-  h7.set(r++, 0, "Frases del cliente que el sistema no reconoció (para ajustar las palabras que busca)", "seccion");
+  // v22.46: tres listas para ajustar las frases con las que el sistema reconoce el pedido, el recordatorio y el aviso de cierre
+  const listaTop = (titulo, enc, mapa, etiqueta)=>{
+    h7.set(r++, 0, titulo, "seccion");
+    h7.fila(r++, 0, enc, "gEnc");
+    const todos = Array.from(mapa.entries()).sort((a, b)=> b[1].n - a[1].n), top = todos.slice(0, 60);
+    if(top.length) top.forEach(([t, o], i)=>{ const z = i % 2 ? "Z" : ""; h7.fila(r++, 0, [etiqueta(o), o.n, limpio(t)], ["gTxt"+z, "gNum"+z, "gJusG"+z]); });
+    else h7.fila(r++, 0, ["Ninguno", 0, ""], ["gTxt","gNum","gTxt"]);
+    h7.fila(r++, 0, [todos.length > top.length ? `Total (se listan los ${top.length} más repetidos de ${fmtNum(todos.length)})` : "Total", todos.reduce((s, x)=> s + x[1].n, 0), ""], ["gTotTxt","gTotNum","gTotTxt"]);
+    r++;
+  };
+  const suma = (mapa, t, cat)=>{ let o = mapa.get(t); if(!o){ o = { n:0, cats:new Map() }; mapa.set(t, o); } o.n++; if(cat) o.cats.set(cat, (o.cats.get(cat)||0) + 1); };
+  const masFrecuente = o=> (Array.from(o.cats.entries()).sort((a, b)=> b[1]-a[1])[0] || [""])[0];
+  const finales = new Map(), noCont = new Map(), peds = new Map();
+  c.res.forEach(x=>{
+    if(x.r.cat===AUD_CAT.sinAviso && x.r.ultAsesor) suma(finales, x.r.ultAsesor, x.r.cat);
+    (x.r.sinContar||[]).forEach(t=> suma(noCont, t, x.r.cat));
+    if(x.r.pidio && x.r.pedido) suma(peds, x.r.pedido, x.r.cat);
+  });
+  listaTop("Último mensaje del asesor cuando no se encontró el aviso de cierre (para ajustar las frases que busca el sistema)", ["Qué pasó", "Conversaciones", "Último mensaje del asesor"], finales, ()=> AUD_CAT.sinAviso);
+  listaTop("Mensajes del asesor después del pedido que no contaron como recordatorio ni como aviso de cierre", ["Qué pasó (lo más frecuente)", "Veces", "Mensaje del asesor"], noCont, masFrecuente);
+  listaTop("Lo que el sistema tomó como el pedido del asesor (lo que quedó sin respuesta del cliente)", ["Qué pasó (lo más frecuente)", "Conversaciones", "Mensaje del asesor"], peds, masFrecuente);
+  h7.set(r++, 0, "Frases del cliente que el sistema no reconoció (motivo sin identificar; no cambia el dictamen)", "seccion");
   h7.fila(r++, 0, ["ID de la conversación", "Asesor", "Lo que escribió el cliente"], "gEnc");
-  const raros = c.res.filter(x=> x.r.cat===AUD_CAT.texto).slice(0, 500);
+  const raros = c.res.filter(x=> x.r.porque===AUD_PORQUE.texto).slice(0, 500);
   if(raros.length) raros.forEach((x, i)=>{ const z = i % 2 ? "Z" : ""; h7.fila(r++, 0, [x.f.cid, x.f.asesor, limpio(x.r.todo)], ["gTxt"+z, "gTxt"+z, "gJusG"+z]); });
   else h7.fila(r++, 0, ["Ninguna", "", ""], ["gTxt","gTxt","gTxt"]);
   h7.fila(r++, 0, ["Total", "", raros.length], ["gTotTxt","gTotTxt","gTotNum"]);
