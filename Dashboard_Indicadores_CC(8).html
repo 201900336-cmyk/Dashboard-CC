@@ -1635,6 +1635,25 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .qa-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;}
   .qa-pill.cli{background:#E8EEFC;color:#1D3FA8;} .qa-pill.ase{background:#FBD9DE;color:#9B0A22;} .qa-pill.tra{background:#EEF0F3;color:#3B4350;}
   .qa-pill.aba{background:#FBEFD0;color:#7A5200;} .qa-pill.ivr,.qa-pill.sis{background:#F1F2F4;color:#5B6472;}
+  /* v22.45: "Se cayó (asesor)" y la tarjeta "Cómo terminó" */
+  .qa-pill.cai{background:#FDE7D3;color:#8A3B00;}
+  .qa-dw-tiles .qa-pill.cai{background:#E8730C;color:#fff;}
+  .cc-pill.a{background:#FDE7D3;color:#8A3B00;}
+  .qa-ledger .a b,.qa-tabla td.num.a{color:#B05A00;}
+  .qa-fin-c{margin:0 0 8px;font-size:12.5px;font-weight:700;line-height:1.45;color:#1F2430;}
+  .qa-fin-c.r{color:#9B0A22;} .qa-fin-c.a{color:#8A3B00;}
+  .qa-fin .qa-datos{gap:8px 12px;}
+  .qa-fin dd code{display:inline-block;max-width:100%;font-family:Consolas,monospace;font-size:11px;font-weight:700;background:#EEF0F3;border-radius:4px;padding:1px 6px;color:#1F2430;overflow-wrap:anywhere;}
+  .qa-fin dd i{font-style:normal;font-size:11px;font-weight:500;color:#5B6472;margin-left:6px;font-variant-numeric:tabular-nums;}
+  .qa-fin dd span{display:block;font-weight:500;color:#3B4350;line-height:1.4;margin-top:2px;}
+  .qa-fin dd span.qa-fin-cod{font-size:11px;color:#7C8592;}
+  .qa-fin-n{margin:8px 0 0;font-size:11px;color:#5B6472;line-height:1.45;}
+  .qa-fin-c + .qa-fin-n{margin:-2px 0 10px;}
+  .qa-fin-val{margin:0 0 14px;}
+  .qa-fin-val .qa-tabla-wrap{margin-top:10px;}
+  .qa-fin-val code{font-family:Consolas,monospace;font-size:11.5px;font-weight:700;background:#EEF0F3;border-radius:4px;padding:1px 6px;color:#1F2430;}
+  .qa-fin-val tfoot td{position:sticky;bottom:0;background:#F4F5F7;border-top:2px solid var(--red);}
+  .qa-fin-val .qa-nota{margin:8px 0 2px;}
   .qa-cuad{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;}
   .qa-cuad.ok{background:#DDF3E5;color:#17733F;} .qa-cuad.amb{background:#FBEFD0;color:#7A5200;} .qa-cuad.bad{background:#FBD9DE;color:#9B0A22;} .qa-cuad.sin{background:#F1F2F4;color:#5B6472;}
   .qa-ok{color:#17733F;font-weight:700;} .qa-no{color:#B4021F;font-weight:700;} .qa-meh{color:#7A5200;font-weight:700;}
@@ -15487,6 +15506,7 @@ const QA_BANDEJA_MAX_DIAS = 31;
 const QA_RECONTACTO_DIAS = 7;
 const QA_FLAGS = {
   asesorColgo: { label:"Colgó el asesor", corto:"Colgó asesor", peso:3, cls:"crit" },
+  asesorCaida: { label:"Se cayó del lado del asesor (sin el botón)", corto:"Se cayó (asesor)", peso:2, cls:"warn" },   // v22.45
   corta:       { label:"Llamada corta (<20 s)", corto:"Corta", peso:3, cls:"crit" },
   recontacto:  { label:"Volvió a llamar", corto:"Recontacto", peso:2, cls:"warn" },
   holdLargo:   { label:"Hold largo (≥2 min o ≥3 veces)", corto:"Hold largo", peso:2, cls:"warn" },
@@ -15613,6 +15633,122 @@ function qaFiltroOr(dimension, valores){
   return { type:"or", predicates: valores.map(v=>({ type:"dimension", dimension, operator:"matches", value:v })) };
 }
 
+/* ---------- v22.45 (Oscar, 2026-11-27): quién colgó, y cómo ----------
+   Oscar: "siento que cuando miro la grabación de pantalla de los asesores, no se ve que el asesor corta… si
+   presionan F5 se cae la llamada, pero tengo mis dudas". Se revisó contra la documentación de Genesys:
+   · Genesys guarda un motivo de desconexión POR PARTICIPANTE (disconnectType del último segmento), relativo a ese
+     participante: client = la orden de colgar salió de su aplicación (botón); endpoint = se desconectó su teléfono
+     (colgó en el aparato, o se cerró o recargó el navegador con el teléfono web); peer = cortó otro participante;
+     error / transportFailure = falla de conexión (p. ej. errorCode …iceIdleDetection: Genesys dejó de recibir el
+     audio del teléfono web); system = la nube o el proveedor.
+   · La regla de Genesys para su columna "Tipo de desconexión" (Interacciones): asesor con client o endpoint =
+     "Agent"; asesor con peer y cliente con endpoint = "External"; lo demás = "System".
+   Lo que hacía el dashboard: toda llamada con "peer" en el cliente salía "colgó el asesor", fuera cual fuera el
+   motivo del asesor: el botón, una recarga (F5), el cierre de la página y una falla de red quedaban mezclados.
+   Ahora:
+   · "Asesor"           = client sin error: la orden de colgar salió de su aplicación (alerta "Colgó el asesor").
+   · "Se cayó (asesor)" = se cortó de su lado SIN esa orden: endpoint, error, transportFailure, o client con error
+                          de sesión (alerta "Se cayó del lado del asesor"). Con el dato de Genesys no se distingue
+                          una recarga de una falla de red.
+   · "Sistema"          = el cliente tiene peer pero Genesys no lo atribuye al asesor (system, other, peer en ambos).
+   · Las transferencias de consulta o de conferencia (consultTransfer, conferenceTransfer) son "Transferencia".
+   · El segmento del asesor que se mira es el que terminó junto con la llamada del cliente (antes: el último en
+     terminar; si el asesor cerraba una consulta después de que el cliente colgó, salía "colgó el asesor").
+   Cada llamada guarda la evidencia (f.fin) y la ficha la muestra en "Cómo terminó". */
+const QA_CAIDA = "Se cayó (asesor)";
+const QA_FIN_NOMBRE = { client:"Client", endpoint:"Endpoint", peer:"Peer", system:"System", error:"Error", transportfailure:"Transport Failure", timeout:"Timeout", other:"Other",
+  transfer:"Transfer", consulttransfer:"Consult Transfer", conferencetransfer:"Conference Transfer", forwardtransfer:"Forward Transfer", noanswertransfer:"No Answer Transfer", notavailabletransfer:"Not Available Transfer", uncallable:"Uncallable", spam:"Spam" };
+function qaFinDe(s){
+  if(!s) return null;
+  const o = { tipo: String(s.disconnectType||"").toLowerCase(), err: s.errorCode ? String(s.errorCode) : "", t: s.segmentEnd || "" };
+  if(Array.isArray(s.sipResponseCodes) && s.sipResponseCodes.length) o.sip = s.sipResponseCodes.slice(0, 4);
+  if(Array.isArray(s.q850ResponseCodes) && s.q850ResponseCodes.length) o.q850 = s.q850ResponseCodes.slice(0, 4);
+  return o;
+}
+function qaFinErrCorto(err){ return String(err||"").split(".").filter(Boolean).slice(-2).join("."); }
+function qaFinCrudo(x){ return !x ? "" : (QA_FIN_NOMBRE[x.tipo] || x.tipo || "(sin dato)") + (x.err ? ` (${qaFinErrCorto(x.err)})` : ""); }
+// Qué significa el motivo de Genesys para ese participante ("a" = asesor, "c" = cliente)
+function qaFinExplica(lado, x){
+  if(!x) return "Genesys no trae este dato.";
+  const t = x.tipo, e = x.err;
+  if(t.includes("transfer")) return lado==="a" ? "Transfirió la llamada." : "Pasó a otra llamada por una transferencia.";
+  if(lado==="a"){
+    if(t==="client") return e ? "Su aplicación reportó un error de sesión en lugar de una orden normal de colgar (suele pasar cuando la llamada ya estaba cortada). No prueba que haya usado el botón."
+      : "Genesys recibió la orden de colgar desde su aplicación: el botón de finalizar la llamada.";
+    if(t==="endpoint") return "Su teléfono se desconectó sin la orden de colgar: se cerró o se recargó (F5) la página o la aplicación de Genesys, o colgó en un teléfono físico.";
+    if(t==="error" || t==="transportfailure") return /iceidle/i.test(e) ? "Genesys dejó de recibir el audio de su teléfono web y cortó la llamada: falla de red o del equipo, o la página se recargó o se cerró."
+      : "Falla de conexión de su teléfono web (red o equipo).";
+    if(t==="peer") return "No cortó el asesor: la llamada terminó por otro participante.";
+  } else {
+    if(t==="endpoint") return "Colgó desde su teléfono.";
+    if(t==="client") return "Cerró desde su aplicación.";
+    if(t==="peer") return "No cortó el cliente: la llamada se le cortó desde el otro lado.";
+    if(t==="error" || t==="transportfailure") return "Falla de conexión del lado del cliente o del operador de telefonía.";
+  }
+  if(t==="system") return "Lo cortó el sistema (la nube o el proveedor).";
+  return t ? "Otro motivo." : "Genesys no indicó el motivo.";
+}
+function qaFinConclusion(f){
+  const x = f.fin || {}, c = f.colgo;
+  if(c==="Asesor") return "Colgó el asesor: la orden de colgar salió de su aplicación de Genesys (el botón de finalizar la llamada)." + (x.dt > 10 ? ` El cliente siguió conectado ${qaDur(x.dt)} más (con otro participante o con el IVR).` : "");
+  if(c===QA_CAIDA) return f.colgoComo==="equipo" ? "Se cayó del lado del asesor: su teléfono se desconectó sin que usara el botón de colgar."
+    : f.colgoComo==="sesion" ? "Se cayó del lado del asesor: Genesys anotó un error de sesión, no una orden normal de colgar."
+    : "Se cayó del lado del asesor: se perdió la conexión de su teléfono web.";
+  if(c==="Cliente") return "Colgó el cliente.";
+  if(c==="Transferencia") return "La llamada salió del asesor por una transferencia.";
+  if(c==="Sistema") return "Genesys no atribuye el corte al asesor ni al cliente (sistema, operador de telefonía u otro participante).";
+  return "La llamada no llegó a un asesor.";
+}
+// Para el Excel: una frase corta
+function qaFinCorto(f){
+  const x = f.fin || {}, c = f.colgo;
+  if(c==="Asesor") return "Botón de Genesys (la orden de colgar salió de su aplicación)";
+  if(c===QA_CAIDA) return f.colgoComo==="equipo" ? "Se desconectó su teléfono sin la orden de colgar (cierre o recarga de Genesys, o colgó en el aparato)"
+    : f.colgoComo==="sesion" ? "Error de sesión en su aplicación (no es una orden normal de colgar)"
+    : "Se perdió la conexión de su teléfono web (red o equipo, o recarga o cierre de la página)";
+  if(c==="Cliente") return x.c && x.c.tipo==="client" ? "Cerró desde su aplicación" : "Colgó desde su teléfono";
+  return "";
+}
+function qaFinFrase(f){ return f.colgo==="Cliente" ? "colgó el cliente" : f.colgo==="Asesor" ? "colgó el asesor" : f.colgo===QA_CAIDA ? "se cayó del lado del asesor" : String(f.colgo||"").toLowerCase(); }
+function qaHoraSeg(iso){ const t = qaHn(iso); if(!t || isNaN(t.h)) return ""; const p = n=> String(n).padStart(2, "0"); return `${p(t.h)}:${p(t.mi)}:${p(t.s)}`; }
+function qaHtmlFinBloque(f){
+  const x = f.fin || {};
+  const fila = (nombre, lado, d)=> `<dt>${nombre}</dt><dd>${d ? `<code>${qaEsc(qaFinCrudo(d))}</code>${d.t ? `<i>${qaHoraSeg(d.t)}</i>` : ""}` : ""}<span>${qaEsc(qaFinExplica(lado, d))}</span>${d && (d.sip || d.q850) ? `<span class="qa-fin-cod">${[d.sip ? "SIP " + d.sip.join(", ") : "", d.q850 ? "Q.850 " + d.q850.join(", ") : ""].filter(Boolean).join(" · ")}</span>` : ""}</dd>`;
+  const conAsesor = f.userIds && f.userIds.length;
+  return `<div class="qa-fin">
+    <p class="qa-fin-c ${f.colgo==="Asesor" ? "r" : f.colgo===QA_CAIDA ? "a" : ""}">${qaEsc(qaFinConclusion(f))}</p>
+    ${f.colgo===QA_CAIDA ? `<p class="qa-fin-n">Pasa cuando se recarga (F5) o se cierra Genesys, y también por fallas de red o del equipo. Con el dato de Genesys no se puede saber cuál de esas fue.</p>` : ""}
+    <dl class="qa-datos">${conAsesor ? fila("Asesor", "a", x.a) : ""}${fila("Cliente", "c", x.c)}</dl>
+    <p class="qa-fin-n">Es el motivo de desconexión que Genesys guarda para cada participante. Se puede comparar con la línea de tiempo de esta misma interacción en Genesys.</p>
+  </div>`;
+}
+// Para validar con los datos reales: cuántas llamadas con asesor terminaron con cada pareja de motivos de Genesys
+// (asesor / cliente) y cómo las cuenta el dashboard. Va en la bandeja (se abre y se cierra) y en su Excel.
+function qaFinTabla(filas){
+  const m = new Map();
+  filas.forEach(f=>{
+    if(!f.userIds || !f.userIds.length) return;
+    const a = qaFinCrudo(f.fin && f.fin.a) || "(sin dato)", c = qaFinCrudo(f.fin && f.fin.c) || "(sin dato)";
+    const k = a + "|" + c + "|" + f.colgo;
+    const o = m.get(k) || { a, c, colgo: f.colgo, n:0 };
+    o.n++; m.set(k, o);
+  });
+  return Array.from(m.values()).sort((x, y)=> y.n - x.n || x.a.localeCompare(y.a));
+}
+function qaHtmlFinTabla(filas){
+  const t = qaFinTabla(filas), n = t.reduce((s, o)=> s + o.n, 0);
+  if(!n) return "";
+  return `<details class="ia-valid ok qa-fin-val"${QA.finAbierta ? " open" : ""} ontoggle="QA.finAbierta=this.open">
+    <summary>Cómo terminaron las ${fmtNum(n)} llamadas con asesor, según Genesys <span class="ia-valid-n">(${t.length} ${t.length===1 ? "combinación" : "combinaciones"})</span><span class="ia-valid-ver"></span></summary>
+    <div class="qa-tabla-wrap corta"><table class="qa-tabla">
+      <thead><tr><th>Motivo del asesor</th><th>Motivo del cliente</th><th class="num">Llamadas</th><th class="num">%</th><th>El dashboard lo cuenta como</th></tr></thead>
+      <tbody>${t.map(o=> `<tr><td><code>${qaEsc(o.a)}</code></td><td><code>${qaEsc(o.c)}</code></td><td class="num">${fmtNum(o.n)}</td><td class="num">${(o.n/n*100).toFixed(1)}%</td><td>${qaColgoPill(o.colgo)}</td></tr>`).join("")}</tbody>
+      <tfoot><tr><td><b>Total</b></td><td></td><td class="num"><b>${fmtNum(n)}</b></td><td class="num"><b>100%</b></td><td></td></tr></tfoot>
+    </table></div>
+    <p class="qa-nota">Es el motivo de desconexión que Genesys guarda para el asesor y para el cliente en cada llamada. Sirve para comprobar la regla con llamadas de prueba: una colgada con el botón tiene que salir «Client / Peer».</p>
+  </details>`;
+}
+
 /* ---------- resumen de una conversación ---------- */
 function qaSegDur(s){ const a = Date.parse(s.segmentStart), b = s.segmentEnd ? Date.parse(s.segmentEnd) : NaN; return (isNaN(a)||isNaN(b)) ? 0 : Math.max(0,(b-a)/1000); }
 function qaSegs(p){ const out=[]; (p.sessions||[]).forEach(se=> (se.segments||[]).forEach(sg=> out.push({ ...sg, _session: se }))); return out.sort((x,y)=> Date.parse(x.segmentStart)-Date.parse(y.segmentStart)); }
@@ -15634,6 +15770,7 @@ function qaResumen(c, wrapups){
   ivrs.forEach(p=> qaSegs(p).forEach(s=>{ ivr += qaSegDur(s); }));
   const userIds = [];
   let ultimoAgSeg = null;
+  const agSegs = [];   // v22.45: los segmentos de conversación o hold de los asesores
   agentes.forEach(p=>{
     if(p.userId && !userIds.includes(p.userId)) userIds.push(p.userId);
     qaSegs(p).forEach(s=>{
@@ -15645,28 +15782,48 @@ function qaResumen(c, wrapups){
       // v21.71: solo segmentos de conversación/hold — antes un intento de
       // transferencia que sonó y nadie contestó (segmento "alert" del 2º
       // asesor) quedaba como "último" y la llamada salía colgada por "Sistema".
-      if((s.segmentType==="interact" || s.segmentType==="hold") && (!ultimoAgSeg || Date.parse(s.segmentEnd||s.segmentStart) >= Date.parse(ultimoAgSeg.segmentEnd||ultimoAgSeg.segmentStart))) ultimoAgSeg = s;
+      if(s.segmentType==="interact" || s.segmentType==="hold"){
+        agSegs.push(s);
+        if(!ultimoAgSeg || Date.parse(s.segmentEnd||s.segmentStart) >= Date.parse(ultimoAgSeg.segmentEnd||ultimoAgSeg.segmentStart)) ultimoAgSeg = s;
+      }
     });
   });
   const custSegs = cust ? qaSegs(cust) : [];
   const ultCust = custSegs.length ? custSegs[custSegs.length-1] : null;
   const nTransferDisc = agentes.reduce((n,p)=> n + qaSegs(p).filter(s=> s.disconnectType==="transfer").length, 0);
   const transferencias = Math.max(0, userIds.length-1, nTransferDisc);
-  let colgo;
+  // v22.45: el segmento del asesor que cuenta es el que terminó junto con la llamada del cliente (ver el comentario
+  // de "quién colgó, y cómo", arriba de qaResumen)
+  let agFin = ultimoAgSeg;
+  const finCliMs = ultCust ? Date.parse(ultCust.segmentEnd) : NaN;
+  if(!isNaN(finCliMs) && agSegs.length > 1){
+    let mejor = null;
+    agSegs.forEach(sg=>{ const t = Date.parse(sg.segmentEnd); if(isNaN(t)) return; const d = Math.abs(t - finCliMs); if(!mejor || d < mejor.d || (d===mejor.d && t > mejor.t)) mejor = { sg, d, t }; });
+    if(mejor) agFin = mejor.sg;
+  }
+  const finA = qaFinDe(agFin), finC = qaFinDe(ultCust);
+  const tA = finA ? finA.tipo : "", tC = finC ? finC.tipo : "";
+  let colgo, como = "";
   if(!agentes.length){
     colgo = acds.length ? "Abandonó en cola" : (ivrs.length ? "Terminó en IVR" : "Sin asesor");
-  } else if(ultimoAgSeg && ultimoAgSeg.disconnectType==="client"){
-    colgo = "Asesor";
-  } else if(ultCust && (ultCust.disconnectType==="endpoint" || ultCust.disconnectType==="client")){
+  } else if(tA==="client" && !finA.err){
+    colgo = "Asesor"; como = "boton";               // la orden de colgar salió de la aplicación del asesor
+  } else if(tC==="endpoint" || tC==="client"){
     colgo = "Cliente";
-  } else if(ultimoAgSeg && ultimoAgSeg.disconnectType==="transfer"){
+  } else if(tA.includes("transfer")){
     colgo = "Transferencia";
-  } else if(ultCust && ultCust.disconnectType==="peer" && ultimoAgSeg){
-    colgo = "Asesor"; // "peer" en el cliente = cortó el otro lado (el asesor)
+  } else if(tC==="peer" && agFin){                  // "peer" en el cliente = se cortó desde el otro lado
+    if(tA==="endpoint"){ colgo = QA_CAIDA; como = "equipo"; }
+    else if(tA==="client"){ colgo = QA_CAIDA; como = "sesion"; }
+    else if(tA==="error" || tA==="transportfailure"){ colgo = QA_CAIDA; como = "conexion"; }
+    else colgo = "Sistema";                         // system, other, peer en los dos: Genesys no lo atribuye al asesor
   } else colgo = "Sistema";
+  const tFinA = finA ? Date.parse(finA.t) : NaN;
+  const fin = { a: agentes.length ? finA : null, c: finC, dt: !isNaN(tFinA) && !isNaN(finCliMs) ? Math.round((finCliMs - tFinA)/100)/10 : null };
   const dur = (c.conversationStart && c.conversationEnd) ? (Date.parse(c.conversationEnd)-Date.parse(c.conversationStart))/1000 : null;
   const flags = new Set();
   if(colgo==="Asesor") flags.add("asesorColgo");
+  if(colgo===QA_CAIDA) flags.add("asesorCaida");
   if(agentes.length && talk>0 && talk<20) flags.add("corta");
   if(hold>=120 || nHold>=3) flags.add("holdLargo");
   if(transferencias>0) flags.add("transferida");
@@ -15677,7 +15834,7 @@ function qaResumen(c, wrapups){
     ani, aniTxt: qaLimpiarTel(ani), dnis,
     queueId, cola: qaQueueName(queueId),
     userIds, asesor: userIds.length ? userIds.map(qaUserName).join(" → ") : "—",
-    dur, ivr, espera, talk, hold, nHold, acw, transferencias, colgo,
+    dur, ivr, espera, talk, hold, nHold, acw, transferencias, colgo, colgoComo: como, fin,
     tipificacion: wrapId ? ((wrapups && wrapups[wrapId]) || "(tipificación sin nombre)") : "—", wrapNota,
     flags, _conv: c,
   };
@@ -15800,6 +15957,7 @@ function qaHtmlResultados(filas, origen, sinResumen){
   const unicos = new Set(filas.map(f=> String(f.ani||"").replace(/\D/g,"").slice(-8)).filter(Boolean)).size;
   const cuenta = qaContarFlags(filas);
   const colgoAs = filas.filter(f=> f.colgo==="Asesor").length, colgoCl = filas.filter(f=> f.colgo==="Cliente").length;
+  const cayoAs = filas.filter(f=> f.colgo===QA_CAIDA).length;   // v22.45
   const nSel = Array.from(QA.sel).filter(id=> filas.some(f=> f.id===id)).length;
   const todosVisSel = vis.length && vis.every(f=> QA.sel.has(f.id));
   return `
@@ -15810,6 +15968,7 @@ function qaHtmlResultados(filas, origen, sinResumen){
       <div><b>${aht===null?"—":qaDur(aht)}</b><span>TMO promedio</span></div>
       <div><b>${fmtNum(filas.filter(f=>f.transferencias).length)}</b><span>transferidas</span></div>
       <div class="r"><b>${fmtNum(colgoAs)}</b><span>colgó el asesor</span></div>
+      <div class="${cayoAs ? "a" : ""}"><b>${fmtNum(cayoAs)}</b><span>se cayó del lado del asesor</span></div>
       <div><b>${fmtNum(colgoCl)}</b><span>colgó el cliente</span></div>
     </div>`}
     <div class="qa-toolbar">
@@ -15846,12 +16005,13 @@ function qaHtmlResultados(filas, origen, sinResumen){
           </tr>`).join("")}</tbody>
       </table>
     </div>
-    <p class="qa-nota">${vis.length>600?`Se muestran las primeras 600 de ${fmtNum(vis.length)} — el Excel trae todas. `:""}Toca una llamada para ver su recorrido, grabación y evaluaciones. "Quién colgó" se calcula con el tipo de desconexión que reporta Genesys.</p>
+    <p class="qa-nota">${vis.length>600?`Se muestran las primeras 600 de ${fmtNum(vis.length)} — el Excel trae todas. `:""}Toca una llamada para ver su recorrido, grabación y evaluaciones. "Quién colgó" sale del motivo de desconexión que Genesys guarda para cada participante: <b>Asesor</b> = la orden de colgar salió de su aplicación (el botón); <b>${QA_CAIDA}</b> = se cortó de su lado sin esa orden (recarga con F5 o cierre de Genesys, o falla de red o del equipo). El detalle de cada llamada está en "Cómo terminó".</p>
   </section>`;
 }
 function qaColgoPill(c){
-  const cls = { "Cliente":"cli", "Asesor":"ase", "Transferencia":"tra", "Abandonó en cola":"aba", "Terminó en IVR":"ivr" }[c] || "sis";
-  return `<span class="qa-pill ${cls}">${qaEsc(c)}</span>`;
+  const cls = { "Cliente":"cli", "Asesor":"ase", "Transferencia":"tra", "Abandonó en cola":"aba", "Terminó en IVR":"ivr", [QA_CAIDA]:"cai" }[c] || "sis";
+  const tit = c==="Asesor" ? "La orden de colgar salió de la aplicación del asesor (botón de Genesys)" : c===QA_CAIDA ? "Se cortó del lado del asesor sin la orden de colgar: recarga (F5) o cierre de Genesys, o falla de red o del equipo" : "";
+  return `<span class="qa-pill ${cls}"${tit ? ` title="${tit}"` : ""}>${qaEsc(c)}</span>`;
 }
 
 /* ---------- eventos ---------- */
@@ -16016,14 +16176,15 @@ function qaMensajeError(e){
 function qaFilaExcel(f){
   return [qaFecha(f.inicio), qaHora(f.inicio), f.id, f.canal, f.direccion, f.cola, f.asesor, f.aniTxt, qaLimpiarTel(f.dnis),
     Math.round(f.dur||0), Math.round(f.ivr), Math.round(f.espera), Math.round(f.talk), f.nHold, Math.round(f.hold), Math.round(f.acw),
-    f.transferencias, f.colgo, f.tipificacion, f.wrapNota||"", Array.from(f.flags).map(k=>QA_FLAGS[k].label).join(", "), qaPrioridad(f)];
+    f.transferencias, f.colgo, qaFinCorto(f), qaFinCrudo(f.fin && f.fin.a), qaFinCrudo(f.fin && f.fin.c), f.tipificacion, f.wrapNota||"", Array.from(f.flags).map(k=>QA_FLAGS[k].label).join(", "), qaPrioridad(f)];
 }
-const QA_EXCEL_HEAD = ["Fecha","Hora","ID conversación","Canal","Dirección","Cola","Asesor(es)","Teléfono","Número marcado","Duración (s)","IVR (s)","Espera en cola (s)","Conversación (s)","Veces en hold","Hold (s)","ACW (s)","Transferencias","Quién colgó","Tipificación","Nota de cierre","Alertas","Prioridad"];
+const QA_EXCEL_HEAD = ["Fecha","Hora","ID conversación","Canal","Dirección","Cola","Asesor(es)","Teléfono","Número marcado","Duración (s)","IVR (s)","Espera en cola (s)","Conversación (s)","Veces en hold","Hold (s)","ACW (s)","Transferencias","Quién colgó","Cómo terminó","Genesys: motivo del asesor","Genesys: motivo del cliente","Tipificación","Nota de cierre","Alertas","Prioridad"];
+const QA_EXCEL_ANCHOS = [10,7,38,14,9,26,28,12,12,10,8,10,10,8,8,8,8,16,52,26,22,26,30,34,8];   // v22.45: tres columnas más
 function qaExcelLlamadas(filas, origen){
   const vis = qaFilasFiltradas(origen==="bandeja" ? qaFilasBandejaVisibles() : filas);
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([QA_EXCEL_HEAD, ...vis.map(qaFilaExcel)]);
-  ws["!cols"] = [10,7,38,14,9,26,28,12,12,10,8,10,10,8,8,8,8,14,26,30,34,8].map(w=>({wch:w}));
+  ws["!cols"] = QA_EXCEL_ANCHOS.map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, "Llamadas");
   const nombre = QA.modo==="asesor" && QA.asesorElegido ? QA.asesorElegido.name : (QA.modo==="telefono" ? QA.texto : "consulta");
   XLSX.writeFile(wb, `QA_llamadas_${String(nombre).replace(/[^\wáéíóúñ-]+/gi,"_")}_${qaHoyIso()}.xlsx`);
@@ -16624,7 +16785,7 @@ function qaRecorrido(f){
     }
   });
   ev.sort((a,b)=> a.t-b.t);
-  ev.push({ t: Infinity, tipo:"fin", titulo:`Fin: ${f.colgo==="Cliente"||f.colgo==="Asesor" ? "colgó el "+f.colgo.toLowerCase() : f.colgo.toLowerCase()}`, sub:`duración total ${qaDur(f.dur)}` });
+  ev.push({ t: Infinity, tipo:"fin", titulo:`Fin: ${qaFinFrase(f)}`, sub:`duración total ${qaDur(f.dur)}` });
   return ev;
 }
 function qaSeccionEstado(sec, nombre){
@@ -17062,6 +17223,7 @@ function qaPintarDetalle(){
       <div class="qa-dw-main">${principal}</div>
       <aside class="qa-dw-lado" aria-label="Datos de la interacción">
         ${tarjeta("Recorrido", qaHtmlRecorridoBloque(f))}
+        ${tarjeta("Cómo terminó", qaHtmlFinBloque(f))}
         ${tarjeta("Datos", qaHtmlDatosBloque(f))}
         ${tarjeta("Descargas", qaHtmlDescargas(f) + qaHtmlAuditoria())}
         ${escrita || msgs.length ? tarjeta("Evaluación de calidad", qaHtmlEvaluacionBloque()) : ""}
@@ -17125,6 +17287,8 @@ function qaPintarFicha(posPrevia){
     <section class="qa-card qa-fcol">
       <h4 class="qa-ft">Recorrido de la llamada · ${qaFecha(f.inicio)} ${qaHora(f.inicio)}</h4>
       ${qaHtmlRecorridoBloque(f)}
+      <h4 class="qa-ft" style="margin-top:14px;">Cómo terminó</h4>
+      ${qaHtmlFinBloque(f)}
       <h4 class="qa-ft" style="margin-top:14px;">Datos de la interacción</h4>
       ${qaHtmlDatosBloque(f)}
       ${qaHtmlAuditoria()}
@@ -17876,9 +18040,9 @@ function qaPeCalcular(){
   // la despedida es la ÚLTIMA frase de cierre, ya pasada la apertura (para no
   // confundirla con el "gracias por llamar" del saludo)
   p = qaPeBuscar(fr, A, QA_PE_RX.despedida, Math.max(ini + Math.min(30, (fin - ini) / 2), fin - 150), undefined, true);
-  const colgoAse = f.colgo==="Asesor";
+  const colgoAse = f.colgo==="Asesor", cayoAse = f.colgo===QA_CAIDA;   // v22.45
   add("cierre", "Despedida institucional y cierre correcto", 20, colgoAse ? "no" : p ? "cumple" : "no", p,
-    (p ? `Se despidió: ${qaPeCita(p)}` : "No se encontró despedida al final.") + (colgoAse ? " ⚠️ La llamada la colgó el asesor." : ` Colgó: ${f.colgo.toLowerCase()}.`));
+    (p ? `Se despidió: ${qaPeCita(p)}` : "No se encontró despedida al final.") + (colgoAse ? " ⚠️ La llamada la colgó el asesor." : cayoAse ? " ⚠️ La llamada se cayó del lado del asesor (sin usar el botón)." : ` Colgó: ${f.colgo.toLowerCase()}.`));
   // correcciones del evaluador
   const ed = QA.peEdits.get(det.id) || {};
   R.forEach(r=>{ const e = ed[r.id]; r.sistema = r.res; if(e){ if(e.res) r.res = e.res; if(e.obs!==undefined) r.obs = e.obs; r.editado = !!(e.res && e.res!==r.sistema) || e.obs!==undefined; } });
@@ -17890,6 +18054,7 @@ function qaPeCalcular(){
   const alertas = [];
   QA_PE_ALERTAS.forEach(a=>{ const q = qaPeBuscar(fr, hayRoles ? a.quien : null, a.rx); if(q) alertas.push({ et:a.et, t:q.s, cita: qaPeCita(q, 70), grave: a.k!=="reincide" }); });
   if(colgoAse) alertas.push({ et:"Colgó el asesor", t:null, cita:"", grave:true });
+  if(cayoAse) alertas.push({ et:"Se cayó del lado del asesor", t:null, cita:"", grave:false });
   if(f.flags && f.flags.has("recontacto") && !alertas.some(a=> a.et==="Ya llamó antes")) alertas.push({ et:"Volvió a llamar (Genesys)", t:null, cita:"", grave:false });
   const nivel = alertas.some(a=> a.grave) || (nota!==null && nota < 70) ? "rojo" : (nota!==null && nota < 85) || alertas.length ? "amarillo" : "verde";
   return { R, nota, alertas, nivel, hayRoles, fuente: sttaOk ? "Genesys" : "computadora" };
@@ -17962,7 +18127,7 @@ function qaHtmlBandeja(){
   const b = QA.bandeja;
   const [a,z] = qaRangoFechas(b.rango, b.desde, b.hasta);
   const intro = `<section class="qa-card qa-search">
-    <div class="qa-intro"><b>¿Qué llamadas conviene evaluar?</b><span>Revisa todas las llamadas del período (hasta 31 días) y te propone las que tienen alertas: colgó el asesor, llamadas cortas, holds largos, transferencias, clientes que volvieron a llamar en 7 días o menos y esperas largas. Las ordena por prioridad y las resume por asesor.</span></div>
+    <div class="qa-intro"><b>¿Qué llamadas conviene evaluar?</b><span>Revisa todas las llamadas del período (hasta 31 días) y te propone las que tienen alertas: colgó el asesor, se cayó del lado del asesor, llamadas cortas, holds largos, transferencias, clientes que volvieron a llamar en 7 días o menos y esperas largas. Las ordena por prioridad y las resume por asesor.</span></div>
     <div class="qa-opciones">
       ${qaChipsRango("bandeja", b.rango, [["hoy","Hoy"],["ayer","Ayer"],["7d","Últimos 7 días"],["estemes","Este mes"],["mesanterior","Mes anterior"],["rango","Rango"]])}
       ${b.rango==="rango" ? `<label class="qa-fecha">Desde <input type="date" id="qa-b-desde" value="${a}" max="${qaHoyIso()}"/></label><label class="qa-fecha">Hasta <input type="date" id="qa-b-hasta" value="${z}" max="${qaHoyIso()}"/></label>` : `<span class="qa-rango-txt">${qaFmtRango(a,z)}</span>`}
@@ -17981,17 +18146,19 @@ function qaHtmlBandeja(){
       <div><b>${fmtNum(filas.length)}</b><span>llamadas revisadas</span></div>
       <div class="r"><b>${fmtNum(conAlerta.length)}</b><span>con al menos una alerta</span></div>
       <div class="r"><b>${fmtNum(cuenta.asesorColgo)}</b><span>colgó el asesor</span></div>
+      <div class="${cuenta.asesorCaida ? "a" : ""}"><b>${fmtNum(cuenta.asesorCaida)}</b><span>se cayó del lado del asesor</span></div>
       <div class="r"><b>${fmtNum(cuenta.corta)}</b><span>llamadas cortas</span></div>
       <div><b>${fmtNum(cuenta.recontacto)}</b><span>recontactos</span></div>
       <div><b>${fmtNum(cuenta.holdLargo)}</b><span>hold largo</span></div>
     </div>
+    ${qaHtmlFinTabla(filas)}
     <h3 class="qa-h3">Por asesor <span>toca un asesor para ver solo sus llamadas</span></h3>
     <div class="qa-tabla-wrap corta">
       <table class="qa-tabla">
-        <thead><tr><th>Asesor</th><th class="num">Llamadas</th><th class="num">Colgó</th><th class="num">Cortas</th><th class="num">Hold largo</th><th class="num">Transferidas</th><th class="num">Recontacto</th><th class="num">% con alerta</th><th class="num">Prioridad</th></tr></thead>
+        <thead><tr><th>Asesor</th><th class="num">Llamadas</th><th class="num" title="La orden de colgar salió de la aplicación del asesor (botón de Genesys)">Colgó</th><th class="num" title="Se cortó del lado del asesor sin la orden de colgar: recarga (F5) o cierre de Genesys, o falla de red o del equipo">Se cayó</th><th class="num">Cortas</th><th class="num">Hold largo</th><th class="num">Transferidas</th><th class="num">Recontacto</th><th class="num">% con alerta</th><th class="num">Prioridad</th></tr></thead>
         <tbody>${b.porAsesor.map(r=>`<tr class="${b.asesorFiltro===r.id?"sel":""}" data-bandeja-asesor="${r.id}" tabindex="0">
           <td><b>${qaEsc(qaUserName(r.id))}</b></td><td class="num">${r.n}</td>
-          <td class="num ${r.asesorColgo?"r":""}">${r.asesorColgo}</td><td class="num ${r.corta?"r":""}">${r.corta}</td>
+          <td class="num ${r.asesorColgo?"r":""}">${r.asesorColgo}</td><td class="num ${r.asesorCaida?"a":""}">${r.asesorCaida}</td><td class="num ${r.corta?"r":""}">${r.corta}</td>
           <td class="num">${r.holdLargo}</td><td class="num">${r.transferida}</td><td class="num">${r.recontacto}</td>
           <td class="num">${(r.pct*100).toFixed(0)}%</td><td class="num"><b>${r.puntaje}</b></td></tr>`).join("")}</tbody>
       </table>
@@ -18025,7 +18192,7 @@ async function qaArmarBandeja(){
     b.filas.forEach(f=>{
       if(!f.userIds.length) return;
       const id = f.userIds[f.userIds.length-1];
-      const x = por[id] = por[id] || { id, n:0, conAlerta:0, puntaje:0, asesorColgo:0, corta:0, holdLargo:0, transferida:0, recontacto:0, esperaLarga:0 };
+      const x = por[id] = por[id] || { id, n:0, conAlerta:0, puntaje:0, asesorColgo:0, asesorCaida:0, corta:0, holdLargo:0, transferida:0, recontacto:0, esperaLarga:0 };
       x.n++; if(f.flags.size) x.conAlerta++; x.puntaje += qaPrioridad(f);
       f.flags.forEach(k=> x[k]++);
     });
@@ -18098,14 +18265,20 @@ function qaBandejaPintarAvance(){
 function qaExcelBandeja(){
   const b = QA.bandeja; if(!b.cargada) return;
   const wb = XLSX.utils.book_new();
-  const s1 = [["Asesor","Llamadas","Colgó el asesor","Cortas","Hold largo","Transferidas","Recontacto","Espera larga","% con alerta","Prioridad"]]
-    .concat(b.porAsesor.map(r=> [qaUserName(r.id), r.n, r.asesorColgo, r.corta, r.holdLargo, r.transferida, r.recontacto, r.esperaLarga, Math.round(r.pct*1000)/10, r.puntaje]));
-  const ws1 = XLSX.utils.aoa_to_sheet(s1); ws1["!cols"] = [32,9,10,8,9,11,10,10,10,9].map(w=>({wch:w}));
+  const s1 = [["Asesor","Llamadas","Colgó el asesor (botón)","Se cayó del lado del asesor","Cortas","Hold largo","Transferidas","Recontacto","Espera larga","% con alerta","Prioridad"]]
+    .concat(b.porAsesor.map(r=> [qaUserName(r.id), r.n, r.asesorColgo, r.asesorCaida, r.corta, r.holdLargo, r.transferida, r.recontacto, r.esperaLarga, Math.round(r.pct*1000)/10, r.puntaje]));
+  const ws1 = XLSX.utils.aoa_to_sheet(s1); ws1["!cols"] = [32,9,14,16,8,9,11,10,10,10,9].map(w=>({wch:w}));
   const alert = b.filas.filter(f=> f.flags.size).sort((x,y)=> qaPrioridad(y)-qaPrioridad(x));
   const ws2 = XLSX.utils.aoa_to_sheet([QA_EXCEL_HEAD, ...alert.map(qaFilaExcel)]);
-  ws2["!cols"] = [10,7,38,14,9,26,28,12,12,10,8,10,10,8,8,8,8,14,26,30,34,8].map(w=>({wch:w}));
+  ws2["!cols"] = QA_EXCEL_ANCHOS.map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws1, "Por asesor");
   XLSX.utils.book_append_sheet(wb, ws2, "Llamadas sugeridas");
+  // v22.45: cómo terminaron todas las llamadas con asesor (motivos de Genesys), con su total
+  const ft = qaFinTabla(b.filas), ftN = ft.reduce((s, o)=> s + o.n, 0);
+  const ws3 = XLSX.utils.aoa_to_sheet([["Genesys: motivo del asesor","Genesys: motivo del cliente","Llamadas","% de las llamadas","El dashboard lo cuenta como"]]
+    .concat(ft.map(o=> [o.a, o.c, o.n, ftN ? Math.round(o.n/ftN*1000)/10 : 0, o.colgo])).concat([["Total", "", ftN, ftN ? 100 : 0, ""]]));
+  ws3["!cols"] = [36,28,10,16,28].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws3, "Cómo terminaron");
   const [a,z] = qaRangoFechas(b.rango, b.desde, b.hasta);
   XLSX.writeFile(wb, `QA_bandeja_${b.cat.replace(/\s+/g,"_")}_${a}${a!==z?"_"+z:""}.xlsx`);
 }
@@ -20894,21 +21067,22 @@ function ccHtmlLlamadas(){
   if(!L.filas) return top + `<div class="qa-vacio"><b>Todavía no hay llamadas en pantalla.</b><span>Para un código muy usado, elegí también un asesor o un período corto: se traen como máximo ${fmtNum(QA_MAX_RESULTADOS)} llamadas.</span></div>`;
   const filas = L.filas, G = "grid-template-columns:118px minmax(120px,1fr) minmax(0,1.6fr) 56px 62px 84px 110px;";
   const cortas = filas.filter(f=> f.flags.has("corta")).length, colgo = filas.filter(f=> f.colgo==="Asesor").length;
+  const cayo = filas.filter(f=> f.colgo===QA_CAIDA).length;   // v22.45
   return top + `
   <div class="cc-kpis">
     ${ccKpi(fmtNum(filas.length), "Llamadas encontradas", L.capado ? `se llegó al máximo de ${fmtNum(QA_MAX_RESULTADOS)}` : "con ese filtro", "rojo")}
     ${ccKpi(fmtNum(cortas), "De menos de 20 segundos", ccPct(cortas, filas.length, 0) + " de las encontradas", cortas ? "ambar" : "")}
-    ${ccKpi(fmtNum(colgo), "Colgó el asesor", ccPct(colgo, filas.length, 0) + " de las encontradas", colgo ? "ambar" : "")}
+    ${ccKpi(fmtNum(colgo), "Colgó el asesor", ccPct(colgo, filas.length, 0) + " de las encontradas" + (cayo ? ` · ${fmtNum(cayo)} más se ${cayo===1 ? "cayó" : "cayeron"} de su lado` : ""), colgo ? "ambar" : "")}
   </div>
   <section class="qa-card">
-    <div class="cc-h"><h3>${qaEsc([L.uid ? ccNombre(L.uid) : "", ccNodoNombre(L.nodo)].filter(Boolean).join(" · ") || "Todas")}</h3><span>De la más reciente a la más vieja. En color, las cortas o las que colgó el asesor.</span></div>
+    <div class="cc-h"><h3>${qaEsc([L.uid ? ccNombre(L.uid) : "", ccNodoNombre(L.nodo)].filter(Boolean).join(" · ") || "Todas")}</h3><span>De la más reciente a la más vieja. En color, las cortas, las que colgó el asesor y las que se cayeron de su lado.</span></div>
     ${filas.length ? `<div class="cc-tabla" style="max-height:62vh;overflow:auto;"><div style="min-width:820px;">
       <div class="cc-g cc-th" style="${G}position:sticky;top:0;z-index:1;"><div>Fecha y hora</div><div>Asesor</div><div>Ruta y código</div><div class="cc-num">Espera</div><div class="cc-num">Duración</div><div>Quién colgó</div><div></div></div>
-      ${filas.slice(0, 400).map(f=>{ const ojo = f.flags.has("corta") || f.colgo==="Asesor"; return `<div class="cc-g cc-trs ${ojo?"ojo":""}" style="${G}">
+      ${filas.slice(0, 400).map(f=>{ const ojo = f.flags.has("corta") || f.colgo==="Asesor" || f.colgo===QA_CAIDA; return `<div class="cc-g cc-trs ${ojo?"ojo":""}" style="${G}">
         <div><b>${qaFecha(f.inicio).slice(0,5)}</b> ${qaHora(f.inicio)}</div><div class="cc-cod" style="font-weight:600;">${qaEsc(tnNombrePropio(f.asesor))}</div>
         <div style="min-width:0;">${f._cc ? ccRutaHtml(f._cc) : `<div class="cc-cod">${qaEsc(f.tipificacion)}</div>`}</div>
         <div class="cc-num">${qaDur(f.espera)}</div><div class="cc-num"><b class="${f.flags.has("corta")?"r":""}">${qaDur(f.talk)}</b></div>
-        <div><span class="cc-pill ${f.colgo==="Asesor"?"r":""}">${qaEsc(f.colgo)}</span></div>
+        <div><span class="cc-pill ${f.colgo==="Asesor" ? "r" : f.colgo===QA_CAIDA ? "a" : ""}">${qaEsc(f.colgo)}</span></div>
         <div class="cc-num"><button type="button" class="qa-chip" data-ccescuchar="${qaEsc(f.id)}">🎧 Escuchar</button></div></div>`; }).join("")}
     </div></div>${filas.length > 400 ? `<p class="qa-nota">Se muestran las primeras 400 de ${fmtNum(filas.length)}.</p>` : ""}`
     : `<div class="qa-vacio" style="padding:28px 8px;"><b>No hay llamadas con ese filtro.</b></div>`}
